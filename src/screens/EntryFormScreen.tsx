@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from "react";
 import {
   View,
   Text,
@@ -9,61 +9,77 @@ import {
   KeyboardAvoidingView,
   Platform,
   StyleSheet,
-} from 'react-native';
-import DateTimePicker, { DateTimePickerEvent } from '@react-native-community/datetimepicker';
-import { Picker } from '@react-native-picker/picker';
-import { MaterialCommunityIcons } from '@expo/vector-icons';
-import { useRoute, useNavigation, RouteProp } from '@react-navigation/native';
-import { StackNavigationProp } from '@react-navigation/stack';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { ANIMALS, COLORS, SHIFTS } from '../constants';
-import { useDoodhContext } from '../context/DoodhContext';
-import { getLocalDateString, getYearAndMonth, parseLocalDate } from '../utils/dateUtils';
-import { calculateEarnings } from '../utils/calculations';
-import { formatCurrency } from '../utils/formatters';
-import { Animal, MilkEntry, RootStackParamList, Shift } from '../types';
+} from "react-native";
+import DateTimePicker, {
+  DateTimePickerEvent,
+} from "@react-native-community/datetimepicker";
+import { Picker } from "@react-native-picker/picker";
+import { MaterialCommunityIcons } from "@expo/vector-icons";
+import { useRoute, useNavigation, RouteProp } from "@react-navigation/native";
+import { StackNavigationProp } from "@react-navigation/stack";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { ANIMALS, COLORS, SHIFTS } from "../constants";
+import { useDoodhContext } from "../context/DoodhContext";
+import {
+  getLocalDateString,
+  getYearAndMonth,
+  parseLocalDate,
+} from "../utils/dateUtils";
+import { calculateEarnings } from "../utils/calculations";
+import { formatCurrency } from "../utils/formatters";
+import { Animal, MilkEntry, RootStackParamList, Shift } from "../types";
 
-type EntryFormScreenNavigationProp = StackNavigationProp<RootStackParamList, 'EntryForm'>;
-type EntryFormScreenRouteProp = RouteProp<RootStackParamList, 'EntryForm'>;
+type EntryFormScreenNavigationProp = StackNavigationProp<
+  RootStackParamList,
+  "EntryForm"
+>;
+type EntryFormScreenRouteProp = RouteProp<RootStackParamList, "EntryForm">;
 
 export default function EntryFormScreen() {
   const navigation = useNavigation<EntryFormScreenNavigationProp>();
   const route = useRoute<EntryFormScreenRouteProp>();
   const insets = useSafeAreaInsets();
-  const { pricingConfig, addEntry, updateEntry, deleteEntry } = useDoodhContext();
+  const { pricingConfig, addEntry, updateEntry, deleteEntry } =
+    useDoodhContext();
 
   const entryToEdit = route.params?.entry || null;
   const isEditing = Boolean(entryToEdit && entryToEdit.id !== undefined);
 
-  const [date, setDate] = useState<string>(entryToEdit?.date || getLocalDateString());
-  const [animal, setAnimal] = useState<Animal>(entryToEdit?.animal || 'Cow');
-  const [shift, setShift] = useState<Shift>(entryToEdit?.shift || 'Morning');
+  const [date, setDate] = useState<string>(
+    entryToEdit?.date || getLocalDateString(),
+  );
+  const [animal, setAnimal] = useState<Animal>(entryToEdit?.animal || "Cow");
+  const [shift, setShift] = useState<Shift>(entryToEdit?.shift || "Morning");
   const [milkQuantity, setMilkQuantity] = useState<string>(
-    entryToEdit?.milk_quantity !== undefined ? String(entryToEdit.milk_quantity) : ''
+    entryToEdit?.milk_quantity !== undefined
+      ? String(entryToEdit.milk_quantity)
+      : "",
   );
   const [fatPercentage, setFatPercentage] = useState<string>(
-    entryToEdit?.fat_percentage !== undefined ? String(entryToEdit.fat_percentage) : ''
+    entryToEdit?.fat_percentage !== undefined
+      ? String(entryToEdit.fat_percentage)
+      : "",
   );
-  const [notes, setNotes] = useState<string>(entryToEdit?.notes || '');
+  const [notes, setNotes] = useState<string>(entryToEdit?.notes || "");
   const [showDatePicker, setShowDatePicker] = useState<boolean>(false);
   const [earningsPreview, setEarningsPreview] = useState<number>(0);
 
   const priceInfo = useMemo(() => {
     const { year, month } = getYearAndMonth(date);
     const monthKey = `${year}-${month}`;
-    const animalConfig = pricingConfig[monthKey] || { Cow: 8, Buffalo: 9 };
+    const animalConfig = pricingConfig[monthKey];
     return {
-      cowPrice: Number(animalConfig.Cow ?? 8),
-      buffaloPrice: Number(animalConfig.Buffalo ?? 9),
+      cowPrice: Number(animalConfig?.Cow ?? 8),
+      buffaloPrice: Number(animalConfig?.Buffalo ?? 9),
     };
   }, [date, pricingConfig]);
 
   useEffect(() => {
     const qty = Number(milkQuantity || 0);
     const fat = Number(fatPercentage || 0);
-    const rate = animal === 'Cow' ? priceInfo.cowPrice : priceInfo.buffaloPrice;
+    const rate = animal === "Cow" ? priceInfo.cowPrice : priceInfo.buffaloPrice;
     setEarningsPreview(calculateEarnings(qty, fat, rate));
-  }, [milkQuantity, fatPercentage, animal, priceInfo]);
+  }, [milkQuantity, fatPercentage, animal, pricingConfig]);
 
   const handleDateChange = (_: DateTimePickerEvent, selectedDate?: Date) => {
     setShowDatePicker(false);
@@ -77,12 +93,18 @@ export default function EntryFormScreen() {
     const fat = Number(fatPercentage);
 
     if (isNaN(qty) || qty <= 0 || qty > 500) {
-      Alert.alert('Invalid Milk Quantity', 'Please enter a valid milk quantity in kg (e.g., 15.5).');
+      Alert.alert(
+        "Invalid Milk Quantity",
+        "Please enter a valid milk quantity in kg (e.g., 15.5).",
+      );
       return;
     }
 
     if (isNaN(fat) || fat <= 0 || fat > 25) {
-      Alert.alert('Invalid Fat Percentage', 'Please enter a valid fat percentage (e.g., 4.5).');
+      Alert.alert(
+        "Invalid Fat Percentage",
+        "Please enter a valid fat percentage (e.g., 4.5).",
+      );
       return;
     }
 
@@ -100,7 +122,7 @@ export default function EntryFormScreen() {
         const entryToSave: MilkEntry = {
           ...normalizedData,
           id: entryToEdit.id,
-          earnings: earningsPreview,
+          price: entryToEdit.price,
         };
         await updateEntry(entryToSave, entryToEdit.date);
       } else {
@@ -108,55 +130,81 @@ export default function EntryFormScreen() {
       }
       navigation.goBack();
     } catch (error) {
-      console.error('Error saving entry:', error);
-      Alert.alert('Save Failed', 'Unable to save entry. Please try again.');
+      console.error("Error saving entry:", error);
+      Alert.alert("Save Failed", "Unable to save entry. Please try again.");
     }
   };
 
   const handleDelete = () => {
     if (!isEditing || !entryToEdit || entryToEdit.id === undefined) return;
-    Alert.alert('Delete Entry', 'Are you sure you want to delete this milk entry?', [
-      { text: 'Cancel', style: 'cancel' },
-      {
-        text: 'Delete',
-        style: 'destructive',
-        onPress: async () => {
-          try {
-            await deleteEntry(entryToEdit.id, entryToEdit.date);
-            navigation.goBack();
-          } catch (error) {
-            Alert.alert('Delete Failed', 'Unable to delete entry.');
-          }
+    Alert.alert(
+      "Delete Entry",
+      "Are you sure you want to delete this milk entry?",
+      [
+        { text: "Cancel", style: "cancel" },
+        {
+          text: "Delete",
+          style: "destructive",
+          onPress: async () => {
+            try {
+              await deleteEntry(entryToEdit.id, entryToEdit.date);
+              navigation.goBack();
+            } catch (error) {
+              Alert.alert("Delete Failed", "Unable to delete entry.");
+            }
+          },
         },
-      },
-    ]);
+      ],
+    );
   };
 
   return (
     <KeyboardAvoidingView
-      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-      keyboardVerticalOffset={Platform.OS === 'ios' ? 64 : 0}
+      behavior={Platform.OS === "ios" ? "padding" : undefined}
+      keyboardVerticalOffset={Platform.OS === "ios" ? 64 : 0}
       style={styles.flex}
     >
-      <View style={[styles.header, { paddingTop: Math.max(insets.top + 12, 44) }]}>
-        <Pressable onPress={() => navigation.goBack()} hitSlop={10} style={styles.backButton}>
-          <MaterialCommunityIcons name="chevron-left" size={28} color={COLORS.text} />
+      <View
+        style={[styles.header, { paddingTop: Math.max(insets.top + 12, 44) }]}
+      >
+        <Pressable
+          onPress={() => navigation.goBack()}
+          hitSlop={10}
+          style={styles.backButton}
+        >
+          <MaterialCommunityIcons
+            name="chevron-left"
+            size={28}
+            color={COLORS.text}
+          />
         </Pressable>
-        <Text style={styles.title}>{isEditing ? 'Edit Entry' : 'Add Entry'}</Text>
+        <Text style={styles.title}>
+          {isEditing ? "Edit Entry" : "Add Entry"}
+        </Text>
       </View>
 
-      <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
+      <ScrollView
+        contentContainerStyle={styles.content}
+        showsVerticalScrollIndicator={false}
+      >
         <View style={styles.fieldGroup}>
           <Text style={styles.label}>Collection Date</Text>
-          <Pressable style={styles.inputBox} onPress={() => setShowDatePicker(true)}>
+          <Pressable
+            style={styles.inputBox}
+            onPress={() => setShowDatePicker(true)}
+          >
             <Text style={styles.inputText}>{date}</Text>
-            <MaterialCommunityIcons name="calendar" size={20} color={COLORS.brand} />
+            <MaterialCommunityIcons
+              name="calendar"
+              size={20}
+              color={COLORS.brand}
+            />
           </Pressable>
           {showDatePicker && (
             <DateTimePicker
               value={parseLocalDate(date)}
               mode="date"
-              display={Platform.OS === 'ios' ? 'spinner' : 'default'}
+              display={Platform.OS === "ios" ? "spinner" : "default"}
               onChange={handleDateChange}
             />
           )}
@@ -200,7 +248,11 @@ export default function EntryFormScreen() {
           <Text style={styles.label}>Milk Quantity (kg)</Text>
           <View style={styles.inputBoxRow}>
             <View style={styles.iconWrapBlue}>
-              <MaterialCommunityIcons name="glass-mug-variant" size={20} color="#2563EB" />
+              <MaterialCommunityIcons
+                name="glass-mug-variant"
+                size={20}
+                color="#2563EB"
+              />
             </View>
             <TextInput
               value={milkQuantity}
@@ -236,10 +288,14 @@ export default function EntryFormScreen() {
           <View>
             <Text style={styles.previewLabel}>Estimated Earnings</Text>
             <Text style={styles.previewSubtext}>
-              Rate: ₹{animal === 'Cow' ? priceInfo.cowPrice : priceInfo.buffaloPrice} / fat
+              Rate: ₹
+              {animal === "Cow" ? priceInfo.cowPrice : priceInfo.buffaloPrice} /
+              fat
             </Text>
           </View>
-          <Text style={styles.previewValue}>{formatCurrency(earningsPreview)}</Text>
+          <Text style={styles.previewValue}>
+            {formatCurrency(earningsPreview)}
+          </Text>
         </View>
 
         <View style={styles.fieldGroup}>
@@ -256,22 +312,41 @@ export default function EntryFormScreen() {
         </View>
       </ScrollView>
 
-      <View style={[styles.footer, { paddingBottom: Math.max(insets.bottom + 12, 16) }]}>
+      <View
+        style={[
+          styles.footer,
+          { paddingBottom: Math.max(insets.bottom + 12, 16) },
+        ]}
+      >
         {isEditing && (
           <Pressable
             onPress={handleDelete}
-            style={({ pressed }) => [styles.deleteButton, styles.footerButton, pressed && styles.buttonPressed]}
+            style={({ pressed }) => [
+              styles.deleteButton,
+              styles.footerButton,
+              pressed && styles.buttonPressed,
+            ]}
           >
-            <MaterialCommunityIcons name="trash-can-outline" size={20} color="#DC2626" />
+            <MaterialCommunityIcons
+              name="trash-can-outline"
+              size={20}
+              color="#DC2626"
+            />
             <Text style={styles.deleteButtonText}>Delete</Text>
           </Pressable>
         )}
         <Pressable
           onPress={handleSave}
-          style={({ pressed }) => [styles.primaryButton, styles.footerButton, pressed && styles.buttonPressed]}
+          style={({ pressed }) => [
+            styles.primaryButton,
+            styles.footerButton,
+            pressed && styles.buttonPressed,
+          ]}
         >
           <MaterialCommunityIcons name="check-circle" size={20} color="#fff" />
-          <Text style={styles.primaryButtonText}>{isEditing ? 'Update Entry' : 'Save Entry'}</Text>
+          <Text style={styles.primaryButtonText}>
+            {isEditing ? "Update Entry" : "Save Entry"}
+          </Text>
         </Pressable>
       </View>
     </KeyboardAvoidingView>
@@ -279,26 +354,26 @@ export default function EntryFormScreen() {
 }
 
 const styles = StyleSheet.create({
-  flex: { flex: 1, backgroundColor: '#F8FAFC' },
+  flex: { flex: 1, backgroundColor: "#F8FAFC" },
   header: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     paddingHorizontal: 16,
     paddingBottom: 14,
-    backgroundColor: '#fff',
+    backgroundColor: "#fff",
     borderBottomWidth: 1,
-    borderBottomColor: '#E2E8F0',
+    borderBottomColor: "#E2E8F0",
   },
   backButton: {
     width: 36,
     height: 36,
     borderRadius: 18,
-    justifyContent: 'center',
-    alignItems: 'center',
+    justifyContent: "center",
+    alignItems: "center",
   },
   title: {
     fontSize: 20,
-    fontWeight: '800',
+    fontWeight: "800",
     color: COLORS.text,
     marginLeft: 6,
   },
@@ -317,133 +392,133 @@ const styles = StyleSheet.create({
     marginBottom: 8,
     marginLeft: 2,
     fontSize: 12,
-    fontWeight: '800',
-    color: '#475569',
-    textTransform: 'uppercase',
+    fontWeight: "800",
+    color: "#475569",
+    textTransform: "uppercase",
   },
   inputBox: {
-    backgroundColor: '#fff',
+    backgroundColor: "#fff",
     borderRadius: 14,
     borderWidth: 1,
-    borderColor: '#CBD5E1',
+    borderColor: "#CBD5E1",
     paddingHorizontal: 14,
     height: 50,
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
   },
   inputBoxRow: {
-    backgroundColor: '#fff',
+    backgroundColor: "#fff",
     borderRadius: 14,
     borderWidth: 1,
-    borderColor: '#CBD5E1',
+    borderColor: "#CBD5E1",
     paddingHorizontal: 12,
     height: 52,
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
   },
   pickerWrap: {
-    backgroundColor: '#fff',
+    backgroundColor: "#fff",
     borderRadius: 14,
     borderWidth: 1,
-    borderColor: '#CBD5E1',
+    borderColor: "#CBD5E1",
     height: 50,
-    justifyContent: 'center',
-    overflow: 'hidden',
+    justifyContent: "center",
+    overflow: "hidden",
   },
   picker: {
-    color: '#0F172A',
+    color: "#0F172A",
     marginHorizontal: -6,
   },
   inputText: {
     fontSize: 15,
-    fontWeight: '700',
-    color: '#0F172A',
+    fontWeight: "700",
+    color: "#0F172A",
   },
   inputField: {
     flex: 1,
     height: 50,
     fontSize: 18,
-    fontWeight: '800',
-    color: '#0F172A',
+    fontWeight: "800",
+    color: "#0F172A",
     paddingHorizontal: 10,
   },
   suffix: {
     fontSize: 14,
-    color: '#64748B',
-    fontWeight: '700',
+    color: "#64748B",
+    fontWeight: "700",
   },
   iconWrapBlue: {
     width: 36,
     height: 36,
     borderRadius: 10,
-    backgroundColor: '#EFF6FF',
-    alignItems: 'center',
-    justifyContent: 'center',
+    backgroundColor: "#EFF6FF",
+    alignItems: "center",
+    justifyContent: "center",
   },
   iconWrapAmber: {
     width: 36,
     height: 36,
     borderRadius: 10,
-    backgroundColor: '#FFFBEB',
-    alignItems: 'center',
-    justifyContent: 'center',
+    backgroundColor: "#FFFBEB",
+    alignItems: "center",
+    justifyContent: "center",
   },
   previewBox: {
-    backgroundColor: '#E9F7EC',
+    backgroundColor: "#E9F7EC",
     borderWidth: 1,
-    borderColor: '#BBF7D0',
+    borderColor: "#BBF7D0",
     borderRadius: 14,
     padding: 16,
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
     marginBottom: 20,
   },
   previewLabel: {
     fontSize: 13,
-    fontWeight: '800',
-    color: '#0F172A',
+    fontWeight: "800",
+    color: "#0F172A",
   },
   previewSubtext: {
     fontSize: 11,
-    color: '#64748B',
-    fontWeight: '600',
+    color: "#64748B",
+    fontWeight: "600",
     marginTop: 2,
   },
   previewValue: {
     fontSize: 22,
-    fontWeight: '900',
+    fontWeight: "900",
     color: COLORS.brand,
   },
   notesInput: {
-    backgroundColor: '#fff',
+    backgroundColor: "#fff",
     borderWidth: 1,
-    borderColor: '#CBD5E1',
+    borderColor: "#CBD5E1",
     borderRadius: 14,
     minHeight: 90,
     padding: 14,
-    textAlignVertical: 'top',
-    color: '#0F172A',
+    textAlignVertical: "top",
+    color: "#0F172A",
     fontSize: 14,
-    fontWeight: '500',
+    fontWeight: "500",
   },
   twoColumn: {
-    flexDirection: 'row',
+    flexDirection: "row",
     gap: 12,
   },
   footer: {
-    position: 'absolute',
+    position: "absolute",
     bottom: 0,
     left: 0,
     right: 0,
-    backgroundColor: '#fff',
+    backgroundColor: "#fff",
     borderTopWidth: 1,
-    borderTopColor: '#E2E8F0',
+    borderTopColor: "#E2E8F0",
     padding: 16,
-    flexDirection: 'row',
+    flexDirection: "row",
     gap: 12,
-    shadowColor: '#000',
+    shadowColor: "#000",
     shadowOpacity: 0.05,
     shadowRadius: 6,
     shadowOffset: { width: 0, height: -3 },
@@ -453,9 +528,9 @@ const styles = StyleSheet.create({
     flex: 1,
     height: 52,
     borderRadius: 14,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
     gap: 8,
   },
   buttonPressed: { opacity: 0.85, transform: [{ scale: 0.99 }] },
@@ -463,19 +538,19 @@ const styles = StyleSheet.create({
     backgroundColor: COLORS.brand,
   },
   primaryButtonText: {
-    color: '#fff',
-    fontWeight: '800',
+    color: "#fff",
+    fontWeight: "800",
     fontSize: 16,
   },
   deleteButton: {
-    backgroundColor: '#FEE2E2',
+    backgroundColor: "#FEE2E2",
     borderWidth: 1,
-    borderColor: '#FECACA',
+    borderColor: "#FECACA",
     maxWidth: 120,
   },
   deleteButtonText: {
-    color: '#DC2626',
-    fontWeight: '800',
+    color: "#DC2626",
+    fontWeight: "800",
     fontSize: 16,
   },
 });

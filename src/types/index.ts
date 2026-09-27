@@ -8,7 +8,8 @@ export interface MilkEntry {
   shift: Shift;
   milk_quantity: number;
   fat_percentage: number;
-  earnings: number;
+  /** Rate per 1% fat applied when the entry was last saved. */
+  price: number;
   notes?: string;
 }
 
@@ -44,9 +45,10 @@ export interface DoodhContextType {
     price: number,
   ) => Promise<void>;
   addEntry: (
-    entry: Omit<MilkEntry, "id" | "earnings"> & {
+    entry: Omit<MilkEntry, "id" | "earnings" | "price"> & {
       id?: number;
       earnings?: number;
+      price?: number;
     },
   ) => Promise<MilkEntry>;
   updateEntry: (

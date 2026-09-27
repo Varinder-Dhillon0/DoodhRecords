@@ -7,12 +7,12 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { MONTH_OPTIONS, YEAR_OPTIONS, COLORS } from "../constants";
 import { useDoodhContext } from "../context/DoodhContext";
 import { getLocalDateString } from "../utils/dateUtils";
-import { calculateSummary } from "../utils/calculations";
+import { calculateEntryEarnings, calculateSummary } from "../utils/calculations";
 import { formatCurrency, formatNumber } from "../utils/formatters";
 
 export default function ReportsScreen() {
   const insets = useSafeAreaInsets();
-  const { entries } = useDoodhContext();
+  const { entries, pricingConfig } = useDoodhContext();
 
   const todayStr = getLocalDateString();
   const currentYear = todayStr.slice(0, 4);
@@ -21,14 +21,22 @@ export default function ReportsScreen() {
   const [selectedMonth, setSelectedMonth] = useState<string>(currentMonth);
   const [selectedYear, setSelectedYear] = useState<string>(currentYear);
 
+  const pricedEntries = useMemo(
+    () =>
+      entries.map((entry) => ({
+        ...entry,
+        earnings: calculateEntryEarnings(entry, pricingConfig),
+      })),
+    [entries, pricingConfig],
+  );
+
   const filteredEntries = useMemo(() => {
-    if (!entries) return [];
     const monthPad = selectedMonth.padStart(2, "0");
     const prefix = `${selectedYear}-${monthPad}`;
-    return entries.filter(
+    return pricedEntries.filter(
       (entry) => entry.date && entry.date.startsWith(prefix),
     );
-  }, [entries, selectedMonth, selectedYear]);
+  }, [pricedEntries, selectedMonth, selectedYear]);
 
   const reportSummary = useMemo(
     () => calculateSummary(filteredEntries),

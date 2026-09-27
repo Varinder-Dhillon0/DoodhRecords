@@ -102,7 +102,7 @@ const getHeaders = (): string[] => [
   "shift",
   "milk_quantity",
   "fat_percentage",
-  "earnings",
+  "price",
   "notes",
 ];
 
@@ -249,15 +249,21 @@ export const getPricingForDate = async (
   };
 };
 
+export const getPriceForEntry = async (
+  animal: Animal,
+  dateString: string,
+): Promise<number> => {
+  const pricing = await getPricingForDate(dateString);
+  return animal === "Cow" ? pricing.cowPrice : pricing.buffaloPrice;
+};
+
 export const calculateEarnings = async (
   milkQuantity: number | string,
   fatPercentage: number | string,
   animal: Animal,
   dateString: string,
 ): Promise<number> => {
-  const pricing = await getPricingForDate(dateString);
-  const pricePerFat =
-    animal === "Cow" ? pricing.cowPrice : pricing.buffaloPrice;
+  const pricePerFat = await getPriceForEntry(animal, dateString);
   return calcEarnings(milkQuantity, fatPercentage, pricePerFat);
 };
 
@@ -304,7 +310,8 @@ export const readEntriesForMonth = async (
       shift: (entry.shift as any) || "Morning",
       milk_quantity: Number(entry.milk_quantity) || 0,
       fat_percentage: Number(entry.fat_percentage) || 0,
-      earnings: Number(entry.earnings) || 0,
+      price: Number(entry.price) || 0,
+      earnings: 0,
       notes: entry.notes || "",
     };
   });
@@ -332,7 +339,7 @@ export const writeEntriesForMonth = async (
       entry.shift,
       Number(entry.milk_quantity).toString(),
       Number(entry.fat_percentage).toString(),
-      Number(entry.earnings).toString(),
+      Number(entry.price).toString(),
       entry.notes || "",
     ]);
   });
@@ -341,9 +348,10 @@ export const writeEntriesForMonth = async (
 };
 
 export const addEntry = async (
-  entry: Omit<MilkEntry, "id" | "earnings"> & {
+  entry: Omit<MilkEntry, "id" | "earnings" | "price"> & {
     id?: number;
     earnings?: number;
+    price?: number;
   },
 ): Promise<MilkEntry> => {
   const { year, month } = getYearAndMonth(entry.date);
@@ -355,20 +363,18 @@ export const addEntry = async (
     allEntries.reduce((max, item) => Math.max(max, Number(item.id) || 0), 0) +
       1;
 
-  let computedEarnings = entry.earnings;
-  if (computedEarnings === undefined || computedEarnings === null) {
-    computedEarnings = await calculateEarnings(
-      entry.milk_quantity,
-      entry.fat_percentage,
-      entry.animal,
-      entry.date,
-    );
-  }
+  const savedPrice =
+    entry.price ?? (await getPriceForEntry(entry.animal, entry.date));
+  const computedEarnings = calcEarnings(
+    entry.milk_quantity,
+    entry.fat_percentage,
+    savedPrice,
+  );
 
   const newEntry: MilkEntry = {
     ...entry,
     id: nextId,
-    earnings: Number(computedEarnings) || 0,
+    price: Number(savedPrice) || 0,
   };
 
   const updatedEntries = [...existingEntries, newEntry];
@@ -397,15 +403,10 @@ export const updateEntry = async (
   let updatedEntries: MilkEntry[];
   if (exists) {
     updatedEntries = existingEntries.map((item) =>
-      Number(item.id) === Number(entry.id)
-        ? { ...item, ...entry, earnings: Number(entry.earnings) || 0 }
-        : item,
+      Number(item.id) === Number(entry.id) ? { ...item, ...entry } : item,
     );
   } else {
-    updatedEntries = [
-      ...existingEntries,
-      { ...entry, earnings: Number(entry.earnings) || 0 },
-    ];
+    updatedEntries = [...existingEntries, { ...entry }];
   }
 
   await writeEntriesForMonth(newYear, newMonth, updatedEntries);

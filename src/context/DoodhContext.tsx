@@ -9,14 +9,15 @@ import { Animal, DoodhContextType, MilkEntry, PricingConfig } from "../types";
 import { defaultEntries, defaultPricing } from "../data/defaultData";
 import {
   addEntry as storageAddEntry,
-  calculateEarnings,
   deleteEntry as storageDeleteEntry,
+  getPriceForEntry,
   getPricingConfig,
   initializeStorage,
   readAllEntries,
   savePricingConfig,
   updateEntry as storageUpdateEntry,
 } from "../utils/storageManager";
+import { calculateEarnings } from "../utils/calculations";
 
 const DoodhContext = createContext<DoodhContextType | null>(null);
 
@@ -73,19 +74,21 @@ export function DoodhProvider({ children }: { children: React.ReactNode }) {
 
   const handleAddEntry = useCallback(
     async (
-      entry: Omit<MilkEntry, "id" | "earnings"> & {
+      entry: Omit<MilkEntry, "id" | "earnings" | "price"> & {
         id?: number;
         earnings?: number;
+        price?: number;
       },
     ): Promise<MilkEntry> => {
-      const nextEarnings = await calculateEarnings(
+      const savedPrice = await getPriceForEntry(entry.animal, entry.date);
+      const nextEarnings = calculateEarnings(
         entry.milk_quantity,
         entry.fat_percentage,
-        entry.animal,
-        entry.date,
+        savedPrice,
       );
       const newEntry = await storageAddEntry({
         ...entry,
+        price: savedPrice,
         earnings: nextEarnings,
       });
       setEntries((prev) => [...prev, newEntry]);
@@ -99,13 +102,17 @@ export function DoodhProvider({ children }: { children: React.ReactNode }) {
       entry: MilkEntry,
       oldDate: string | null = null,
     ): Promise<MilkEntry> => {
-      const nextEarnings = await calculateEarnings(
+      const savedPrice = await getPriceForEntry(entry.animal, entry.date);
+      const nextEarnings = calculateEarnings(
         entry.milk_quantity,
         entry.fat_percentage,
-        entry.animal,
-        entry.date,
+        savedPrice,
       );
-      const updatedEntry: MilkEntry = { ...entry, earnings: nextEarnings };
+      const updatedEntry: MilkEntry = {
+        ...entry,
+        price: savedPrice,
+        earnings: nextEarnings,
+      };
       await storageUpdateEntry(updatedEntry, oldDate);
       setEntries((prev) =>
         prev.map((item) =>

@@ -1,4 +1,5 @@
-import { MilkEntry, SummaryMetrics } from "../types";
+import { MilkEntry, PricingConfig, SummaryMetrics } from "../types";
+import { getYearAndMonth } from "./dateUtils";
 
 /**
  * Mathematical calculations for dairy earnings and statistics
@@ -7,13 +8,28 @@ import { MilkEntry, SummaryMetrics } from "../types";
 export const calculateEarnings = (
   milkQuantity: number | string,
   fatPercentage: number | string,
-  pricePerFat: number | string,
+  pricePerFat: number,
 ): number => {
   const qty = Number(milkQuantity || 0);
   const fat = Number(fatPercentage || 0);
   const price = Number(pricePerFat || 0);
   if (isNaN(qty) || isNaN(fat) || isNaN(price)) return 0;
   return Number((qty * fat * price).toFixed(2));
+};
+
+export const calculateEntryEarnings = (
+  entry: Pick<
+    MilkEntry,
+    "date" | "animal" | "milk_quantity" | "fat_percentage"
+  >,
+  pricingConfig: PricingConfig,
+): number => {
+  const { year, month } = getYearAndMonth(entry.date);
+  const price =
+    pricingConfig[`${year}-${month}`]?.[entry.animal] ??
+    (entry.animal === "Cow" ? 8 : 9);
+
+  return calculateEarnings(entry.milk_quantity, entry.fat_percentage, price);
 };
 
 export const calculateSummary = (entries: MilkEntry[] = []): SummaryMetrics => {
@@ -25,7 +41,9 @@ export const calculateSummary = (entries: MilkEntry[] = []): SummaryMetrics => {
     entries.forEach((entry) => {
       const milk = Number(entry.milk_quantity || 0);
       const fat = Number(entry.fat_percentage || 0);
-      const earnings = Number(entry.earnings || 0);
+      const earnings = Number(
+        entry.fat_percentage * entry.milk_quantity * entry.price || 0,
+      );
 
       totalMilk += milk;
       totalFatWeight += milk * fat;

@@ -16,6 +16,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { MONTH_OPTIONS, YEAR_OPTIONS, COLORS } from "../constants";
 import { useDoodhContext } from "../context/DoodhContext";
 import { getLocalDateString } from "../utils/dateUtils";
+import { calculateEntryEarnings } from "../utils/calculations";
 import { formatCurrency, formatNumber } from "../utils/formatters";
 import { MilkEntry, RootStackParamList } from "../types";
 
@@ -24,7 +25,7 @@ type EntriesScreenNavigationProp = StackNavigationProp<RootStackParamList>;
 export default function EntriesScreen() {
   const navigation = useNavigation<EntriesScreenNavigationProp>();
   const insets = useSafeAreaInsets();
-  const { entries, deleteEntry } = useDoodhContext();
+  const { entries, pricingConfig, deleteEntry } = useDoodhContext();
 
   const todayStr = getLocalDateString();
   const currentYear = todayStr.slice(0, 4);
@@ -34,14 +35,22 @@ export default function EntriesScreen() {
   const [selectedYear, setSelectedYear] = useState<string>(currentYear);
   const [sheetEntry, setSheetEntry] = useState<MilkEntry | null>(null);
 
+  const pricedEntries = useMemo(
+    () =>
+      entries.map((entry) => ({
+        ...entry,
+        earnings: calculateEntryEarnings(entry, pricingConfig),
+      })),
+    [entries, pricingConfig],
+  );
+
   const filteredEntries = useMemo(() => {
-    if (!entries) return [];
     const monthPad = selectedMonth.padStart(2, "0");
     const prefix = `${selectedYear}-${monthPad}`;
-    return [...entries]
+    return [...pricedEntries]
       .filter((entry) => entry.date && entry.date.startsWith(prefix))
       .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
-  }, [entries, selectedMonth, selectedYear]);
+  }, [pricedEntries, selectedMonth, selectedYear]);
 
   const openEntrySheet = (entry: MilkEntry) => setSheetEntry(entry);
   const closeEntrySheet = () => setSheetEntry(null);
@@ -175,7 +184,9 @@ export default function EntriesScreen() {
 
               <View style={styles.rowRight}>
                 <Text style={styles.earningsText}>
-                  {formatCurrency(entry.earnings)}
+                  {formatCurrency(
+                    entry.fat_percentage * entry.milk_quantity * entry.price,
+                  )}
                 </Text>
               </View>
 
@@ -224,7 +235,11 @@ export default function EntriesScreen() {
                 <Text style={styles.sheetStats}>
                   {sheetEntry?.date} •{" "}
                   {formatNumber(sheetEntry?.milk_quantity, 1)}kg •{" "}
-                  {formatCurrency(sheetEntry?.earnings)}
+                  {formatCurrency(
+                    (sheetEntry?.fat_percentage ?? 0) *
+                      (sheetEntry?.milk_quantity ?? 0) *
+                      (sheetEntry?.price ?? 0),
+                  )}
                 </Text>
               </View>
               <Pressable onPress={closeEntrySheet} style={styles.closeButton}>
