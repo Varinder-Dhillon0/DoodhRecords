@@ -22,11 +22,13 @@ import { useTranslation } from "react-i18next";
 import Text from "../components/ScaledText";
 import { TYPOGRAPHY } from "../constants/typography";
 import Button from "../components/Button";
+import { useSnackbar } from "../context/SnackbarContext";
 
 type EntriesScreenNavigationProp = StackNavigationProp<RootStackParamList>;
 
 export default function EntriesScreen() {
   const { t, i18n } = useTranslation();
+  const { showSnackbar } = useSnackbar();
   const navigation = useNavigation<EntriesScreenNavigationProp>();
   const insets = useSafeAreaInsets();
   const { entries, pricingConfig, deleteEntry } = useDoodhContext();
@@ -93,8 +95,9 @@ export default function EntriesScreen() {
             closeEntrySheet();
             try {
               await deleteEntry(entry.id, entry.date);
+              showSnackbar(t("entries.deleteSuccess"));
             } catch (err) {
-              Alert.alert(t("common.error"), t("entries.deleteFailed"));
+              showSnackbar(t("entries.deleteFailed"));
             }
           },
         },

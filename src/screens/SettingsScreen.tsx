@@ -29,9 +29,11 @@ import {
   getNearestFontScaleOption,
 } from "../constants/typography";
 import { createDataExportFile } from "../utils/storageManager";
+import { useSnackbar } from "../context/SnackbarContext";
 
 export default function SettingsScreen() {
   const { t, i18n } = useTranslation();
+  const { showSnackbar } = useSnackbar();
   const { fontScale, setFontScale } = useFontScale();
   const insets = useSafeAreaInsets();
   const { scrollViewRef, onInputFocus } = useKeyboardAwareScroll(200);
@@ -70,13 +72,10 @@ export default function SettingsScreen() {
       const monthPad = month.padStart(2, "0");
       await saveConfig(year, monthPad, "Cow", cowVal);
       await saveConfig(year, monthPad, "Buffalo", bufVal);
-      Alert.alert(
-        t("common.success"),
-        t("settings.saveSuccess", { period: `${year}-${monthPad}` }),
-      );
+      showSnackbar(t("settings.saveSuccess", { period: `${year}-${monthPad}` }));
     } catch (err) {
       console.error("Error saving pricing:", err);
-      Alert.alert(t("common.error"), t("settings.saveError"));
+      showSnackbar(t("settings.saveError"));
     }
   };
 

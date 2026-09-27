@@ -20,6 +20,7 @@ import ReportsScreen from "./src/screens/ReportsScreen";
 import SettingsScreen from "./src/screens/SettingsScreen";
 import EntryFormScreen from "./src/screens/EntryFormScreen";
 import { getStoredFontScale } from "./src/utils/storageManager";
+import { SnackbarProvider } from "./src/context/SnackbarContext";
 
 const Stack = createStackNavigator<RootStackParamList>();
 const Tab = createBottomTabNavigator<MainTabParamList>();
@@ -109,9 +110,11 @@ export default function App() {
       {initialFontScale !== null ? (
         <FontScaleProvider initialScale={initialFontScale}>
           <DoodhProvider>
-            <NavigationContainer>
-              <MainNavigator />
-            </NavigationContainer>
+            <SnackbarProvider>
+              <NavigationContainer>
+                <MainNavigator />
+              </NavigationContainer>
+            </SnackbarProvider>
           </DoodhProvider>
         </FontScaleProvider>
       ) : (

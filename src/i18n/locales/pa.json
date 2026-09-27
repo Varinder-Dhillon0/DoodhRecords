@@ -67,6 +67,7 @@
     "delete": "ਐਂਟਰੀ ਮਿਟਾਓ",
     "deleteConfirmTitle": "ਐਂਟਰੀ ਮਿਟਾਓ",
     "deleteConfirmMessage": "ਕੀ ਤੁਸੀਂ ਇਹ ਦੁੱਧ ਦੀ ਐਂਟਰੀ ਮਿਟਾਉਣਾ ਚਾਹੁੰਦੇ ਹੋ?",
+    "deleteSuccess": "ਐਂਟਰੀ ਸਫਲਤਾਪੂਰਵਕ ਮਿਟਾਈ ਗਈ।",
     "deleteFailed": "ਐਂਟਰੀ ਮਿਟਾਈ ਨਹੀਂ ਜਾ ਸਕੀ।"
   },
   "entryForm": {
@@ -92,6 +93,8 @@
     "invalidFatMessage": "ਕਿਰਪਾ ਕਰਕੇ fat ਦੀ ਸਹੀ ਪ੍ਰਤੀਸ਼ਤ ਦਰਜ ਕਰੋ (ਜਿਵੇਂ 4.5)।",
     "saveFailedTitle": "ਸੰਭਾਲਿਆ ਨਹੀਂ ਜਾ ਸਕਿਆ",
     "saveFailedMessage": "ਐਂਟਰੀ ਸੰਭਾਲੀ ਨਹੀਂ ਜਾ ਸਕੀ। ਕਿਰਪਾ ਕਰਕੇ ਦੁਬਾਰਾ ਕੋਸ਼ਿਸ਼ ਕਰੋ।",
+    "addSuccess": "ਐਂਟਰੀ ਸਫਲਤਾਪੂਰਵਕ ਸੰਭਾਲੀ ਗਈ।",
+    "updateSuccess": "ਐਂਟਰੀ ਸਫਲਤਾਪੂਰਵਕ ਅੱਪਡੇਟ ਕੀਤੀ ਗਈ।",
     "deleteFailedTitle": "ਮਿਟਾਇਆ ਨਹੀਂ ਜਾ ਸਕਿਆ",
     "deleteFailedMessage": "ਐਂਟਰੀ ਮਿਟਾਈ ਨਹੀਂ ਜਾ ਸਕੀ।"
   },

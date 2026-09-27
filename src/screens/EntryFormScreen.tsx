@@ -32,6 +32,7 @@ import { TYPOGRAPHY } from "../constants/typography";
 import AppPicker from "../components/AppPicker";
 import useKeyboardAwareScroll from "../hooks/useKeyboardAwareScroll";
 import Button from "../components/Button";
+import { useSnackbar } from "../context/SnackbarContext";
 
 type EntryFormScreenNavigationProp = StackNavigationProp<
   RootStackParamList,
@@ -41,6 +42,7 @@ type EntryFormScreenRouteProp = RouteProp<RootStackParamList, "EntryForm">;
 
 export default function EntryFormScreen() {
   const { t, i18n } = useTranslation();
+  const { showSnackbar } = useSnackbar();
   const navigation = useNavigation<EntryFormScreenNavigationProp>();
   const route = useRoute<EntryFormScreenRouteProp>();
   const insets = useSafeAreaInsets();
@@ -135,13 +137,11 @@ export default function EntryFormScreen() {
       } else {
         await addEntry(normalizedData);
       }
+      showSnackbar(t(isEditing ? "entryForm.updateSuccess" : "entryForm.addSuccess"));
       navigation.goBack();
     } catch (error) {
       console.error("Error saving entry:", error);
-      Alert.alert(
-        t("entryForm.saveFailedTitle"),
-        t("entryForm.saveFailedMessage"),
-      );
+      showSnackbar(t("entryForm.saveFailedMessage"));
     }
   };
 
@@ -158,12 +158,10 @@ export default function EntryFormScreen() {
           onPress: async () => {
             try {
               await deleteEntry(entryToEdit.id, entryToEdit.date);
+              showSnackbar(t("entries.deleteSuccess"));
               navigation.goBack();
             } catch (error) {
-              Alert.alert(
-                t("entryForm.deleteFailedTitle"),
-                t("entryForm.deleteFailedMessage"),
-              );
+              showSnackbar(t("entryForm.deleteFailedMessage"));
             }
           },
         },

@@ -67,6 +67,7 @@
     "delete": "Delete Entry",
     "deleteConfirmTitle": "Delete Entry",
     "deleteConfirmMessage": "Are you sure you want to delete this milk entry?",
+    "deleteSuccess": "Entry deleted successfully.",
     "deleteFailed": "Unable to delete entry."
   },
   "entryForm": {
@@ -92,6 +93,8 @@
     "invalidFatMessage": "Please enter a valid fat percentage (e.g., 4.5).",
     "saveFailedTitle": "Save Failed",
     "saveFailedMessage": "Unable to save entry. Please try again.",
+    "addSuccess": "Entry saved successfully.",
+    "updateSuccess": "Entry updated successfully.",
     "deleteFailedTitle": "Delete Failed",
     "deleteFailedMessage": "Unable to delete entry."
   },
