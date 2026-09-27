@@ -2,6 +2,7 @@ import React from "react";
 import { StyleSheet, View } from "react-native";
 import { Picker } from "@react-native-picker/picker";
 import { MONTH_OPTIONS, YEAR_OPTIONS } from "../constants";
+import { useTranslation } from "react-i18next";
 
 type MonthYearFilterProps = {
   month: string;
@@ -18,6 +19,8 @@ export default function MonthYearFilter({
   onYearChange,
   filterBoxMinWidth = 110,
 }: MonthYearFilterProps) {
+  const { t } = useTranslation();
+
   return (
     <View style={styles.filterRow}>
       <View style={[styles.filterBox, { minWidth: filterBoxMinWidth }]}>
@@ -30,7 +33,7 @@ export default function MonthYearFilter({
           {MONTH_OPTIONS.map((item) => (
             <Picker.Item
               key={item.value}
-              label={item.label}
+              label={t(`months.${item.value}`)}
               value={item.value}
             />
           ))}

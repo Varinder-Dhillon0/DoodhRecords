@@ -10,10 +10,12 @@ import { getLocalDateString } from "../utils/dateUtils";
 import { calculateSummary } from "../utils/calculations";
 import { formatCurrency, formatNumber } from "../utils/formatters";
 import { MilkEntry, RootStackParamList } from "../types";
+import { useTranslation } from "react-i18next";
 
 type HomeScreenNavigationProp = StackNavigationProp<RootStackParamList>;
 
 export default function HomeScreen() {
+  const { t } = useTranslation();
   const navigation = useNavigation<HomeScreenNavigationProp>();
   const insets = useSafeAreaInsets();
   const { entries } = useDoodhContext();
@@ -45,8 +47,8 @@ export default function HomeScreen() {
         ]}
       >
         <View style={styles.headerTop}>
-          <Text style={styles.appTitle}>Doodh Records</Text>
-          <Text style={styles.appSubtitle}>Dairy Management</Text>
+          <Text style={styles.appTitle}>{t("home.appTitle")}</Text>
+          <Text style={styles.appSubtitle}>{t("home.appSubtitle")}</Text>
         </View>
         <View style={styles.heroIllustration}>
           <MaterialCommunityIcons name="cow" size={90} color="#FFFFFF" />
@@ -61,7 +63,7 @@ export default function HomeScreen() {
         <View style={styles.summaryCard}>
           <View style={styles.summaryHeader}>
             <View>
-              <Text style={styles.summaryTitle}>Today's Summary</Text>
+              <Text style={styles.summaryTitle}>{t("home.summaryTitle")}</Text>
               <Text style={styles.summaryDate}>{dateToday}</Text>
             </View>
             <View style={styles.calendarBadge}>
@@ -83,10 +85,10 @@ export default function HomeScreen() {
                 />
               </View>
               <View style={styles.metricContent}>
-                <Text style={styles.metricLabel}>Total Milk</Text>
+                <Text style={styles.metricLabel}>{t("home.totalMilk")}</Text>
                 <Text style={styles.metricValue}>
                   {formatNumber(summary.totalMilk, 1)}{" "}
-                  <Text style={styles.metricUnit}>kg</Text>
+                  <Text style={styles.metricUnit}>{t("common.kg")}</Text>
                 </Text>
               </View>
             </View>
@@ -100,7 +102,7 @@ export default function HomeScreen() {
                 />
               </View>
               <View style={styles.metricContent}>
-                <Text style={styles.metricLabel}>Avg. Fat</Text>
+                <Text style={styles.metricLabel}>{t("home.averageFat")}</Text>
                 <Text style={styles.metricValue}>{summary.avgFat}%</Text>
               </View>
             </View>
@@ -115,7 +117,7 @@ export default function HomeScreen() {
               />
             </View>
             <View style={styles.metricContent}>
-              <Text style={styles.metricLabel}>Today's Earnings</Text>
+              <Text style={styles.metricLabel}>{t("home.todaysEarnings")}</Text>
               <Text style={styles.earningsValue}>
                 {formatCurrency(summary.totalEarnings)}
               </Text>
@@ -131,13 +133,13 @@ export default function HomeScreen() {
           ]}
         >
           <MaterialCommunityIcons name="plus-circle" size={22} color="#fff" />
-          <Text style={styles.addButtonText}>Add New Entry</Text>
+          <Text style={styles.addButtonText}>{t("home.addEntry")}</Text>
         </Pressable>
 
         <View style={styles.sectionHeader}>
-          <Text style={styles.sectionTitle}>Recent Entries</Text>
+          <Text style={styles.sectionTitle}>{t("home.recentEntries")}</Text>
           <Pressable onPress={() => navigation.navigate("MainTabs")}>
-            <Text style={styles.linkText}>View All</Text>
+            <Text style={styles.linkText}>{t("home.viewAll")}</Text>
           </Pressable>
         </View>
 
@@ -167,14 +169,14 @@ export default function HomeScreen() {
                   </View>
                   <View>
                     <Text style={styles.entryTitle}>
-                      {entry.shift}{" "}
+                      {t(`shifts.${entry.shift.toLowerCase()}`)}{" "}
                       <Text
                         style={[
                           styles.entrySubtitle,
                           entry.animal === "Buffalo" && styles.buffaloText,
                         ]}
                       >
-                        ({entry.animal})
+                        ({t(`animals.${entry.animal.toLowerCase()}`)})
                       </Text>
                     </Text>
                     <Text style={styles.entryDate}>{entry.date}</Text>
@@ -187,8 +189,10 @@ export default function HomeScreen() {
                     )}
                   </Text>
                   <Text style={styles.entryMeta}>
-                    {formatNumber(entry.milk_quantity, 1)}kg •{" "}
-                    {formatNumber(entry.fat_percentage, 1)}% Fat
+                    {t("home.milkAndFat", {
+                      quantity: formatNumber(entry.milk_quantity, 1),
+                      fat: formatNumber(entry.fat_percentage, 1),
+                    })}
                   </Text>
                 </View>
               </Pressable>
@@ -200,7 +204,7 @@ export default function HomeScreen() {
                 size={36}
                 color="#94A3B8"
               />
-              <Text style={styles.emptyText}>No entries recorded yet.</Text>
+              <Text style={styles.emptyText}>{t("home.empty")}</Text>
             </View>
           )}
         </View>

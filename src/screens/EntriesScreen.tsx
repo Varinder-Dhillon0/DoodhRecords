@@ -19,10 +19,12 @@ import { calculateEntryEarnings } from "../utils/calculations";
 import { formatCurrency, formatNumber } from "../utils/formatters";
 import { MilkEntry, RootStackParamList } from "../types";
 import MonthYearFilter from "../components/MonthYearFilter";
+import { useTranslation } from "react-i18next";
 
 type EntriesScreenNavigationProp = StackNavigationProp<RootStackParamList>;
 
 export default function EntriesScreen() {
+  const { t } = useTranslation();
   const navigation = useNavigation<EntriesScreenNavigationProp>();
   const insets = useSafeAreaInsets();
   const { entries, pricingConfig, deleteEntry } = useDoodhContext();
@@ -78,19 +80,19 @@ export default function EntriesScreen() {
     if (!sheetEntry) return;
     const entry = sheetEntry;
     Alert.alert(
-      "Delete Entry",
-      "Are you sure you want to delete this milk entry?",
+      t("entries.deleteConfirmTitle"),
+      t("entries.deleteConfirmMessage"),
       [
-        { text: "Cancel", style: "cancel" },
+        { text: t("common.cancel"), style: "cancel" },
         {
-          text: "Delete",
+          text: t("common.delete"),
           style: "destructive",
           onPress: async () => {
             closeEntrySheet();
             try {
               await deleteEntry(entry.id, entry.date);
             } catch (err) {
-              Alert.alert("Error", "Unable to delete entry.");
+              Alert.alert(t("common.error"), t("entries.deleteFailed"));
             }
           },
         },
@@ -103,7 +105,7 @@ export default function EntriesScreen() {
       <View
         style={[styles.header, { paddingTop: Math.max(insets.top + 12, 44) }]}
       >
-        <Text style={styles.title}>All Entries</Text>
+        <Text style={styles.title}>{t("entries.title")}</Text>
         <MonthYearFilter
           month={selectedMonth}
           year={selectedYear}
@@ -118,9 +120,9 @@ export default function EntriesScreen() {
         showsVerticalScrollIndicator={false}
       >
         <View style={styles.tableHeader}>
-          <Text style={styles.headerCellLeft}>Date / Shift</Text>
-          <Text style={styles.headerCellCenter}>Milk / Fat</Text>
-          <Text style={styles.headerCellRight}>Earnings</Text>
+          <Text style={styles.headerCellLeft}>{t("entries.dateShift")}</Text>
+          <Text style={styles.headerCellCenter}>{t("entries.milkFat")}</Text>
+          <Text style={styles.headerCellRight}>{t("entries.earnings")}</Text>
           <View style={{ width: 24 }} />
         </View>
 
@@ -144,17 +146,22 @@ export default function EntriesScreen() {
                       : styles.buffaloText,
                   ]}
                 >
-                  {entry.shift} • {entry.animal}
+                  {t("entries.shiftAnimal", {
+                    shift: t(`shifts.${entry.shift.toLowerCase()}`),
+                    animal: t(`animals.${entry.animal.toLowerCase()}`),
+                  })}
                 </Text>
               </View>
 
               <View style={styles.rowCenter}>
                 <Text style={styles.milkText}>
                   {formatNumber(entry.milk_quantity, 1)}{" "}
-                  <Text style={styles.unit}>kg</Text>
+                  <Text style={styles.unit}>{t("common.kg")}</Text>
                 </Text>
                 <Text style={styles.fatText}>
-                  {formatNumber(entry.fat_percentage, 1)}% Fat
+                  {t("entries.fatValue", {
+                    value: formatNumber(entry.fat_percentage, 1),
+                  })}
                 </Text>
               </View>
 
@@ -186,9 +193,9 @@ export default function EntriesScreen() {
               size={42}
               color="#CBD5E1"
             />
-            <Text style={styles.emptyTitle}>No Entries Found</Text>
+            <Text style={styles.emptyTitle}>{t("entries.emptyTitle")}</Text>
             <Text style={styles.emptySubtitle}>
-              No records available for the selected month.
+              {t("entries.emptySubtitle")}
             </Text>
           </View>
         )}
@@ -206,7 +213,11 @@ export default function EntriesScreen() {
             <View style={styles.sheetHeader}>
               <View>
                 <Text style={styles.sheetTitle}>
-                  {sheetEntry?.shift} ({sheetEntry?.animal})
+                  {sheetEntry &&
+                    t("entries.entryTitle", {
+                      shift: t(`shifts.${sheetEntry.shift.toLowerCase()}`),
+                      animal: t(`animals.${sheetEntry.animal.toLowerCase()}`),
+                    })}
                 </Text>
                 <Text style={styles.sheetStats}>
                   {sheetEntry?.date} •{" "}
@@ -238,7 +249,7 @@ export default function EntriesScreen() {
                     color={COLORS.brand}
                   />
                 </View>
-                <Text style={styles.actionText}>Edit Entry</Text>
+                <Text style={styles.actionText}>{t("entries.edit")}</Text>
               </Pressable>
 
               <Pressable onPress={handleDuplicate} style={styles.actionButton}>
@@ -251,7 +262,7 @@ export default function EntriesScreen() {
                     color="#2563EB"
                   />
                 </View>
-                <Text style={styles.actionText}>Duplicate Entry</Text>
+                <Text style={styles.actionText}>{t("entries.duplicate")}</Text>
               </Pressable>
 
               <Pressable
@@ -267,7 +278,7 @@ export default function EntriesScreen() {
                     color="#DC2626"
                   />
                 </View>
-                <Text style={styles.deleteText}>Delete Entry</Text>
+                <Text style={styles.deleteText}>{t("entries.delete")}</Text>
               </Pressable>
             </View>
           </Pressable>

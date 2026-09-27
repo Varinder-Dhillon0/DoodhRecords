@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { View, ActivityIndicator, StyleSheet } from "react-native";
 import { NavigationContainer } from "@react-navigation/native";
 import { createStackNavigator } from "@react-navigation/stack";
@@ -8,6 +8,8 @@ import { SafeAreaProvider } from "react-native-safe-area-context";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 
 import { COLORS } from "./src/constants";
+import { initializeI18n } from "./src/i18n";
+import { useTranslation } from "react-i18next";
 import { DoodhProvider, useDoodhContext } from "./src/context/DoodhContext";
 import { MainTabParamList, RootStackParamList } from "./src/types";
 import HomeScreen from "./src/screens/HomeScreen";
@@ -20,6 +22,8 @@ const Stack = createStackNavigator<RootStackParamList>();
 const Tab = createBottomTabNavigator<MainTabParamList>();
 
 function Tabs() {
+  const { t } = useTranslation();
+
   return (
     <Tab.Navigator
       screenOptions={({ route }) => ({
@@ -39,6 +43,7 @@ function Tabs() {
           fontWeight: "700",
           marginBottom: 2,
         },
+        tabBarLabel: t(`navigation.${route.name.toLowerCase()}`),
         tabBarIcon: ({ color, size }) => {
           const iconName =
             {
@@ -86,14 +91,26 @@ function MainNavigator() {
 }
 
 export default function App() {
+  const [isI18nReady, setIsI18nReady] = useState(false);
+
+  useEffect(() => {
+    initializeI18n().then(() => setIsI18nReady(true));
+  }, []);
+
   return (
     <SafeAreaProvider>
-      <DoodhProvider>
-        <NavigationContainer>
-          <StatusBar style="dark" />
-          <MainNavigator />
-        </NavigationContainer>
-      </DoodhProvider>
+      <StatusBar style="dark" />
+      {isI18nReady ? (
+        <DoodhProvider>
+          <NavigationContainer>
+            <MainNavigator />
+          </NavigationContainer>
+        </DoodhProvider>
+      ) : (
+        <View style={styles.loadingContainer}>
+          <ActivityIndicator size="large" color={COLORS.brand} />
+        </View>
+      )}
     </SafeAreaProvider>
   );
 }

@@ -28,6 +28,7 @@ import {
 import { calculateEarnings } from "../utils/calculations";
 import { formatCurrency } from "../utils/formatters";
 import { Animal, MilkEntry, RootStackParamList, Shift } from "../types";
+import { useTranslation } from "react-i18next";
 
 type EntryFormScreenNavigationProp = StackNavigationProp<
   RootStackParamList,
@@ -36,6 +37,7 @@ type EntryFormScreenNavigationProp = StackNavigationProp<
 type EntryFormScreenRouteProp = RouteProp<RootStackParamList, "EntryForm">;
 
 export default function EntryFormScreen() {
+  const { t, i18n } = useTranslation();
   const navigation = useNavigation<EntryFormScreenNavigationProp>();
   const route = useRoute<EntryFormScreenRouteProp>();
   const insets = useSafeAreaInsets();
@@ -94,16 +96,16 @@ export default function EntryFormScreen() {
 
     if (isNaN(qty) || qty <= 0 || qty > 500) {
       Alert.alert(
-        "Invalid Milk Quantity",
-        "Please enter a valid milk quantity in kg (e.g., 15.5).",
+        t("entryForm.invalidMilkTitle"),
+        t("entryForm.invalidMilkMessage"),
       );
       return;
     }
 
     if (isNaN(fat) || fat <= 0 || fat > 25) {
       Alert.alert(
-        "Invalid Fat Percentage",
-        "Please enter a valid fat percentage (e.g., 4.5).",
+        t("entryForm.invalidFatTitle"),
+        t("entryForm.invalidFatMessage"),
       );
       return;
     }
@@ -131,26 +133,32 @@ export default function EntryFormScreen() {
       navigation.goBack();
     } catch (error) {
       console.error("Error saving entry:", error);
-      Alert.alert("Save Failed", "Unable to save entry. Please try again.");
+      Alert.alert(
+        t("entryForm.saveFailedTitle"),
+        t("entryForm.saveFailedMessage"),
+      );
     }
   };
 
   const handleDelete = () => {
     if (!isEditing || !entryToEdit || entryToEdit.id === undefined) return;
     Alert.alert(
-      "Delete Entry",
-      "Are you sure you want to delete this milk entry?",
+      t("entries.deleteConfirmTitle"),
+      t("entries.deleteConfirmMessage"),
       [
-        { text: "Cancel", style: "cancel" },
+        { text: t("common.cancel"), style: "cancel" },
         {
-          text: "Delete",
+          text: t("common.delete"),
           style: "destructive",
           onPress: async () => {
             try {
               await deleteEntry(entryToEdit.id, entryToEdit.date);
               navigation.goBack();
             } catch (error) {
-              Alert.alert("Delete Failed", "Unable to delete entry.");
+              Alert.alert(
+                t("entryForm.deleteFailedTitle"),
+                t("entryForm.deleteFailedMessage"),
+              );
             }
           },
         },
@@ -179,7 +187,7 @@ export default function EntryFormScreen() {
           />
         </Pressable>
         <Text style={styles.title}>
-          {isEditing ? "Edit Entry" : "Add Entry"}
+          {isEditing ? t("entryForm.editTitle") : t("entryForm.addTitle")}
         </Text>
       </View>
 
@@ -188,7 +196,7 @@ export default function EntryFormScreen() {
         showsVerticalScrollIndicator={false}
       >
         <View style={styles.fieldGroup}>
-          <Text style={styles.label}>Collection Date</Text>
+          <Text style={styles.label}>{t("entryForm.collectionDate")}</Text>
           <Pressable
             style={styles.inputBox}
             onPress={() => setShowDatePicker(true)}
@@ -205,6 +213,7 @@ export default function EntryFormScreen() {
               value={parseLocalDate(date)}
               mode="date"
               display={Platform.OS === "ios" ? "spinner" : "default"}
+              locale={i18n.language.startsWith("pa") ? "pa-IN" : undefined}
               onChange={handleDateChange}
             />
           )}
@@ -212,7 +221,7 @@ export default function EntryFormScreen() {
 
         <View style={styles.twoColumn}>
           <View style={styles.fieldGroupFlex}>
-            <Text style={styles.label}>Shift</Text>
+            <Text style={styles.label}>{t("entryForm.shift")}</Text>
             <View style={styles.pickerWrap}>
               <Picker
                 selectedValue={shift}
@@ -221,14 +230,18 @@ export default function EntryFormScreen() {
                 dropdownIconColor="#334155"
               >
                 {SHIFTS.map((item) => (
-                  <Picker.Item key={item} label={item} value={item} />
+                  <Picker.Item
+                    key={item}
+                    label={t(`shifts.${item.toLowerCase()}`)}
+                    value={item}
+                  />
                 ))}
               </Picker>
             </View>
           </View>
 
           <View style={styles.fieldGroupFlex}>
-            <Text style={styles.label}>Animal</Text>
+            <Text style={styles.label}>{t("entryForm.animal")}</Text>
             <View style={styles.pickerWrap}>
               <Picker
                 selectedValue={animal}
@@ -237,7 +250,11 @@ export default function EntryFormScreen() {
                 dropdownIconColor="#334155"
               >
                 {ANIMALS.map((item) => (
-                  <Picker.Item key={item} label={item} value={item} />
+                  <Picker.Item
+                    key={item}
+                    label={t(`animals.${item.toLowerCase()}`)}
+                    value={item}
+                  />
                 ))}
               </Picker>
             </View>
@@ -245,7 +262,7 @@ export default function EntryFormScreen() {
         </View>
 
         <View style={styles.fieldGroup}>
-          <Text style={styles.label}>Milk Quantity (kg)</Text>
+          <Text style={styles.label}>{t("entryForm.milkQuantity")}</Text>
           <View style={styles.inputBoxRow}>
             <View style={styles.iconWrapBlue}>
               <MaterialCommunityIcons
@@ -258,16 +275,16 @@ export default function EntryFormScreen() {
               value={milkQuantity}
               onChangeText={setMilkQuantity}
               keyboardType="decimal-pad"
-              placeholder="e.g. 20.5"
+              placeholder={t("entryForm.milkPlaceholder")}
               placeholderTextColor="#94A3B8"
               style={styles.inputField}
             />
-            <Text style={styles.suffix}>kg</Text>
+            <Text style={styles.suffix}>{t("common.kg")}</Text>
           </View>
         </View>
 
         <View style={styles.fieldGroup}>
-          <Text style={styles.label}>Fat Percentage (%)</Text>
+          <Text style={styles.label}>{t("entryForm.fatPercentage")}</Text>
           <View style={styles.inputBoxRow}>
             <View style={styles.iconWrapAmber}>
               <MaterialCommunityIcons name="water" size={20} color="#D97706" />
@@ -276,7 +293,7 @@ export default function EntryFormScreen() {
               value={fatPercentage}
               onChangeText={setFatPercentage}
               keyboardType="decimal-pad"
-              placeholder="e.g. 4.5"
+              placeholder={t("entryForm.fatPlaceholder")}
               placeholderTextColor="#94A3B8"
               style={styles.inputField}
             />
@@ -286,11 +303,13 @@ export default function EntryFormScreen() {
 
         <View style={styles.previewBox}>
           <View>
-            <Text style={styles.previewLabel}>Estimated Earnings</Text>
+            <Text style={styles.previewLabel}>
+              {t("entryForm.estimatedEarnings")}
+            </Text>
             <Text style={styles.previewSubtext}>
-              Rate: ₹
-              {animal === "Cow" ? priceInfo.cowPrice : priceInfo.buffaloPrice} /
-              fat
+              {t("entryForm.ratePreview", {
+                rate: animal === "Cow" ? priceInfo.cowPrice : priceInfo.buffaloPrice,
+              })}
             </Text>
           </View>
           <Text style={styles.previewValue}>
@@ -299,13 +318,13 @@ export default function EntryFormScreen() {
         </View>
 
         <View style={styles.fieldGroup}>
-          <Text style={styles.label}>Notes (Optional)</Text>
+          <Text style={styles.label}>{t("entryForm.notes")}</Text>
           <TextInput
             value={notes}
             multiline
             numberOfLines={3}
             onChangeText={setNotes}
-            placeholder="e.g. Morning batch notes, feed details"
+            placeholder={t("entryForm.notesPlaceholder")}
             placeholderTextColor="#94A3B8"
             style={styles.notesInput}
           />
@@ -332,7 +351,7 @@ export default function EntryFormScreen() {
               size={20}
               color="#DC2626"
             />
-            <Text style={styles.deleteButtonText}>Delete</Text>
+            <Text style={styles.deleteButtonText}>{t("entryForm.delete")}</Text>
           </Pressable>
         )}
         <Pressable
@@ -345,7 +364,7 @@ export default function EntryFormScreen() {
         >
           <MaterialCommunityIcons name="check-circle" size={20} color="#fff" />
           <Text style={styles.primaryButtonText}>
-            {isEditing ? "Update Entry" : "Save Entry"}
+            {isEditing ? t("entryForm.update") : t("entryForm.save")}
           </Text>
         </Pressable>
       </View>

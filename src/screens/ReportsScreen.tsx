@@ -10,8 +10,10 @@ import { calculateEntryEarnings, calculateSummary } from "../utils/calculations"
 import { formatCurrency, formatNumber } from "../utils/formatters";
 import MonthYearFilter from "../components/MonthYearFilter";
 import ReportChartCard from "../components/ReportChartCard";
+import { useTranslation } from "react-i18next";
 
 export default function ReportsScreen() {
+  const { t } = useTranslation();
   const insets = useSafeAreaInsets();
   const { entries, pricingConfig } = useDoodhContext();
 
@@ -118,7 +120,7 @@ export default function ReportsScreen() {
       <View
         style={[styles.header, { paddingTop: Math.max(insets.top + 12, 44) }]}
       >
-        <Text style={styles.title}>Monthly Reports</Text>
+        <Text style={styles.title}>{t("reports.title")}</Text>
         <MonthYearFilter
           month={selectedMonth}
           year={selectedYear}
@@ -134,7 +136,9 @@ export default function ReportsScreen() {
       >
         <View style={styles.summaryCard}>
           <View>
-            <Text style={styles.summaryLabel}>Total Monthly Earnings</Text>
+            <Text style={styles.summaryLabel}>
+              {t("reports.totalMonthlyEarnings")}
+            </Text>
             <Text style={styles.summaryValue}>
               {formatCurrency(reportSummary.totalEarnings)}
             </Text>
@@ -157,10 +161,10 @@ export default function ReportsScreen() {
                 color="#2563EB"
               />
             </View>
-            <Text style={styles.metricLabel}>Total Milk</Text>
+            <Text style={styles.metricLabel}>{t("reports.totalMilk")}</Text>
             <Text style={styles.metricValue}>
               {formatNumber(reportSummary.totalMilk, 1)}{" "}
-              <Text style={styles.metricUnit}>kg</Text>
+              <Text style={styles.metricUnit}>{t("common.kg")}</Text>
             </Text>
           </View>
 
@@ -168,7 +172,7 @@ export default function ReportsScreen() {
             <View style={styles.metricIconAmber}>
               <MaterialCommunityIcons name="water" size={20} color="#D97706" />
             </View>
-            <Text style={styles.metricLabel}>Average Fat</Text>
+            <Text style={styles.metricLabel}>{t("reports.averageFat")}</Text>
             <Text style={styles.metricValue}>{reportSummary.avgFat}%</Text>
           </View>
         </View>
@@ -176,7 +180,7 @@ export default function ReportsScreen() {
         <ReportChartCard
           icon="chart-bell-curve-cumulative"
           color="#2563EB"
-          title="Daily Milk Quantity (kg)"
+          title={t("reports.dailyMilk")}
         >
           <LineChart
             data={{
@@ -199,7 +203,7 @@ export default function ReportsScreen() {
         <ReportChartCard
           icon="water-percent"
           color="#D97706"
-          title="Daily Fat Percentage (%)"
+          title={t("reports.dailyFat")}
         >
           <LineChart
             data={{
@@ -222,7 +226,7 @@ export default function ReportsScreen() {
         <ReportChartCard
           icon="cash-multiple"
           color={COLORS.brand}
-          title="Daily Earnings (₹)"
+          title={t("reports.dailyEarnings")}
         >
           <LineChart
             data={{

@@ -8,14 +8,18 @@ import {
   Alert,
   ScrollView,
 } from "react-native";
+import { Picker } from "@react-native-picker/picker";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { APP_VERSION, COLORS } from "../constants";
 import { useDoodhContext } from "../context/DoodhContext";
 import { getLocalDateString } from "../utils/dateUtils";
 import MonthYearFilter from "../components/MonthYearFilter";
+import { useTranslation } from "react-i18next";
+import { changeAppLanguage, SupportedLanguage } from "../i18n";
 
 export default function SettingsScreen() {
+  const { t, i18n } = useTranslation();
   const insets = useSafeAreaInsets();
   const { pricingConfig, saveConfig } = useDoodhContext();
 
@@ -40,7 +44,10 @@ export default function SettingsScreen() {
     const bufVal = Number(buffaloPrice);
 
     if (isNaN(cowVal) || cowVal <= 0 || isNaN(bufVal) || bufVal <= 0) {
-      Alert.alert("Invalid Input", "Please enter valid positive price values.");
+      Alert.alert(
+        t("settings.invalidInputTitle"),
+        t("settings.invalidInputMessage"),
+      );
       return;
     }
 
@@ -49,12 +56,12 @@ export default function SettingsScreen() {
       await saveConfig(year, monthPad, "Cow", cowVal);
       await saveConfig(year, monthPad, "Buffalo", bufVal);
       Alert.alert(
-        "Success",
-        `Pricing configuration for ${year}-${monthPad} saved successfully!`,
+        t("common.success"),
+        t("settings.saveSuccess", { period: `${year}-${monthPad}` }),
       );
     } catch (err) {
       console.error("Error saving pricing:", err);
-      Alert.alert("Error", "Unable to save pricing configuration.");
+      Alert.alert(t("common.error"), t("settings.saveError"));
     }
   };
 
@@ -63,7 +70,7 @@ export default function SettingsScreen() {
       <View
         style={[styles.header, { paddingTop: Math.max(insets.top + 12, 44) }]}
       >
-        <Text style={styles.title}>Settings</Text>
+        <Text style={styles.title}>{t("settings.title")}</Text>
       </View>
 
       <ScrollView
@@ -72,13 +79,30 @@ export default function SettingsScreen() {
         showsVerticalScrollIndicator={false}
       >
         <View style={styles.sectionHeader}>
+          <Text style={styles.sectionTitle}>{t("settings.language")}</Text>
+          <View style={styles.filterBox}>
+            <Picker
+              selectedValue={i18n.language.startsWith("pa") ? "pa" : "en"}
+              onValueChange={(value: SupportedLanguage) => {
+                void changeAppLanguage(value);
+              }}
+              style={styles.picker}
+              dropdownIconColor="#334155"
+            >
+              <Picker.Item label={t("settings.english")} value="en" />
+              <Picker.Item label={t("settings.punjabi")} value="pa" />
+            </Picker>
+          </View>
+        </View>
+
+        <View style={styles.sectionHeader}>
           <View style={styles.sectionTitleRow}>
             <MaterialCommunityIcons
               name="currency-inr"
               size={16}
               color={COLORS.brand}
             />
-            <Text style={styles.sectionTitle}>Animal Pricing Config</Text>
+            <Text style={styles.sectionTitle}>{t("settings.pricingConfig")}</Text>
           </View>
           <MonthYearFilter
             month={month}
@@ -90,8 +114,7 @@ export default function SettingsScreen() {
         </View>
 
         <Text style={styles.helpText}>
-          Configure per-1% fat rate (₹) for each animal type for the selected
-          month.
+          {t("settings.pricingHelp")}
         </Text>
 
         <View style={styles.card}>
@@ -105,8 +128,8 @@ export default function SettingsScreen() {
                 />
               </View>
               <View>
-                <Text style={styles.rowTitle}>Cow Rate</Text>
-                <Text style={styles.rowSubtitle}>Per 1% fat / kg milk</Text>
+                <Text style={styles.rowTitle}>{t("settings.cowRate")}</Text>
+                <Text style={styles.rowSubtitle}>{t("settings.rateDescription")}</Text>
               </View>
             </View>
             <View style={styles.priceBox}>
@@ -126,8 +149,8 @@ export default function SettingsScreen() {
                 <MaterialCommunityIcons name="cow" size={20} color="#334155" />
               </View>
               <View>
-                <Text style={styles.rowTitle}>Buffalo Rate</Text>
-                <Text style={styles.rowSubtitle}>Per 1% fat / kg milk</Text>
+                <Text style={styles.rowTitle}>{t("settings.buffaloRate")}</Text>
+                <Text style={styles.rowSubtitle}>{t("settings.rateDescription")}</Text>
               </View>
             </View>
             <View style={styles.priceBox}>
@@ -150,7 +173,7 @@ export default function SettingsScreen() {
           ]}
         >
           <MaterialCommunityIcons name="content-save" size={20} color="#fff" />
-          <Text style={styles.saveButtonText}>Save Pricing</Text>
+          <Text style={styles.saveButtonText}>{t("settings.savePricing")}</Text>
         </Pressable>
 
         <View style={styles.infoBox}>
@@ -160,7 +183,7 @@ export default function SettingsScreen() {
               size={20}
               color="#64748B"
             />
-            <Text style={styles.infoLabel}>App Version</Text>
+            <Text style={styles.infoLabel}>{t("settings.appVersion")}</Text>
           </View>
           <Text style={styles.infoValue}>v{APP_VERSION}</Text>
         </View>
@@ -194,6 +217,15 @@ const styles = StyleSheet.create({
     color: COLORS.brand,
     textTransform: "uppercase",
   },
+  filterBox: {
+    minWidth: 100,
+    backgroundColor: "#F1F5F9",
+    borderRadius: 10,
+    justifyContent: "center",
+    height: 38,
+    overflow: "hidden",
+  },
+  picker: { color: "#334155", marginHorizontal: -6 },
   helpText: { fontSize: 12, color: "#64748B", marginBottom: 16 },
   card: {
     backgroundColor: "#fff",

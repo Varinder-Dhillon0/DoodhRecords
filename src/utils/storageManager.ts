@@ -7,6 +7,29 @@ const baseDir = Paths.document ?? Paths.cache;
 const storageDir = new Directory(baseDir, "doodh_records");
 export const PRICING_FILE = new File(storageDir, "pricing_config.csv").uri;
 
+export const getStoredLanguage = async (): Promise<string | null> => {
+  try {
+    const languageFile = new File(storageDir, "language.txt");
+    if (!languageFile.exists) return null;
+    const language = (await languageFile.text()).trim();
+    return language || null;
+  } catch (err) {
+    console.error("Error reading language preference:", err);
+    return null;
+  }
+};
+
+export const saveStoredLanguage = async (language: string): Promise<void> => {
+  try {
+    if (!storageDir.exists) {
+      storageDir.create();
+    }
+    new File(storageDir, "language.txt").write(language);
+  } catch (err) {
+    console.error("Error saving language preference:", err);
+  }
+};
+
 const csvEscape = (value: string | number | undefined | null): string => {
   const stringValue = String(value ?? "");
   if (

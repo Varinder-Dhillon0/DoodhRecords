@@ -22,18 +22,18 @@ export const SHIFTS: Shift[] = ["Morning", "Evening"];
 export const APP_VERSION = "1.0.0";
 
 export const MONTH_OPTIONS: MonthOption[] = [
-  { label: "January", value: "01" },
-  { label: "February", value: "02" },
-  { label: "March", value: "03" },
-  { label: "April", value: "04" },
-  { label: "May", value: "05" },
-  { label: "June", value: "06" },
-  { label: "July", value: "07" },
-  { label: "August", value: "08" },
-  { label: "September", value: "09" },
-  { label: "October", value: "10" },
-  { label: "November", value: "11" },
-  { label: "December", value: "12" },
+  { value: "01" },
+  { value: "02" },
+  { value: "03" },
+  { value: "04" },
+  { value: "05" },
+  { value: "06" },
+  { value: "07" },
+  { value: "08" },
+  { value: "09" },
+  { value: "10" },
+  { value: "11" },
+  { value: "12" },
 ];
 
 const currentYear = new Date().getFullYear();
