@@ -3,6 +3,7 @@ import {
   View,
   ScrollView,
   Alert,
+  Keyboard,
   KeyboardAvoidingView,
   Platform,
   StyleSheet,
@@ -71,6 +72,21 @@ export default function EntryFormScreen() {
   const [notes, setNotes] = useState<string>(entryToEdit?.notes || "");
   const [showDatePicker, setShowDatePicker] = useState<boolean>(false);
   const [earningsPreview, setEarningsPreview] = useState<number>(0);
+  const [isKeyboardVisible, setIsKeyboardVisible] = useState(false);
+
+  useEffect(() => {
+    const showSubscription = Keyboard.addListener("keyboardDidShow", () =>
+      setIsKeyboardVisible(true),
+    );
+    const hideSubscription = Keyboard.addListener("keyboardDidHide", () =>
+      setIsKeyboardVisible(false),
+    );
+
+    return () => {
+      showSubscription.remove();
+      hideSubscription.remove();
+    };
+  }, []);
 
   const priceInfo = useMemo(() => {
     const { year, month } = getYearAndMonth(date);
@@ -137,7 +153,9 @@ export default function EntryFormScreen() {
       } else {
         await addEntry(normalizedData);
       }
-      showSnackbar(t(isEditing ? "entryForm.updateSuccess" : "entryForm.addSuccess"));
+      showSnackbar(
+        t(isEditing ? "entryForm.updateSuccess" : "entryForm.addSuccess"),
+      );
       navigation.goBack();
     } catch (error) {
       console.error("Error saving entry:", error);
@@ -338,7 +356,12 @@ export default function EntryFormScreen() {
       <View
         style={[
           styles.footer,
-          { paddingBottom: Math.max(insets.bottom + 12, 16) },
+          {
+            paddingBottom: Math.max(
+              insets.bottom + 12 + (isKeyboardVisible ? 12 : 0),
+              16,
+            ),
+          },
         ]}
       >
         {isEditing && (
