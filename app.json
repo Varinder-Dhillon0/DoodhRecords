@@ -13,7 +13,8 @@
       "permissions": []
     },
     "plugins": [
-      "expo-font"
+      "expo-font",
+      "expo-sharing"
     ],
     "ios": {
       "bundleIdentifier": "com.doodhrecords.app"

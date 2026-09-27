@@ -1,5 +1,5 @@
 import React, { useMemo } from "react";
-import { View, ScrollView, Pressable, StyleSheet } from "react-native";
+import { View, ScrollView, StyleSheet } from "react-native";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 import { useNavigation } from "@react-navigation/native";
 import { StackNavigationProp } from "@react-navigation/stack";
@@ -13,6 +13,7 @@ import { MilkEntry, RootStackParamList } from "../types";
 import { useTranslation } from "react-i18next";
 import Text from "../components/ScaledText";
 import { TYPOGRAPHY } from "../constants/typography";
+import Button from "../components/Button";
 
 type HomeScreenNavigationProp = StackNavigationProp<RootStackParamList>;
 
@@ -129,7 +130,8 @@ export default function HomeScreen() {
           </View>
         </View>
 
-        <Pressable
+        <Button
+          size="sm"
           onPress={() => navigation.navigate("EntryForm")}
           style={({ pressed }) => [
             styles.addButton,
@@ -138,19 +140,20 @@ export default function HomeScreen() {
         >
           <MaterialCommunityIcons name="plus-circle" size={22} color="#fff" />
           <Text style={styles.addButtonText}>{t("home.addEntry")}</Text>
-        </Pressable>
+        </Button>
 
         <View style={styles.sectionHeader}>
           <Text style={styles.sectionTitle}>{t("home.recentEntries")}</Text>
-          <Pressable onPress={() => navigation.navigate("MainTabs")}>
+          <Button size="sm" onPress={() => navigation.navigate("MainTabs")}>
             <Text style={styles.linkText}>{t("home.viewAll")}</Text>
-          </Pressable>
+          </Button>
         </View>
 
         <View style={styles.listCard}>
           {recentEntries.length > 0 ? (
             recentEntries.map((entry: MilkEntry, index: number) => (
-              <Pressable
+              <Button
+                size="sm"
                 key={`${entry.id}-${entry.date}-${index}`}
                 onPress={() => navigation.navigate("EntryForm", { entry })}
                 style={({ pressed }) => [
@@ -201,7 +204,7 @@ export default function HomeScreen() {
                     })}
                   </Text>
                 </View>
-              </Pressable>
+              </Button>
             ))
           ) : (
             <View style={styles.emptyContainer}>
@@ -237,7 +240,11 @@ const styles = StyleSheet.create({
     elevation: 4,
   },
   headerTop: { flex: 1 },
-  appTitle: { color: "#fff", fontSize: TYPOGRAPHY.brandTitle, fontWeight: "800" },
+  appTitle: {
+    color: "#fff",
+    fontSize: TYPOGRAPHY.brandTitle,
+    fontWeight: "800",
+  },
   appSubtitle: {
     color: "#E9F7EC",
     fontSize: TYPOGRAPHY.label,
@@ -271,7 +278,11 @@ const styles = StyleSheet.create({
     alignItems: "center",
     marginBottom: 16,
   },
-  summaryTitle: { fontSize: TYPOGRAPHY.headingSmall, fontWeight: "800", color: "#0F172A" },
+  summaryTitle: {
+    fontSize: TYPOGRAPHY.headingSmall,
+    fontWeight: "800",
+    color: "#0F172A",
+  },
   summaryDate: {
     fontSize: TYPOGRAPHY.caption,
     color: "#64748B",
@@ -332,8 +343,16 @@ const styles = StyleSheet.create({
     color: "#64748B",
     marginBottom: 2,
   },
-  metricValue: { fontSize: TYPOGRAPHY.metric, fontWeight: "800", color: "#0F172A" },
-  metricUnit: { fontSize: TYPOGRAPHY.micro, fontWeight: "600", color: "#64748B" },
+  metricValue: {
+    fontSize: TYPOGRAPHY.metric,
+    fontWeight: "800",
+    color: "#0F172A",
+  },
+  metricUnit: {
+    fontSize: TYPOGRAPHY.micro,
+    fontWeight: "600",
+    color: "#64748B",
+  },
   earningsBox: {
     backgroundColor: "#E9F7EC",
     borderRadius: 14,
@@ -352,7 +371,11 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
   },
-  earningsValue: { fontSize: TYPOGRAPHY.screenTitle, fontWeight: "900", color: COLORS.brand },
+  earningsValue: {
+    fontSize: TYPOGRAPHY.screenTitle,
+    fontWeight: "900",
+    color: COLORS.brand,
+  },
   addButton: {
     backgroundColor: COLORS.brand,
     borderRadius: 14,
@@ -369,15 +392,27 @@ const styles = StyleSheet.create({
     elevation: 3,
   },
   buttonPressed: { opacity: 0.85, transform: [{ scale: 0.99 }] },
-  addButtonText: { color: "#fff", fontWeight: "800", fontSize: TYPOGRAPHY.bodyLarge },
+  addButtonText: {
+    color: "#fff",
+    fontWeight: "800",
+    fontSize: TYPOGRAPHY.bodyLarge,
+  },
   sectionHeader: {
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
     marginBottom: 12,
   },
-  sectionTitle: { fontSize: TYPOGRAPHY.bodyLarge, fontWeight: "800", color: "#0F172A" },
-  linkText: { color: COLORS.brand, fontWeight: "700", fontSize: TYPOGRAPHY.label },
+  sectionTitle: {
+    fontSize: TYPOGRAPHY.bodyLarge,
+    fontWeight: "800",
+    color: "#0F172A",
+  },
+  linkText: {
+    color: COLORS.brand,
+    fontWeight: "700",
+    fontSize: TYPOGRAPHY.label,
+  },
   listCard: {
     backgroundColor: "#fff",
     borderRadius: 18,
@@ -407,8 +442,16 @@ const styles = StyleSheet.create({
     justifyContent: "center",
   },
   buffaloIconBg: { backgroundColor: "#F1F5F9" },
-  entryTitle: { fontSize: TYPOGRAPHY.bodySmall, fontWeight: "800", color: "#0F172A" },
-  entrySubtitle: { fontSize: TYPOGRAPHY.caption, fontWeight: "600", color: COLORS.brand },
+  entryTitle: {
+    fontSize: TYPOGRAPHY.bodySmall,
+    fontWeight: "800",
+    color: "#0F172A",
+  },
+  entrySubtitle: {
+    fontSize: TYPOGRAPHY.caption,
+    fontWeight: "600",
+    color: COLORS.brand,
+  },
   buffaloText: { color: "#475569" },
   entryDate: {
     fontSize: TYPOGRAPHY.micro,
@@ -417,7 +460,11 @@ const styles = StyleSheet.create({
     fontWeight: "500",
   },
   entryRight: { alignItems: "flex-end" },
-  entryEarnings: { fontSize: TYPOGRAPHY.body, fontWeight: "800", color: COLORS.brand },
+  entryEarnings: {
+    fontSize: TYPOGRAPHY.body,
+    fontWeight: "800",
+    color: COLORS.brand,
+  },
   entryMeta: {
     fontSize: TYPOGRAPHY.micro,
     color: "#64748B",

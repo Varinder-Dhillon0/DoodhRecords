@@ -2,7 +2,6 @@ import React, { useEffect, useState } from "react";
 import {
   View,
   StyleSheet,
-  Pressable,
   Alert,
   ScrollView,
   KeyboardAvoidingView,
@@ -10,7 +9,6 @@ import {
 } from "react-native";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { Picker } from "@react-native-picker/picker";
 import { APP_VERSION, COLORS } from "../constants";
 import { useDoodhContext } from "../context/DoodhContext";
 import { getLocalDateString } from "../utils/dateUtils";
@@ -22,12 +20,15 @@ import { ScaledTextInput as TextInput } from "../components/ScaledText";
 import { TYPOGRAPHY } from "../constants/typography";
 import AppPicker from "../components/AppPicker";
 import Slider from "@react-native-community/slider";
+import * as Sharing from "expo-sharing";
+import Button from "../components/Button";
 import { useFontScale } from "../context/FontScaleContext";
 import useKeyboardAwareScroll from "../hooks/useKeyboardAwareScroll";
 import {
   FONT_SCALE_RANGE,
   getNearestFontScaleOption,
 } from "../constants/typography";
+import { createDataExportFile } from "../utils/storageManager";
 
 export default function SettingsScreen() {
   const { t, i18n } = useTranslation();
@@ -44,6 +45,7 @@ export default function SettingsScreen() {
   const [year, setYear] = useState<string>(currentYear);
   const [cowPrice, setCowPrice] = useState<string>("8");
   const [buffaloPrice, setBuffaloPrice] = useState<string>("9");
+  const [isExporting, setIsExporting] = useState(false);
 
   useEffect(() => {
     const key = `${year}-${month.padStart(2, "0")}`;
@@ -78,6 +80,27 @@ export default function SettingsScreen() {
     }
   };
 
+  const handleExport = async () => {
+    setIsExporting(true);
+    try {
+      if (!(await Sharing.isAvailableAsync())) {
+        Alert.alert(t("common.error"), t("settings.exportUnavailable"));
+        return;
+      }
+      const { uri } = await createDataExportFile();
+      await Sharing.shareAsync(uri, {
+        dialogTitle: t("settings.exportDialogTitle"),
+        mimeType: "application/json",
+        UTI: "public.json",
+      });
+    } catch (error) {
+      console.error("Error exporting app data:", error);
+      Alert.alert(t("common.error"), t("settings.exportError"));
+    } finally {
+      setIsExporting(false);
+    }
+  };
+
   return (
     <KeyboardAvoidingView
       style={styles.container}
@@ -96,26 +119,29 @@ export default function SettingsScreen() {
         showsVerticalScrollIndicator={false}
         keyboardShouldPersistTaps="handled"
       >
-        <View style={styles.sectionHeader}>
-          <Text style={styles.sectionTitle}>{t("settings.language")}</Text>
-          <AppPicker
-            minWidth={100}
-            selectedValue={
-              (i18n.language.startsWith("pa")
-                ? "pa"
-                : "en") as SupportedLanguage
-            }
-            onValueChange={(value: SupportedLanguage) => {
-              void changeAppLanguage(value);
-            }}
-            dropdownIconColor="#334155"
-          >
-            <Picker.Item label={t("settings.english")} value="en" />
-            <Picker.Item label={t("settings.punjabi")} value="pa" />
-          </AppPicker>
+        <View style={[styles.settingCard, styles.settingCardPadding]}>
+          <View style={styles.sectionHeader}>
+            <Text style={styles.sectionTitle}>{t("settings.language")}</Text>
+            <AppPicker
+              minWidth={100}
+              selectedValue={
+                (i18n.language.startsWith("pa")
+                  ? "pa"
+                  : "en") as SupportedLanguage
+              }
+              onValueChange={(value: SupportedLanguage) => {
+                void changeAppLanguage(value);
+              }}
+              options={[
+                { label: t("settings.english"), value: "en" },
+                { label: t("settings.punjabi"), value: "pa" },
+              ]}
+              accessibilityLabel={t("settings.language")}
+            />
+          </View>
         </View>
 
-        <View>
+        <View style={[styles.settingCard, styles.settingCardPadding]}>
           <View style={styles.sectionHeader}>
             <Text style={styles.sectionTitle}>{t("settings.fontSize")}</Text>
             <Text style={styles.infoValue}>
@@ -143,92 +169,140 @@ export default function SettingsScreen() {
           />
         </View>
 
-        <View style={styles.sectionHeader}>
-          <View style={styles.sectionTitleRow}>
-            <MaterialCommunityIcons
-              name="currency-inr"
-              size={16}
-              color={COLORS.brand}
-            />
-            <Text style={styles.sectionTitle}>
-              {t("settings.pricingConfig")}
-            </Text>
-          </View>
-          <MonthYearFilter
-            month={month}
-            year={year}
-            onMonthChange={setMonth}
-            onYearChange={setYear}
-            filterBoxMinWidth={100}
-          />
-        </View>
-
-        <Text style={styles.helpText}>{t("settings.pricingHelp")}</Text>
-
         <View style={styles.card}>
-          <View style={styles.row}>
-            <View style={styles.leftCell}>
-              <View style={styles.iconGreen}>
-                <MaterialCommunityIcons
-                  name="cow"
-                  size={20}
-                  color={COLORS.brand}
+          <View style={[styles.sectionHeader, styles.cardSectionHeader]}>
+            <View style={styles.sectionTitleRow}>
+              <MaterialCommunityIcons
+                name="currency-inr"
+                size={16}
+                color={COLORS.brand}
+              />
+              <Text style={styles.sectionTitle}>
+                {t("settings.pricingConfig")}
+              </Text>
+            </View>
+          </View>
+
+          <View style={{ padding: 10 }}>
+            <MonthYearFilter
+              month={month}
+              year={year}
+              onMonthChange={setMonth}
+              onYearChange={setYear}
+              filterBoxMinWidth={100}
+            />
+          </View>
+
+          <Text style={[styles.helpText, styles.cardHorizontalPadding]}>
+            {t("settings.pricingHelp")}
+          </Text>
+
+          <View>
+            <View style={styles.row}>
+              <View style={styles.leftCell}>
+                <View style={styles.iconGreen}>
+                  <MaterialCommunityIcons
+                    name="cow"
+                    size={20}
+                    color={COLORS.brand}
+                  />
+                </View>
+                <View>
+                  <Text style={styles.rowTitle}>{t("settings.cowRate")}</Text>
+                  <Text style={styles.rowSubtitle}>
+                    {t("settings.rateDescription")}
+                  </Text>
+                </View>
+              </View>
+              <View style={styles.priceBox}>
+                <Text style={styles.currency}>₹</Text>
+                <TextInput
+                  value={cowPrice}
+                  onFocus={onInputFocus}
+                  keyboardType="decimal-pad"
+                  onChangeText={setCowPrice}
+                  style={styles.priceInput}
                 />
               </View>
-              <View>
-                <Text style={styles.rowTitle}>{t("settings.cowRate")}</Text>
-                <Text style={styles.rowSubtitle}>
-                  {t("settings.rateDescription")}
-                </Text>
-              </View>
             </View>
-            <View style={styles.priceBox}>
-              <Text style={styles.currency}>₹</Text>
-              <TextInput
-                value={cowPrice}
-                onFocus={onInputFocus}
-                keyboardType="decimal-pad"
-                onChangeText={setCowPrice}
-                style={styles.priceInput}
-              />
+
+            <View style={styles.row}>
+              <View style={styles.leftCell}>
+                <View style={styles.iconGray}>
+                  <MaterialCommunityIcons
+                    name="cow"
+                    size={20}
+                    color="#334155"
+                  />
+                </View>
+                <View>
+                  <Text style={styles.rowTitle}>
+                    {t("settings.buffaloRate")}
+                  </Text>
+                  <Text style={styles.rowSubtitle}>
+                    {t("settings.rateDescription")}
+                  </Text>
+                </View>
+              </View>
+              <View style={styles.priceBox}>
+                <Text style={styles.currency}>₹</Text>
+                <TextInput
+                  value={buffaloPrice}
+                  onFocus={onInputFocus}
+                  keyboardType="decimal-pad"
+                  onChangeText={setBuffaloPrice}
+                  style={styles.priceInput}
+                />
+              </View>
             </View>
           </View>
 
-          <View style={styles.row}>
-            <View style={styles.leftCell}>
-              <View style={styles.iconGray}>
-                <MaterialCommunityIcons name="cow" size={20} color="#334155" />
-              </View>
-              <View>
-                <Text style={styles.rowTitle}>{t("settings.buffaloRate")}</Text>
-                <Text style={styles.rowSubtitle}>
-                  {t("settings.rateDescription")}
-                </Text>
-              </View>
-            </View>
-            <View style={styles.priceBox}>
-              <Text style={styles.currency}>₹</Text>
-              <TextInput
-                value={buffaloPrice}
-                onFocus={onInputFocus}
-                keyboardType="decimal-pad"
-                onChangeText={setBuffaloPrice}
-                style={styles.priceInput}
-              />
-            </View>
-          </View>
+          <Button
+            size="sm"
+            onPress={handleSave}
+            style={({ pressed }) => [
+              styles.saveButton,
+              pressed && styles.buttonPressed,
+            ]}
+          >
+            <MaterialCommunityIcons
+              name="content-save"
+              size={20}
+              color="#fff"
+            />
+            <Text style={styles.saveButtonText}>
+              {t("settings.savePricing")}
+            </Text>
+          </Button>
         </View>
 
-        <Pressable
-          onPress={handleSave}
-          style={({ pressed }) => [
-            styles.saveButton,
-            pressed && styles.buttonPressed,
-          ]}
-        >
-          <MaterialCommunityIcons name="content-save" size={20} color="#fff" />
-          <Text style={styles.saveButtonText}>{t("settings.savePricing")}</Text>
-        </Pressable>
+        <View style={[styles.settingCard, styles.settingCardPadding]}>
+          <Text style={styles.sectionTitle}>
+            {t("settings.dataManagement")}
+          </Text>
+          <Text style={styles.helpText}>
+            {t("settings.exportDataDescription")}
+          </Text>
+          <Button
+            size="sm"
+            variant="outline"
+            fullWidth
+            loading={isExporting}
+            disabled={isExporting}
+            onPress={handleExport}
+            icon={
+              <MaterialCommunityIcons
+                name="export-variant"
+                size={20}
+                color={COLORS.brand}
+              />
+            }
+          >
+            <Text style={styles.exportButtonText}>
+              {t("settings.exportData")}
+            </Text>
+          </Button>
+        </View>
 
         <View style={styles.infoBox}>
           <View style={styles.infoLeft}>
@@ -262,6 +336,14 @@ const styles = StyleSheet.create({
   },
   content: { flex: 1 },
   contentPad: { padding: 18, paddingBottom: 100 },
+  settingCard: {
+    backgroundColor: "#fff",
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: "#E2E8F0",
+    marginBottom: 14,
+  },
+  settingCardPadding: { padding: 16 },
   sectionHeader: {
     flexDirection: "row",
     justifyContent: "space-between",
@@ -288,7 +370,10 @@ const styles = StyleSheet.create({
     borderColor: "#E2E8F0",
     overflow: "hidden",
     marginBottom: 18,
+    paddingTop: 16,
   },
+  cardSectionHeader: { paddingHorizontal: 16 },
+  cardHorizontalPadding: { marginHorizontal: 16 },
   row: {
     flexDirection: "row",
     justifyContent: "space-between",
@@ -356,6 +441,7 @@ const styles = StyleSheet.create({
     gap: 8,
     paddingVertical: 15,
     marginBottom: 18,
+    marginHorizontal: 16,
     shadowColor: COLORS.brand,
     shadowOpacity: 0.2,
     shadowRadius: 8,
@@ -365,6 +451,11 @@ const styles = StyleSheet.create({
   buttonPressed: { opacity: 0.85, transform: [{ scale: 0.99 }] },
   saveButtonText: {
     color: "#fff",
+    fontWeight: "800",
+    fontSize: TYPOGRAPHY.bodyLarge,
+  },
+  exportButtonText: {
+    color: COLORS.brand,
     fontWeight: "800",
     fontSize: TYPOGRAPHY.bodyLarge,
   },

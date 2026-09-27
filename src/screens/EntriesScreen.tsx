@@ -21,6 +21,7 @@ import MonthYearFilter from "../components/MonthYearFilter";
 import { useTranslation } from "react-i18next";
 import Text from "../components/ScaledText";
 import { TYPOGRAPHY } from "../constants/typography";
+import Button from "../components/Button";
 
 type EntriesScreenNavigationProp = StackNavigationProp<RootStackParamList>;
 
@@ -124,12 +125,12 @@ export default function EntriesScreen() {
           <Text style={styles.headerCellLeft}>{t("entries.dateShift")}</Text>
           <Text style={styles.headerCellCenter}>{t("entries.milkFat")}</Text>
           <Text style={styles.headerCellRight}>{t("entries.earnings")}</Text>
-          <View style={{ width: 24 }} />
         </View>
 
         {filteredEntries.length > 0 ? (
           filteredEntries.map((entry: MilkEntry, index: number) => (
-            <Pressable
+            <Button
+              size="sm"
               key={`${entry.id}-${entry.date}-${index}`}
               onPress={() => openEntrySheet(entry)}
               style={({ pressed }) => [
@@ -175,19 +176,7 @@ export default function EntriesScreen() {
                   )}
                 </Text>
               </View>
-
-              <Pressable
-                onPress={() => openEntrySheet(entry)}
-                hitSlop={8}
-                style={styles.moreButton}
-              >
-                <MaterialCommunityIcons
-                  name="dots-vertical"
-                  size={20}
-                  color="#64748B"
-                />
-              </Pressable>
-            </Pressable>
+            </Button>
           ))
         ) : (
           <View style={styles.emptyContainer}>
@@ -232,17 +221,25 @@ export default function EntriesScreen() {
                   )}
                 </Text>
               </View>
-              <Pressable onPress={closeEntrySheet} style={styles.closeButton}>
+              <Button
+                size="sm"
+                onPress={closeEntrySheet}
+                style={styles.closeButton}
+              >
                 <MaterialCommunityIcons
                   name="close"
                   size={20}
                   color="#64748B"
                 />
-              </Pressable>
+              </Button>
             </View>
 
             <View style={styles.sheetActions}>
-              <Pressable onPress={handleEdit} style={styles.actionButton}>
+              <Button
+                size="sm"
+                onPress={handleEdit}
+                style={styles.actionButton}
+              >
                 <View
                   style={[styles.actionIcon, { backgroundColor: "#E9F7EC" }]}
                 >
@@ -253,9 +250,13 @@ export default function EntriesScreen() {
                   />
                 </View>
                 <Text style={styles.actionText}>{t("entries.edit")}</Text>
-              </Pressable>
+              </Button>
 
-              <Pressable onPress={handleDuplicate} style={styles.actionButton}>
+              <Button
+                size="sm"
+                onPress={handleDuplicate}
+                style={styles.actionButton}
+              >
                 <View
                   style={[styles.actionIcon, { backgroundColor: "#EFF6FF" }]}
                 >
@@ -266,9 +267,10 @@ export default function EntriesScreen() {
                   />
                 </View>
                 <Text style={styles.actionText}>{t("entries.duplicate")}</Text>
-              </Pressable>
+              </Button>
 
-              <Pressable
+              <Button
+                size="sm"
                 onPress={handleDelete}
                 style={[styles.actionButton, styles.deleteActionButton]}
               >
@@ -282,7 +284,7 @@ export default function EntriesScreen() {
                   />
                 </View>
                 <Text style={styles.deleteText}>{t("entries.delete")}</Text>
-              </Pressable>
+              </Button>
             </View>
           </Pressable>
         </Pressable>
@@ -294,16 +296,19 @@ export default function EntriesScreen() {
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: "#F8FAFC" },
   header: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
+    alignItems: "flex-start",
     backgroundColor: "#fff",
     paddingHorizontal: 18,
     paddingBottom: 14,
+    gap: 12,
     borderBottomWidth: 1,
     borderBottomColor: "#E2E8F0",
   },
-  title: { fontSize: TYPOGRAPHY.screenTitle, fontWeight: "800", color: "#0F172A" },
+  title: {
+    fontSize: TYPOGRAPHY.screenTitle,
+    fontWeight: "800",
+    color: "#0F172A",
+  },
   list: { flex: 1 },
   listContent: { padding: 14, paddingBottom: 100 },
   tableHeader: {
@@ -358,10 +363,18 @@ const styles = StyleSheet.create({
   rowCenter: { flex: 3, alignItems: "center" },
   milkText: { fontSize: TYPOGRAPHY.body, fontWeight: "800", color: "#0F172A" },
   unit: { fontSize: TYPOGRAPHY.micro, color: "#64748B", fontWeight: "500" },
-  fatText: { fontSize: TYPOGRAPHY.micro, fontWeight: "700", color: "#D97706", marginTop: 2 },
+  fatText: {
+    fontSize: TYPOGRAPHY.micro,
+    fontWeight: "700",
+    color: "#D97706",
+    marginTop: 2,
+  },
   rowRight: { flex: 3, alignItems: "flex-end" },
-  earningsText: { fontSize: TYPOGRAPHY.body, fontWeight: "800", color: COLORS.brand },
-  moreButton: { width: 24, alignItems: "center", justifyContent: "center" },
+  earningsText: {
+    fontSize: TYPOGRAPHY.body,
+    fontWeight: "800",
+    color: COLORS.brand,
+  },
   emptyContainer: {
     alignItems: "center",
     justifyContent: "center",
@@ -374,7 +387,11 @@ const styles = StyleSheet.create({
     color: "#475569",
     marginTop: 6,
   },
-  emptySubtitle: { fontSize: TYPOGRAPHY.caption, color: "#94A3B8", textAlign: "center" },
+  emptySubtitle: {
+    fontSize: TYPOGRAPHY.caption,
+    color: "#94A3B8",
+    textAlign: "center",
+  },
   sheetBackdrop: {
     flex: 1,
     justifyContent: "flex-end",
@@ -401,7 +418,11 @@ const styles = StyleSheet.create({
     alignItems: "flex-start",
     marginBottom: 20,
   },
-  sheetTitle: { fontSize: TYPOGRAPHY.heading, fontWeight: "800", color: "#0F172A" },
+  sheetTitle: {
+    fontSize: TYPOGRAPHY.heading,
+    fontWeight: "800",
+    color: "#0F172A",
+  },
   sheetStats: {
     fontSize: TYPOGRAPHY.label,
     color: "#64748B",
@@ -436,6 +457,14 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     alignItems: "center",
   },
-  actionText: { fontSize: TYPOGRAPHY.body, fontWeight: "700", color: "#0F172A" },
-  deleteText: { fontSize: TYPOGRAPHY.body, fontWeight: "700", color: "#DC2626" },
+  actionText: {
+    fontSize: TYPOGRAPHY.body,
+    fontWeight: "700",
+    color: "#0F172A",
+  },
+  deleteText: {
+    fontSize: TYPOGRAPHY.body,
+    fontWeight: "700",
+    color: "#DC2626",
+  },
 });

@@ -260,12 +260,11 @@ export default function ReportsScreen() {
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: "#F8FAFC" },
   header: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
+    alignItems: "flex-start",
     backgroundColor: "#fff",
     paddingHorizontal: 18,
     paddingBottom: 14,
+    gap: 12,
     borderBottomWidth: 1,
     borderBottomColor: "#E2E8F0",
   },

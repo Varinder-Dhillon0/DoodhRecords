@@ -3,7 +3,6 @@ import { StyleSheet, View } from "react-native";
 import { MONTH_OPTIONS, YEAR_OPTIONS } from "../constants";
 import { useTranslation } from "react-i18next";
 import AppPicker from "./AppPicker";
-import { Picker } from "@react-native-picker/picker";
 
 type MonthYearFilterProps = {
   month: string;
@@ -28,26 +27,20 @@ export default function MonthYearFilter({
         minWidth={filterBoxMinWidth}
         selectedValue={month}
         onValueChange={onMonthChange}
-        dropdownIconColor="#334155"
-      >
-        {MONTH_OPTIONS.map((item) => (
-          <Picker.Item
-            key={item.value}
-            label={t(`months.${item.value}`)}
-            value={item.value}
-          />
-        ))}
-      </AppPicker>
+        options={MONTH_OPTIONS.map((item) => ({
+          label: t(`months.${item.value}`),
+          value: item.value,
+        }))}
+      />
       <AppPicker
         minWidth={filterBoxMinWidth}
         selectedValue={year}
         onValueChange={onYearChange}
-        dropdownIconColor="#334155"
-      >
-        {YEAR_OPTIONS.map((item) => (
-          <Picker.Item key={item} label={item} value={item} />
-        ))}
-      </AppPicker>
+        options={YEAR_OPTIONS.map((yearOption) => ({
+          label: yearOption,
+          value: yearOption,
+        }))}
+      />
     </View>
   );
 }

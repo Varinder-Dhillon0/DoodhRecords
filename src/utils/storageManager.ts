@@ -1,5 +1,6 @@
 import { Directory, File, Paths } from "expo-file-system";
 import { Animal, AnimalPricing, MilkEntry, PricingConfig } from "../types";
+import { ANIMALS, APP_VERSION } from "../constants";
 import { getYearAndMonth } from "./dateUtils";
 import { calculateEarnings as calcEarnings } from "./calculations";
 
@@ -498,4 +499,35 @@ export const readAllEntries = async (): Promise<MilkEntry[]> => {
     console.error("Error in readAllEntries:", err);
     return [];
   }
+};
+
+export const createDataExportFile = async (): Promise<{
+  uri: string;
+  fileName: string;
+}> => {
+  const [milkEntries, pricingConfigurations, language, fontScale] =
+    await Promise.all([
+      readAllEntries(),
+      getPricingConfig(),
+      getStoredLanguage(),
+      getStoredFontScale(),
+    ]);
+  const exportData = {
+    format: "doodh-records-export",
+    formatVersion: 1,
+    exportedAt: new Date().toISOString(),
+    appVersion: APP_VERSION,
+    data: {
+      milkEntries,
+      pricingConfigurations,
+      animalTypes: ANIMALS,
+      preferences: { language, fontScale },
+    },
+  };
+  const fileName = `doodh_records_export_${new Date()
+    .toISOString()
+    .replace(/[:.]/g, "-")}.json`;
+  const file = new File(Paths.cache, fileName);
+  file.write(JSON.stringify(exportData, null, 2));
+  return { uri: file.uri, fileName };
 };

@@ -1,7 +1,6 @@
 import React, { useEffect, useMemo, useState } from "react";
 import {
   View,
-  Pressable,
   ScrollView,
   Alert,
   KeyboardAvoidingView,
@@ -9,9 +8,8 @@ import {
   StyleSheet,
 } from "react-native";
 import DateTimePicker, {
-  DateTimePickerEvent,
+  DateTimePickerChangeEvent,
 } from "@react-native-community/datetimepicker";
-import { Picker } from "@react-native-picker/picker";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 import { useRoute, useNavigation, RouteProp } from "@react-navigation/native";
 import { StackNavigationProp } from "@react-navigation/stack";
@@ -33,6 +31,7 @@ import { ScaledTextInput as TextInput } from "../components/ScaledText";
 import { TYPOGRAPHY } from "../constants/typography";
 import AppPicker from "../components/AppPicker";
 import useKeyboardAwareScroll from "../hooks/useKeyboardAwareScroll";
+import Button from "../components/Button";
 
 type EntryFormScreenNavigationProp = StackNavigationProp<
   RootStackParamList,
@@ -88,11 +87,12 @@ export default function EntryFormScreen() {
     setEarningsPreview(calculateEarnings(qty, fat, rate));
   }, [milkQuantity, fatPercentage, animal, pricingConfig]);
 
-  const handleDateChange = (_: DateTimePickerEvent, selectedDate?: Date) => {
+  const handleDateChange = (
+    _: DateTimePickerChangeEvent,
+    selectedDate: Date,
+  ) => {
     setShowDatePicker(false);
-    if (selectedDate) {
-      setDate(getLocalDateString(selectedDate));
-    }
+    setDate(getLocalDateString(selectedDate));
   };
 
   const handleSave = async () => {
@@ -180,7 +180,8 @@ export default function EntryFormScreen() {
       <View
         style={[styles.header, { paddingTop: Math.max(insets.top + 12, 44) }]}
       >
-        <Pressable
+        <Button
+          size="sm"
           onPress={() => navigation.goBack()}
           hitSlop={10}
           style={styles.backButton}
@@ -190,7 +191,7 @@ export default function EntryFormScreen() {
             size={28}
             color={COLORS.text}
           />
-        </Pressable>
+        </Button>
         <Text style={styles.title}>
           {isEditing ? t("entryForm.editTitle") : t("entryForm.addTitle")}
         </Text>
@@ -204,7 +205,8 @@ export default function EntryFormScreen() {
       >
         <View style={styles.fieldGroup}>
           <Text style={styles.label}>{t("entryForm.collectionDate")}</Text>
-          <Pressable
+          <Button
+            size="sm"
             style={styles.inputBox}
             onPress={() => setShowDatePicker(true)}
           >
@@ -216,14 +218,15 @@ export default function EntryFormScreen() {
               size={20}
               color={COLORS.brand}
             />
-          </Pressable>
+          </Button>
           {showDatePicker && (
             <DateTimePicker
               value={parseLocalDate(date)}
               mode="date"
               display={Platform.OS === "ios" ? "spinner" : "default"}
               locale={i18n.language.startsWith("pa") ? "pa-IN" : undefined}
-              onChange={handleDateChange}
+              onValueChange={handleDateChange}
+              onDismiss={() => setShowDatePicker(false)}
             />
           )}
         </View>
@@ -235,16 +238,12 @@ export default function EntryFormScreen() {
               variant="field"
               selectedValue={shift}
               onValueChange={(val: Shift) => setShift(val)}
-              dropdownIconColor="#334155"
-            >
-              {SHIFTS.map((item) => (
-                <Picker.Item
-                  key={item}
-                  label={t(`shifts.${item.toLowerCase()}`)}
-                  value={item}
-                />
-              ))}
-            </AppPicker>
+              options={SHIFTS.map((item) => ({
+                label: t(`shifts.${item.toLowerCase()}`),
+                value: item,
+              }))}
+              accessibilityLabel={t("entryForm.shift")}
+            />
           </View>
 
           <View style={styles.fieldGroupFlex}>
@@ -253,16 +252,12 @@ export default function EntryFormScreen() {
               variant="field"
               selectedValue={animal}
               onValueChange={(val: Animal) => setAnimal(val)}
-              dropdownIconColor="#334155"
-            >
-              {ANIMALS.map((item) => (
-                <Picker.Item
-                  key={item}
-                  label={t(`animals.${item.toLowerCase()}`)}
-                  value={item}
-                />
-              ))}
-            </AppPicker>
+              options={ANIMALS.map((item) => ({
+                label: t(`animals.${item.toLowerCase()}`),
+                value: item,
+              }))}
+              accessibilityLabel={t("entryForm.animal")}
+            />
           </View>
         </View>
 
@@ -349,7 +344,8 @@ export default function EntryFormScreen() {
         ]}
       >
         {isEditing && (
-          <Pressable
+          <Button
+            size="sm"
             onPress={handleDelete}
             style={({ pressed }) => [
               styles.deleteButton,
@@ -363,9 +359,10 @@ export default function EntryFormScreen() {
               color="#DC2626"
             />
             <Text style={styles.deleteButtonText}>{t("entryForm.delete")}</Text>
-          </Pressable>
+          </Button>
         )}
-        <Pressable
+        <Button
+          size="sm"
           onPress={handleSave}
           style={({ pressed }) => [
             styles.primaryButton,
@@ -377,7 +374,7 @@ export default function EntryFormScreen() {
           <Text style={styles.primaryButtonText}>
             {isEditing ? t("entryForm.update") : t("entryForm.save")}
           </Text>
-        </Pressable>
+        </Button>
       </View>
     </KeyboardAvoidingView>
   );
