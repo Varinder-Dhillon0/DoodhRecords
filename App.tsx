@@ -8,21 +8,25 @@ import { SafeAreaProvider } from "react-native-safe-area-context";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 
 import { COLORS } from "./src/constants";
+import { FONT_SCALE_RANGE } from "./src/constants/typography";
 import { initializeI18n } from "./src/i18n";
 import { useTranslation } from "react-i18next";
 import { DoodhProvider, useDoodhContext } from "./src/context/DoodhContext";
+import { FontScaleProvider, useFontScale } from "./src/context/FontScaleContext";
 import { MainTabParamList, RootStackParamList } from "./src/types";
 import HomeScreen from "./src/screens/HomeScreen";
 import EntriesScreen from "./src/screens/EntriesScreen";
 import ReportsScreen from "./src/screens/ReportsScreen";
 import SettingsScreen from "./src/screens/SettingsScreen";
 import EntryFormScreen from "./src/screens/EntryFormScreen";
+import { getStoredFontScale } from "./src/utils/storageManager";
 
 const Stack = createStackNavigator<RootStackParamList>();
 const Tab = createBottomTabNavigator<MainTabParamList>();
 
 function Tabs() {
   const { t } = useTranslation();
+  const { typography } = useFontScale();
 
   return (
     <Tab.Navigator
@@ -39,7 +43,7 @@ function Tabs() {
           borderTopColor: "#E2E8F0",
         },
         tabBarLabelStyle: {
-          fontSize: 11,
+          fontSize: typography.micro,
           fontWeight: "700",
           marginBottom: 2,
         },
@@ -91,21 +95,25 @@ function MainNavigator() {
 }
 
 export default function App() {
-  const [isI18nReady, setIsI18nReady] = useState(false);
+  const [initialFontScale, setInitialFontScale] = useState<number | null>(null);
 
   useEffect(() => {
-    initializeI18n().then(() => setIsI18nReady(true));
+    Promise.all([initializeI18n(), getStoredFontScale()]).then(([, scale]) =>
+      setInitialFontScale(scale ?? FONT_SCALE_RANGE.default),
+    );
   }, []);
 
   return (
     <SafeAreaProvider>
       <StatusBar style="dark" />
-      {isI18nReady ? (
-        <DoodhProvider>
-          <NavigationContainer>
-            <MainNavigator />
-          </NavigationContainer>
-        </DoodhProvider>
+      {initialFontScale !== null ? (
+        <FontScaleProvider initialScale={initialFontScale}>
+          <DoodhProvider>
+            <NavigationContainer>
+              <MainNavigator />
+            </NavigationContainer>
+          </DoodhProvider>
+        </FontScaleProvider>
       ) : (
         <View style={styles.loadingContainer}>
           <ActivityIndicator size="large" color={COLORS.brand} />

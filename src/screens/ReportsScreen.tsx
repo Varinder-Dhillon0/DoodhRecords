@@ -1,5 +1,5 @@
 import React, { useMemo, useState } from "react";
-import { View, Text, ScrollView, StyleSheet, Dimensions } from "react-native";
+import { View, ScrollView, StyleSheet, Dimensions } from "react-native";
 import { LineChart } from "react-native-chart-kit";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
@@ -11,9 +11,13 @@ import { formatCurrency, formatNumber } from "../utils/formatters";
 import MonthYearFilter from "../components/MonthYearFilter";
 import ReportChartCard from "../components/ReportChartCard";
 import { useTranslation } from "react-i18next";
+import Text from "../components/ScaledText";
+import { TYPOGRAPHY } from "../constants/typography";
+import { useFontScale } from "../context/FontScaleContext";
 
 export default function ReportsScreen() {
   const { t } = useTranslation();
+  const { typography } = useFontScale();
   const insets = useSafeAreaInsets();
   const { entries, pricingConfig } = useDoodhContext();
 
@@ -113,6 +117,8 @@ export default function ReportsScreen() {
       strokeDasharray: "",
     },
     propsForDots: { r: "3", strokeWidth: "1" },
+    propsForLabels: { fontSize: typography.caption },
+    propsForVerticalLabels: { fontSize: typography.caption },
   };
 
   return (
@@ -263,7 +269,7 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1,
     borderBottomColor: "#E2E8F0",
   },
-  title: { fontSize: 22, fontWeight: "800", color: "#0F172A" },
+  title: { fontSize: TYPOGRAPHY.screenTitle, fontWeight: "800", color: "#0F172A" },
   content: { flex: 1 },
   contentPad: { padding: 18, paddingBottom: 100 },
   summaryCard: {
@@ -281,12 +287,12 @@ const styles = StyleSheet.create({
     elevation: 3,
   },
   summaryLabel: {
-    fontSize: 13,
+    fontSize: TYPOGRAPHY.label,
     fontWeight: "700",
     color: "#E9F7EC",
     marginBottom: 4,
   },
-  summaryValue: { fontSize: 28, fontWeight: "900", color: "#fff" },
+  summaryValue: { fontSize: TYPOGRAPHY.display, fontWeight: "900", color: "#fff" },
   iconCircle: {
     width: 48,
     height: 48,
@@ -324,11 +330,11 @@ const styles = StyleSheet.create({
   },
   metricLabel: {
     color: "#64748B",
-    fontSize: 12,
+    fontSize: TYPOGRAPHY.caption,
     fontWeight: "700",
     marginBottom: 4,
   },
-  metricValue: { fontSize: 18, fontWeight: "800", color: "#0F172A" },
-  metricUnit: { fontSize: 12, color: "#64748B", fontWeight: "600" },
+  metricValue: { fontSize: TYPOGRAPHY.headingSmall, fontWeight: "800", color: "#0F172A" },
+  metricUnit: { fontSize: TYPOGRAPHY.caption, color: "#64748B", fontWeight: "600" },
   chart: { marginVertical: 4, borderRadius: 12 },
 });

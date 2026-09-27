@@ -1,8 +1,6 @@
 import React, { useEffect, useMemo, useState } from "react";
 import {
   View,
-  Text,
-  TextInput,
   Pressable,
   ScrollView,
   Alert,
@@ -29,6 +27,9 @@ import { calculateEarnings } from "../utils/calculations";
 import { formatCurrency } from "../utils/formatters";
 import { Animal, MilkEntry, RootStackParamList, Shift } from "../types";
 import { useTranslation } from "react-i18next";
+import Text from "../components/ScaledText";
+import { ScaledTextInput as TextInput } from "../components/ScaledText";
+import { TYPOGRAPHY } from "../constants/typography";
 
 type EntryFormScreenNavigationProp = StackNavigationProp<
   RootStackParamList,
@@ -391,7 +392,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   title: {
-    fontSize: 20,
+    fontSize: TYPOGRAPHY.heading,
     fontWeight: "800",
     color: COLORS.text,
     marginLeft: 6,
@@ -410,7 +411,7 @@ const styles = StyleSheet.create({
   label: {
     marginBottom: 8,
     marginLeft: 2,
-    fontSize: 12,
+    fontSize: TYPOGRAPHY.caption,
     fontWeight: "800",
     color: "#475569",
     textTransform: "uppercase",
@@ -450,20 +451,20 @@ const styles = StyleSheet.create({
     marginHorizontal: -6,
   },
   inputText: {
-    fontSize: 15,
+    fontSize: TYPOGRAPHY.body,
     fontWeight: "700",
     color: "#0F172A",
   },
   inputField: {
     flex: 1,
     height: 50,
-    fontSize: 18,
+    fontSize: TYPOGRAPHY.headingSmall,
     fontWeight: "800",
     color: "#0F172A",
     paddingHorizontal: 10,
   },
   suffix: {
-    fontSize: 14,
+    fontSize: TYPOGRAPHY.bodySmall,
     color: "#64748B",
     fontWeight: "700",
   },
@@ -495,18 +496,18 @@ const styles = StyleSheet.create({
     marginBottom: 20,
   },
   previewLabel: {
-    fontSize: 13,
+    fontSize: TYPOGRAPHY.label,
     fontWeight: "800",
     color: "#0F172A",
   },
   previewSubtext: {
-    fontSize: 11,
+    fontSize: TYPOGRAPHY.micro,
     color: "#64748B",
     fontWeight: "600",
     marginTop: 2,
   },
   previewValue: {
-    fontSize: 22,
+    fontSize: TYPOGRAPHY.screenTitle,
     fontWeight: "900",
     color: COLORS.brand,
   },
@@ -519,7 +520,7 @@ const styles = StyleSheet.create({
     padding: 14,
     textAlignVertical: "top",
     color: "#0F172A",
-    fontSize: 14,
+    fontSize: TYPOGRAPHY.bodySmall,
     fontWeight: "500",
   },
   twoColumn: {
@@ -559,7 +560,7 @@ const styles = StyleSheet.create({
   primaryButtonText: {
     color: "#fff",
     fontWeight: "800",
-    fontSize: 16,
+    fontSize: TYPOGRAPHY.bodyLarge,
   },
   deleteButton: {
     backgroundColor: "#FEE2E2",
@@ -570,6 +571,6 @@ const styles = StyleSheet.create({
   deleteButtonText: {
     color: "#DC2626",
     fontWeight: "800",
-    fontSize: 16,
+    fontSize: TYPOGRAPHY.bodyLarge,
   },
 });

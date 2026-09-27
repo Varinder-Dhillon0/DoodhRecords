@@ -1,10 +1,8 @@
 import React, { useEffect, useState } from "react";
 import {
   View,
-  Text,
   StyleSheet,
   Pressable,
-  TextInput,
   Alert,
   ScrollView,
 } from "react-native";
@@ -17,9 +15,19 @@ import { getLocalDateString } from "../utils/dateUtils";
 import MonthYearFilter from "../components/MonthYearFilter";
 import { useTranslation } from "react-i18next";
 import { changeAppLanguage, SupportedLanguage } from "../i18n";
+import Text from "../components/ScaledText";
+import { ScaledTextInput as TextInput } from "../components/ScaledText";
+import { TYPOGRAPHY } from "../constants/typography";
+import Slider from "@react-native-community/slider";
+import { useFontScale } from "../context/FontScaleContext";
+import {
+  FONT_SCALE_RANGE,
+  getNearestFontScaleOption,
+} from "../constants/typography";
 
 export default function SettingsScreen() {
   const { t, i18n } = useTranslation();
+  const { fontScale, setFontScale } = useFontScale();
   const insets = useSafeAreaInsets();
   const { pricingConfig, saveConfig } = useDoodhContext();
 
@@ -93,6 +101,34 @@ export default function SettingsScreen() {
               <Picker.Item label={t("settings.punjabi")} value="pa" />
             </Picker>
           </View>
+        </View>
+
+        <View>
+          <View style={styles.sectionHeader}>
+            <Text style={styles.sectionTitle}>{t("settings.fontSize")}</Text>
+            <Text style={styles.infoValue}>
+              {t(getNearestFontScaleOption(fontScale).labelKey)}
+            </Text>
+          </View>
+          <Slider
+            accessibilityLabel={t("settings.fontSize")}
+            accessibilityRole="adjustable"
+            accessibilityValue={{
+              min: FONT_SCALE_RANGE.min,
+              max: FONT_SCALE_RANGE.max,
+              now: fontScale,
+              text: t(getNearestFontScaleOption(fontScale).labelKey),
+            }}
+            minimumValue={FONT_SCALE_RANGE.min}
+            maximumValue={FONT_SCALE_RANGE.max}
+            step={FONT_SCALE_RANGE.step}
+            value={fontScale}
+            onValueChange={setFontScale}
+            minimumTrackTintColor={COLORS.brand}
+            maximumTrackTintColor={COLORS.border}
+            thumbTintColor={COLORS.brand}
+            style={styles.fontSizeSlider}
+          />
         </View>
 
         <View style={styles.sectionHeader}>
@@ -201,7 +237,7 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1,
     borderBottomColor: "#E2E8F0",
   },
-  title: { fontSize: 22, fontWeight: "800", color: "#0F172A" },
+  title: { fontSize: TYPOGRAPHY.screenTitle, fontWeight: "800", color: "#0F172A" },
   content: { flex: 1 },
   contentPad: { padding: 18, paddingBottom: 100 },
   sectionHeader: {
@@ -210,9 +246,10 @@ const styles = StyleSheet.create({
     alignItems: "center",
     marginBottom: 8,
   },
+  fontSizeSlider: { width: "100%", height: 40 },
   sectionTitleRow: { flexDirection: "row", alignItems: "center", gap: 6 },
   sectionTitle: {
-    fontSize: 13,
+    fontSize: TYPOGRAPHY.label,
     fontWeight: "800",
     color: COLORS.brand,
     textTransform: "uppercase",
@@ -226,7 +263,7 @@ const styles = StyleSheet.create({
     overflow: "hidden",
   },
   picker: { color: "#334155", marginHorizontal: -6 },
-  helpText: { fontSize: 12, color: "#64748B", marginBottom: 16 },
+  helpText: { fontSize: TYPOGRAPHY.caption, color: "#64748B", marginBottom: 16 },
   card: {
     backgroundColor: "#fff",
     borderRadius: 16,
@@ -261,9 +298,9 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     alignItems: "center",
   },
-  rowTitle: { fontSize: 15, fontWeight: "700", color: "#0F172A" },
+  rowTitle: { fontSize: TYPOGRAPHY.body, fontWeight: "700", color: "#0F172A" },
   rowSubtitle: {
-    fontSize: 11,
+    fontSize: TYPOGRAPHY.micro,
     color: "#64748B",
     fontWeight: "500",
     marginTop: 2,
@@ -282,13 +319,13 @@ const styles = StyleSheet.create({
   currency: {
     color: "#64748B",
     fontWeight: "700",
-    fontSize: 16,
+    fontSize: TYPOGRAPHY.bodyLarge,
     marginRight: 4,
   },
   priceInput: {
     flex: 1,
     textAlign: "right",
-    fontSize: 16,
+    fontSize: TYPOGRAPHY.bodyLarge,
     color: "#0F172A",
     fontWeight: "800",
     height: 42,
@@ -309,7 +346,7 @@ const styles = StyleSheet.create({
     elevation: 3,
   },
   buttonPressed: { opacity: 0.85, transform: [{ scale: 0.99 }] },
-  saveButtonText: { color: "#fff", fontWeight: "800", fontSize: 16 },
+  saveButtonText: { color: "#fff", fontWeight: "800", fontSize: TYPOGRAPHY.bodyLarge },
   infoBox: {
     backgroundColor: "#fff",
     borderRadius: 16,
@@ -321,6 +358,6 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   infoLeft: { flexDirection: "row", alignItems: "center", gap: 8 },
-  infoLabel: { fontSize: 13, color: "#64748B", fontWeight: "700" },
-  infoValue: { fontSize: 14, fontWeight: "800", color: "#0F172A" },
+  infoLabel: { fontSize: TYPOGRAPHY.label, color: "#64748B", fontWeight: "700" },
+  infoValue: { fontSize: TYPOGRAPHY.bodySmall, fontWeight: "800", color: "#0F172A" },
 });

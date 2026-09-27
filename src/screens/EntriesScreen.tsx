@@ -1,7 +1,6 @@
 import React, { useMemo, useState } from "react";
 import {
   View,
-  Text,
   ScrollView,
   Pressable,
   StyleSheet,
@@ -20,6 +19,8 @@ import { formatCurrency, formatNumber } from "../utils/formatters";
 import { MilkEntry, RootStackParamList } from "../types";
 import MonthYearFilter from "../components/MonthYearFilter";
 import { useTranslation } from "react-i18next";
+import Text from "../components/ScaledText";
+import { TYPOGRAPHY } from "../constants/typography";
 
 type EntriesScreenNavigationProp = StackNavigationProp<RootStackParamList>;
 
@@ -300,7 +301,7 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1,
     borderBottomColor: "#E2E8F0",
   },
-  title: { fontSize: 22, fontWeight: "800", color: "#0F172A" },
+  title: { fontSize: TYPOGRAPHY.screenTitle, fontWeight: "800", color: "#0F172A" },
   list: { flex: 1 },
   listContent: { padding: 14, paddingBottom: 100 },
   tableHeader: {
@@ -314,14 +315,14 @@ const styles = StyleSheet.create({
   },
   headerCellLeft: {
     flex: 4,
-    fontSize: 11,
+    fontSize: TYPOGRAPHY.micro,
     fontWeight: "800",
     color: "#64748B",
     textTransform: "uppercase",
   },
   headerCellCenter: {
     flex: 3,
-    fontSize: 11,
+    fontSize: TYPOGRAPHY.micro,
     fontWeight: "800",
     color: "#64748B",
     textTransform: "uppercase",
@@ -329,7 +330,7 @@ const styles = StyleSheet.create({
   },
   headerCellRight: {
     flex: 3,
-    fontSize: 11,
+    fontSize: TYPOGRAPHY.micro,
     fontWeight: "800",
     color: "#64748B",
     textTransform: "uppercase",
@@ -348,16 +349,16 @@ const styles = StyleSheet.create({
   },
   rowPressed: { backgroundColor: "#F8FAFC" },
   rowDateBlock: { flex: 4 },
-  dateText: { fontSize: 13, fontWeight: "700", color: "#0F172A" },
-  shiftText: { fontSize: 11, fontWeight: "600", marginTop: 2 },
+  dateText: { fontSize: TYPOGRAPHY.label, fontWeight: "700", color: "#0F172A" },
+  shiftText: { fontSize: TYPOGRAPHY.micro, fontWeight: "600", marginTop: 2 },
   cowText: { color: COLORS.brand },
   buffaloText: { color: "#475569" },
   rowCenter: { flex: 3, alignItems: "center" },
-  milkText: { fontSize: 15, fontWeight: "800", color: "#0F172A" },
-  unit: { fontSize: 11, color: "#64748B", fontWeight: "500" },
-  fatText: { fontSize: 11, fontWeight: "700", color: "#D97706", marginTop: 2 },
+  milkText: { fontSize: TYPOGRAPHY.body, fontWeight: "800", color: "#0F172A" },
+  unit: { fontSize: TYPOGRAPHY.micro, color: "#64748B", fontWeight: "500" },
+  fatText: { fontSize: TYPOGRAPHY.micro, fontWeight: "700", color: "#D97706", marginTop: 2 },
   rowRight: { flex: 3, alignItems: "flex-end" },
-  earningsText: { fontSize: 15, fontWeight: "800", color: COLORS.brand },
+  earningsText: { fontSize: TYPOGRAPHY.body, fontWeight: "800", color: COLORS.brand },
   moreButton: { width: 24, alignItems: "center", justifyContent: "center" },
   emptyContainer: {
     alignItems: "center",
@@ -366,12 +367,12 @@ const styles = StyleSheet.create({
     gap: 6,
   },
   emptyTitle: {
-    fontSize: 16,
+    fontSize: TYPOGRAPHY.bodyLarge,
     fontWeight: "700",
     color: "#475569",
     marginTop: 6,
   },
-  emptySubtitle: { fontSize: 12, color: "#94A3B8", textAlign: "center" },
+  emptySubtitle: { fontSize: TYPOGRAPHY.caption, color: "#94A3B8", textAlign: "center" },
   sheetBackdrop: {
     flex: 1,
     justifyContent: "flex-end",
@@ -398,9 +399,9 @@ const styles = StyleSheet.create({
     alignItems: "flex-start",
     marginBottom: 20,
   },
-  sheetTitle: { fontSize: 20, fontWeight: "800", color: "#0F172A" },
+  sheetTitle: { fontSize: TYPOGRAPHY.heading, fontWeight: "800", color: "#0F172A" },
   sheetStats: {
-    fontSize: 13,
+    fontSize: TYPOGRAPHY.label,
     color: "#64748B",
     marginTop: 4,
     fontWeight: "500",
@@ -433,6 +434,6 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     alignItems: "center",
   },
-  actionText: { fontSize: 15, fontWeight: "700", color: "#0F172A" },
-  deleteText: { fontSize: 15, fontWeight: "700", color: "#DC2626" },
+  actionText: { fontSize: TYPOGRAPHY.body, fontWeight: "700", color: "#0F172A" },
+  deleteText: { fontSize: TYPOGRAPHY.body, fontWeight: "700", color: "#DC2626" },
 });

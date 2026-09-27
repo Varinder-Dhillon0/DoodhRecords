@@ -30,6 +30,29 @@ export const saveStoredLanguage = async (language: string): Promise<void> => {
   }
 };
 
+export const getStoredFontScale = async (): Promise<number | null> => {
+  try {
+    const scaleFile = new File(storageDir, "font_scale.txt");
+    if (!scaleFile.exists) return null;
+    const scale = Number((await scaleFile.text()).trim());
+    return Number.isFinite(scale) ? scale : null;
+  } catch (err) {
+    console.error("Error reading font scale preference:", err);
+    return null;
+  }
+};
+
+export const saveStoredFontScale = async (scale: number): Promise<void> => {
+  try {
+    if (!storageDir.exists) {
+      storageDir.create();
+    }
+    new File(storageDir, "font_scale.txt").write(String(scale));
+  } catch (err) {
+    console.error("Error saving font scale preference:", err);
+  }
+};
+
 const csvEscape = (value: string | number | undefined | null): string => {
   const stringValue = String(value ?? "");
   if (

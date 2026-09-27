@@ -1,5 +1,5 @@
 import React, { useMemo } from "react";
-import { View, Text, ScrollView, Pressable, StyleSheet } from "react-native";
+import { View, ScrollView, Pressable, StyleSheet } from "react-native";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 import { useNavigation } from "@react-navigation/native";
 import { StackNavigationProp } from "@react-navigation/stack";
@@ -11,6 +11,8 @@ import { calculateSummary } from "../utils/calculations";
 import { formatCurrency, formatNumber } from "../utils/formatters";
 import { MilkEntry, RootStackParamList } from "../types";
 import { useTranslation } from "react-i18next";
+import Text from "../components/ScaledText";
+import { TYPOGRAPHY } from "../constants/typography";
 
 type HomeScreenNavigationProp = StackNavigationProp<RootStackParamList>;
 
@@ -231,10 +233,10 @@ const styles = StyleSheet.create({
     elevation: 4,
   },
   headerTop: { flex: 1 },
-  appTitle: { color: "#fff", fontSize: 24, fontWeight: "800" },
+  appTitle: { color: "#fff", fontSize: TYPOGRAPHY.brandTitle, fontWeight: "800" },
   appSubtitle: {
     color: "#E9F7EC",
-    fontSize: 13,
+    fontSize: TYPOGRAPHY.label,
     fontWeight: "600",
     marginTop: 2,
   },
@@ -265,9 +267,9 @@ const styles = StyleSheet.create({
     alignItems: "center",
     marginBottom: 16,
   },
-  summaryTitle: { fontSize: 18, fontWeight: "800", color: "#0F172A" },
+  summaryTitle: { fontSize: TYPOGRAPHY.headingSmall, fontWeight: "800", color: "#0F172A" },
   summaryDate: {
-    fontSize: 12,
+    fontSize: TYPOGRAPHY.caption,
     color: "#64748B",
     fontWeight: "600",
     marginTop: 2,
@@ -321,13 +323,13 @@ const styles = StyleSheet.create({
   },
   metricContent: { flex: 1 },
   metricLabel: {
-    fontSize: 11,
+    fontSize: TYPOGRAPHY.micro,
     fontWeight: "700",
     color: "#64748B",
     marginBottom: 2,
   },
-  metricValue: { fontSize: 17, fontWeight: "800", color: "#0F172A" },
-  metricUnit: { fontSize: 11, fontWeight: "600", color: "#64748B" },
+  metricValue: { fontSize: TYPOGRAPHY.metric, fontWeight: "800", color: "#0F172A" },
+  metricUnit: { fontSize: TYPOGRAPHY.micro, fontWeight: "600", color: "#64748B" },
   earningsBox: {
     backgroundColor: "#E9F7EC",
     borderRadius: 14,
@@ -346,7 +348,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
   },
-  earningsValue: { fontSize: 22, fontWeight: "900", color: COLORS.brand },
+  earningsValue: { fontSize: TYPOGRAPHY.screenTitle, fontWeight: "900", color: COLORS.brand },
   addButton: {
     backgroundColor: COLORS.brand,
     borderRadius: 14,
@@ -363,15 +365,15 @@ const styles = StyleSheet.create({
     elevation: 3,
   },
   buttonPressed: { opacity: 0.85, transform: [{ scale: 0.99 }] },
-  addButtonText: { color: "#fff", fontWeight: "800", fontSize: 16 },
+  addButtonText: { color: "#fff", fontWeight: "800", fontSize: TYPOGRAPHY.bodyLarge },
   sectionHeader: {
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
     marginBottom: 12,
   },
-  sectionTitle: { fontSize: 16, fontWeight: "800", color: "#0F172A" },
-  linkText: { color: COLORS.brand, fontWeight: "700", fontSize: 13 },
+  sectionTitle: { fontSize: TYPOGRAPHY.bodyLarge, fontWeight: "800", color: "#0F172A" },
+  linkText: { color: COLORS.brand, fontWeight: "700", fontSize: TYPOGRAPHY.label },
   listCard: {
     backgroundColor: "#fff",
     borderRadius: 18,
@@ -401,19 +403,19 @@ const styles = StyleSheet.create({
     justifyContent: "center",
   },
   buffaloIconBg: { backgroundColor: "#F1F5F9" },
-  entryTitle: { fontSize: 14, fontWeight: "800", color: "#0F172A" },
-  entrySubtitle: { fontSize: 12, fontWeight: "600", color: COLORS.brand },
+  entryTitle: { fontSize: TYPOGRAPHY.bodySmall, fontWeight: "800", color: "#0F172A" },
+  entrySubtitle: { fontSize: TYPOGRAPHY.caption, fontWeight: "600", color: COLORS.brand },
   buffaloText: { color: "#475569" },
   entryDate: {
-    fontSize: 11,
+    fontSize: TYPOGRAPHY.micro,
     color: "#94A3B8",
     marginTop: 2,
     fontWeight: "500",
   },
   entryRight: { alignItems: "flex-end" },
-  entryEarnings: { fontSize: 15, fontWeight: "800", color: COLORS.brand },
+  entryEarnings: { fontSize: TYPOGRAPHY.body, fontWeight: "800", color: COLORS.brand },
   entryMeta: {
-    fontSize: 11,
+    fontSize: TYPOGRAPHY.micro,
     color: "#64748B",
     marginTop: 2,
     fontWeight: "700",
@@ -428,6 +430,6 @@ const styles = StyleSheet.create({
     textAlign: "center",
     color: "#94A3B8",
     fontWeight: "600",
-    fontSize: 13,
+    fontSize: TYPOGRAPHY.label,
   },
 });

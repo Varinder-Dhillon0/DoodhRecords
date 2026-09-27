@@ -1,6 +1,8 @@
 import React from "react";
-import { StyleSheet, Text, View } from "react-native";
+import { StyleSheet, View } from "react-native";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
+import Text from "./ScaledText";
+import { TYPOGRAPHY } from "../constants/typography";
 
 type ReportChartCardProps = {
   icon: React.ComponentProps<typeof MaterialCommunityIcons>["name"];
@@ -41,5 +43,5 @@ const styles = StyleSheet.create({
     gap: 8,
     marginBottom: 12,
   },
-  chartTitle: { fontSize: 15, fontWeight: "800", color: "#0F172A" },
+  chartTitle: { fontSize: TYPOGRAPHY.body, fontWeight: "800", color: "#0F172A" },
 });
