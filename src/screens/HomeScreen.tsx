@@ -182,7 +182,9 @@ export default function HomeScreen() {
                 </View>
                 <View style={styles.entryRight}>
                   <Text style={styles.entryEarnings}>
-                    {formatCurrency(entry.earnings)}
+                    {formatCurrency(
+                      entry.fat_percentage * entry.milk_quantity * entry.price,
+                    )}
                   </Text>
                   <Text style={styles.entryMeta}>
                     {formatNumber(entry.milk_quantity, 1)}kg •{" "}

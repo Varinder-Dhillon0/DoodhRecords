@@ -42,7 +42,7 @@ export const calculateSummary = (entries: MilkEntry[] = []): SummaryMetrics => {
       const milk = Number(entry.milk_quantity || 0);
       const fat = Number(entry.fat_percentage || 0);
       const earnings = Number(
-        entry.fat_percentage * entry.milk_quantity * entry.price || 0,
+        entry.fat_percentage * entry.milk_quantity * entry.price,
       );
 
       totalMilk += milk;

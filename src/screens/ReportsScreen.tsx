@@ -1,14 +1,15 @@
 import React, { useMemo, useState } from "react";
 import { View, Text, ScrollView, StyleSheet, Dimensions } from "react-native";
-import { Picker } from "@react-native-picker/picker";
 import { LineChart } from "react-native-chart-kit";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { MONTH_OPTIONS, YEAR_OPTIONS, COLORS } from "../constants";
+import { COLORS } from "../constants";
 import { useDoodhContext } from "../context/DoodhContext";
 import { getLocalDateString } from "../utils/dateUtils";
 import { calculateEntryEarnings, calculateSummary } from "../utils/calculations";
 import { formatCurrency, formatNumber } from "../utils/formatters";
+import MonthYearFilter from "../components/MonthYearFilter";
+import ReportChartCard from "../components/ReportChartCard";
 
 export default function ReportsScreen() {
   const insets = useSafeAreaInsets();
@@ -118,36 +119,12 @@ export default function ReportsScreen() {
         style={[styles.header, { paddingTop: Math.max(insets.top + 12, 44) }]}
       >
         <Text style={styles.title}>Monthly Reports</Text>
-        <View style={styles.filterRow}>
-          <View style={styles.filterBox}>
-            <Picker
-              selectedValue={selectedMonth}
-              onValueChange={setSelectedMonth}
-              style={styles.picker}
-              dropdownIconColor="#334155"
-            >
-              {MONTH_OPTIONS.map((month) => (
-                <Picker.Item
-                  key={month.value}
-                  label={month.label}
-                  value={month.value}
-                />
-              ))}
-            </Picker>
-          </View>
-          <View style={styles.filterBox}>
-            <Picker
-              selectedValue={selectedYear}
-              onValueChange={setSelectedYear}
-              style={styles.picker}
-              dropdownIconColor="#334155"
-            >
-              {YEAR_OPTIONS.map((year) => (
-                <Picker.Item key={year} label={year} value={year} />
-              ))}
-            </Picker>
-          </View>
-        </View>
+        <MonthYearFilter
+          month={selectedMonth}
+          year={selectedYear}
+          onMonthChange={setSelectedMonth}
+          onYearChange={setSelectedYear}
+        />
       </View>
 
       <ScrollView
@@ -196,15 +173,11 @@ export default function ReportsScreen() {
           </View>
         </View>
 
-        <View style={styles.chartCard}>
-          <View style={styles.chartTitleRow}>
-            <MaterialCommunityIcons
-              name="chart-bell-curve-cumulative"
-              size={18}
-              color="#2563EB"
-            />
-            <Text style={styles.chartTitle}>Daily Milk Quantity (kg)</Text>
-          </View>
+        <ReportChartCard
+          icon="chart-bell-curve-cumulative"
+          color="#2563EB"
+          title="Daily Milk Quantity (kg)"
+        >
           <LineChart
             data={{
               labels: chartData.labels,
@@ -221,17 +194,13 @@ export default function ReportsScreen() {
             bezier
             style={styles.chart}
           />
-        </View>
+        </ReportChartCard>
 
-        <View style={styles.chartCard}>
-          <View style={styles.chartTitleRow}>
-            <MaterialCommunityIcons
-              name="water-percent"
-              size={18}
-              color="#D97706"
-            />
-            <Text style={styles.chartTitle}>Daily Fat Percentage (%)</Text>
-          </View>
+        <ReportChartCard
+          icon="water-percent"
+          color="#D97706"
+          title="Daily Fat Percentage (%)"
+        >
           <LineChart
             data={{
               labels: chartData.labels,
@@ -248,17 +217,13 @@ export default function ReportsScreen() {
             bezier
             style={styles.chart}
           />
-        </View>
+        </ReportChartCard>
 
-        <View style={styles.chartCard}>
-          <View style={styles.chartTitleRow}>
-            <MaterialCommunityIcons
-              name="cash-multiple"
-              size={18}
-              color={COLORS.brand}
-            />
-            <Text style={styles.chartTitle}>Daily Earnings (₹)</Text>
-          </View>
+        <ReportChartCard
+          icon="cash-multiple"
+          color={COLORS.brand}
+          title="Daily Earnings (₹)"
+        >
           <LineChart
             data={{
               labels: chartData.labels,
@@ -276,7 +241,7 @@ export default function ReportsScreen() {
             bezier
             style={styles.chart}
           />
-        </View>
+        </ReportChartCard>
       </ScrollView>
     </View>
   );
@@ -295,16 +260,6 @@ const styles = StyleSheet.create({
     borderBottomColor: "#E2E8F0",
   },
   title: { fontSize: 22, fontWeight: "800", color: "#0F172A" },
-  filterRow: { flexDirection: "row", gap: 8 },
-  filterBox: {
-    minWidth: 110,
-    backgroundColor: "#F1F5F9",
-    borderRadius: 10,
-    justifyContent: "center",
-    height: 38,
-    overflow: "hidden",
-  },
-  picker: { color: "#334155", marginHorizontal: -6 },
   content: { flex: 1 },
   contentPad: { padding: 18, paddingBottom: 100 },
   summaryCard: {
@@ -371,20 +326,5 @@ const styles = StyleSheet.create({
   },
   metricValue: { fontSize: 18, fontWeight: "800", color: "#0F172A" },
   metricUnit: { fontSize: 12, color: "#64748B", fontWeight: "600" },
-  chartCard: {
-    backgroundColor: "#fff",
-    borderRadius: 18,
-    borderWidth: 1,
-    borderColor: "#E2E8F0",
-    padding: 14,
-    marginBottom: 16,
-  },
-  chartTitleRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 8,
-    marginBottom: 12,
-  },
-  chartTitle: { fontSize: 15, fontWeight: "800", color: "#0F172A" },
   chart: { marginVertical: 4, borderRadius: 12 },
 });

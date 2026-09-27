@@ -8,17 +8,17 @@ import {
   Modal,
   Alert,
 } from "react-native";
-import { Picker } from "@react-native-picker/picker";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 import { useNavigation } from "@react-navigation/native";
 import { StackNavigationProp } from "@react-navigation/stack";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { MONTH_OPTIONS, YEAR_OPTIONS, COLORS } from "../constants";
+import { COLORS } from "../constants";
 import { useDoodhContext } from "../context/DoodhContext";
 import { getLocalDateString } from "../utils/dateUtils";
 import { calculateEntryEarnings } from "../utils/calculations";
 import { formatCurrency, formatNumber } from "../utils/formatters";
 import { MilkEntry, RootStackParamList } from "../types";
+import MonthYearFilter from "../components/MonthYearFilter";
 
 type EntriesScreenNavigationProp = StackNavigationProp<RootStackParamList>;
 
@@ -104,36 +104,12 @@ export default function EntriesScreen() {
         style={[styles.header, { paddingTop: Math.max(insets.top + 12, 44) }]}
       >
         <Text style={styles.title}>All Entries</Text>
-        <View style={styles.filterRow}>
-          <View style={styles.filterBox}>
-            <Picker
-              selectedValue={selectedMonth}
-              onValueChange={setSelectedMonth}
-              style={styles.picker}
-              dropdownIconColor="#334155"
-            >
-              {MONTH_OPTIONS.map((month) => (
-                <Picker.Item
-                  key={month.value}
-                  label={month.label}
-                  value={month.value}
-                />
-              ))}
-            </Picker>
-          </View>
-          <View style={styles.filterBox}>
-            <Picker
-              selectedValue={selectedYear}
-              onValueChange={setSelectedYear}
-              style={styles.picker}
-              dropdownIconColor="#334155"
-            >
-              {YEAR_OPTIONS.map((year) => (
-                <Picker.Item key={year} label={year} value={year} />
-              ))}
-            </Picker>
-          </View>
-        </View>
+        <MonthYearFilter
+          month={selectedMonth}
+          year={selectedYear}
+          onMonthChange={setSelectedMonth}
+          onYearChange={setSelectedYear}
+        />
       </View>
 
       <ScrollView
@@ -314,16 +290,6 @@ const styles = StyleSheet.create({
     borderBottomColor: "#E2E8F0",
   },
   title: { fontSize: 22, fontWeight: "800", color: "#0F172A" },
-  filterRow: { flexDirection: "row", gap: 8 },
-  filterBox: {
-    minWidth: 110,
-    backgroundColor: "#F1F5F9",
-    borderRadius: 10,
-    justifyContent: "center",
-    height: 38,
-    overflow: "hidden",
-  },
-  picker: { color: "#334155", marginHorizontal: -6 },
   list: { flex: 1 },
   listContent: { padding: 14, paddingBottom: 100 },
   tableHeader: {

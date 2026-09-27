@@ -8,12 +8,12 @@ import {
   Alert,
   ScrollView,
 } from "react-native";
-import { Picker } from "@react-native-picker/picker";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { APP_VERSION, MONTH_OPTIONS, YEAR_OPTIONS, COLORS } from "../constants";
+import { APP_VERSION, COLORS } from "../constants";
 import { useDoodhContext } from "../context/DoodhContext";
 import { getLocalDateString } from "../utils/dateUtils";
+import MonthYearFilter from "../components/MonthYearFilter";
 
 export default function SettingsScreen() {
   const insets = useSafeAreaInsets();
@@ -80,36 +80,13 @@ export default function SettingsScreen() {
             />
             <Text style={styles.sectionTitle}>Animal Pricing Config</Text>
           </View>
-          <View style={styles.filterRow}>
-            <View style={styles.filterBox}>
-              <Picker
-                selectedValue={month}
-                onValueChange={setMonth}
-                style={styles.picker}
-                dropdownIconColor="#334155"
-              >
-                {MONTH_OPTIONS.map((item) => (
-                  <Picker.Item
-                    key={item.value}
-                    label={item.label}
-                    value={item.value}
-                  />
-                ))}
-              </Picker>
-            </View>
-            <View style={styles.filterBox}>
-              <Picker
-                selectedValue={year}
-                onValueChange={setYear}
-                style={styles.picker}
-                dropdownIconColor="#334155"
-              >
-                {YEAR_OPTIONS.map((item) => (
-                  <Picker.Item key={item} label={item} value={item} />
-                ))}
-              </Picker>
-            </View>
-          </View>
+          <MonthYearFilter
+            month={month}
+            year={year}
+            onMonthChange={setMonth}
+            onYearChange={setYear}
+            filterBoxMinWidth={100}
+          />
         </View>
 
         <Text style={styles.helpText}>
@@ -217,16 +194,6 @@ const styles = StyleSheet.create({
     color: COLORS.brand,
     textTransform: "uppercase",
   },
-  filterRow: { flexDirection: "row", gap: 8 },
-  filterBox: {
-    minWidth: 100,
-    backgroundColor: "#F1F5F9",
-    borderRadius: 10,
-    justifyContent: "center",
-    height: 38,
-    overflow: "hidden",
-  },
-  picker: { color: "#334155", marginHorizontal: -6 },
   helpText: { fontSize: 12, color: "#64748B", marginBottom: 16 },
   card: {
     backgroundColor: "#fff",
