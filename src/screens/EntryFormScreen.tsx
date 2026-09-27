@@ -22,6 +22,7 @@ import {
   getLocalDateString,
   getYearAndMonth,
   parseLocalDate,
+  formatDisplayDate,
 } from "../utils/dateUtils";
 import { calculateEarnings } from "../utils/calculations";
 import { formatCurrency } from "../utils/formatters";
@@ -30,6 +31,8 @@ import { useTranslation } from "react-i18next";
 import Text from "../components/ScaledText";
 import { ScaledTextInput as TextInput } from "../components/ScaledText";
 import { TYPOGRAPHY } from "../constants/typography";
+import AppPicker from "../components/AppPicker";
+import useKeyboardAwareScroll from "../hooks/useKeyboardAwareScroll";
 
 type EntryFormScreenNavigationProp = StackNavigationProp<
   RootStackParamList,
@@ -42,6 +45,7 @@ export default function EntryFormScreen() {
   const navigation = useNavigation<EntryFormScreenNavigationProp>();
   const route = useRoute<EntryFormScreenRouteProp>();
   const insets = useSafeAreaInsets();
+  const { scrollViewRef, onInputFocus } = useKeyboardAwareScroll(200);
   const { pricingConfig, addEntry, updateEntry, deleteEntry } =
     useDoodhContext();
 
@@ -169,7 +173,7 @@ export default function EntryFormScreen() {
 
   return (
     <KeyboardAvoidingView
-      behavior={Platform.OS === "ios" ? "padding" : undefined}
+      behavior={Platform.OS === "ios" ? "padding" : "height"}
       keyboardVerticalOffset={Platform.OS === "ios" ? 64 : 0}
       style={styles.flex}
     >
@@ -193,8 +197,10 @@ export default function EntryFormScreen() {
       </View>
 
       <ScrollView
+        ref={scrollViewRef}
         contentContainerStyle={styles.content}
         showsVerticalScrollIndicator={false}
+        keyboardShouldPersistTaps="handled"
       >
         <View style={styles.fieldGroup}>
           <Text style={styles.label}>{t("entryForm.collectionDate")}</Text>
@@ -202,7 +208,9 @@ export default function EntryFormScreen() {
             style={styles.inputBox}
             onPress={() => setShowDatePicker(true)}
           >
-            <Text style={styles.inputText}>{date}</Text>
+            <Text style={styles.inputText}>
+              {formatDisplayDate(date, i18n.language)}
+            </Text>
             <MaterialCommunityIcons
               name="calendar"
               size={20}
@@ -223,42 +231,38 @@ export default function EntryFormScreen() {
         <View style={styles.twoColumn}>
           <View style={styles.fieldGroupFlex}>
             <Text style={styles.label}>{t("entryForm.shift")}</Text>
-            <View style={styles.pickerWrap}>
-              <Picker
-                selectedValue={shift}
-                onValueChange={(val: Shift) => setShift(val)}
-                style={styles.picker}
-                dropdownIconColor="#334155"
-              >
-                {SHIFTS.map((item) => (
-                  <Picker.Item
-                    key={item}
-                    label={t(`shifts.${item.toLowerCase()}`)}
-                    value={item}
-                  />
-                ))}
-              </Picker>
-            </View>
+            <AppPicker
+              variant="field"
+              selectedValue={shift}
+              onValueChange={(val: Shift) => setShift(val)}
+              dropdownIconColor="#334155"
+            >
+              {SHIFTS.map((item) => (
+                <Picker.Item
+                  key={item}
+                  label={t(`shifts.${item.toLowerCase()}`)}
+                  value={item}
+                />
+              ))}
+            </AppPicker>
           </View>
 
           <View style={styles.fieldGroupFlex}>
             <Text style={styles.label}>{t("entryForm.animal")}</Text>
-            <View style={styles.pickerWrap}>
-              <Picker
-                selectedValue={animal}
-                onValueChange={(val: Animal) => setAnimal(val)}
-                style={styles.picker}
-                dropdownIconColor="#334155"
-              >
-                {ANIMALS.map((item) => (
-                  <Picker.Item
-                    key={item}
-                    label={t(`animals.${item.toLowerCase()}`)}
-                    value={item}
-                  />
-                ))}
-              </Picker>
-            </View>
+            <AppPicker
+              variant="field"
+              selectedValue={animal}
+              onValueChange={(val: Animal) => setAnimal(val)}
+              dropdownIconColor="#334155"
+            >
+              {ANIMALS.map((item) => (
+                <Picker.Item
+                  key={item}
+                  label={t(`animals.${item.toLowerCase()}`)}
+                  value={item}
+                />
+              ))}
+            </AppPicker>
           </View>
         </View>
 
@@ -274,6 +278,7 @@ export default function EntryFormScreen() {
             </View>
             <TextInput
               value={milkQuantity}
+              onFocus={onInputFocus}
               onChangeText={setMilkQuantity}
               keyboardType="decimal-pad"
               placeholder={t("entryForm.milkPlaceholder")}
@@ -292,6 +297,7 @@ export default function EntryFormScreen() {
             </View>
             <TextInput
               value={fatPercentage}
+              onFocus={onInputFocus}
               onChangeText={setFatPercentage}
               keyboardType="decimal-pad"
               placeholder={t("entryForm.fatPlaceholder")}
@@ -309,7 +315,10 @@ export default function EntryFormScreen() {
             </Text>
             <Text style={styles.previewSubtext}>
               {t("entryForm.ratePreview", {
-                rate: animal === "Cow" ? priceInfo.cowPrice : priceInfo.buffaloPrice,
+                rate:
+                  animal === "Cow"
+                    ? priceInfo.cowPrice
+                    : priceInfo.buffaloPrice,
               })}
             </Text>
           </View>
@@ -322,6 +331,7 @@ export default function EntryFormScreen() {
           <Text style={styles.label}>{t("entryForm.notes")}</Text>
           <TextInput
             value={notes}
+            onFocus={onInputFocus}
             multiline
             numberOfLines={3}
             onChangeText={setNotes}
@@ -436,19 +446,6 @@ const styles = StyleSheet.create({
     height: 52,
     flexDirection: "row",
     alignItems: "center",
-  },
-  pickerWrap: {
-    backgroundColor: "#fff",
-    borderRadius: 14,
-    borderWidth: 1,
-    borderColor: "#CBD5E1",
-    height: 50,
-    justifyContent: "center",
-    overflow: "hidden",
-  },
-  picker: {
-    color: "#0F172A",
-    marginHorizontal: -6,
   },
   inputText: {
     fontSize: TYPOGRAPHY.body,

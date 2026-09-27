@@ -13,7 +13,7 @@ import { StackNavigationProp } from "@react-navigation/stack";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { COLORS } from "../constants";
 import { useDoodhContext } from "../context/DoodhContext";
-import { getLocalDateString } from "../utils/dateUtils";
+import { formatDisplayDate, getLocalDateString } from "../utils/dateUtils";
 import { calculateEntryEarnings } from "../utils/calculations";
 import { formatCurrency, formatNumber } from "../utils/formatters";
 import { MilkEntry, RootStackParamList } from "../types";
@@ -25,7 +25,7 @@ import { TYPOGRAPHY } from "../constants/typography";
 type EntriesScreenNavigationProp = StackNavigationProp<RootStackParamList>;
 
 export default function EntriesScreen() {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const navigation = useNavigation<EntriesScreenNavigationProp>();
   const insets = useSafeAreaInsets();
   const { entries, pricingConfig, deleteEntry } = useDoodhContext();
@@ -138,7 +138,9 @@ export default function EntriesScreen() {
               ]}
             >
               <View style={styles.rowDateBlock}>
-                <Text style={styles.dateText}>{entry.date}</Text>
+                <Text style={styles.dateText}>
+                  {formatDisplayDate(entry.date, i18n.language)}
+                </Text>
                 <Text
                   style={[
                     styles.shiftText,
@@ -221,7 +223,7 @@ export default function EntriesScreen() {
                     })}
                 </Text>
                 <Text style={styles.sheetStats}>
-                  {sheetEntry?.date} •{" "}
+                  {formatDisplayDate(sheetEntry?.date, i18n.language)} •{" "}
                   {formatNumber(sheetEntry?.milk_quantity, 1)}kg •{" "}
                   {formatCurrency(
                     (sheetEntry?.fat_percentage ?? 0) *

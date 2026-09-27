@@ -1,8 +1,9 @@
 import React from "react";
 import { StyleSheet, View } from "react-native";
-import { Picker } from "@react-native-picker/picker";
 import { MONTH_OPTIONS, YEAR_OPTIONS } from "../constants";
 import { useTranslation } from "react-i18next";
+import AppPicker from "./AppPicker";
+import { Picker } from "@react-native-picker/picker";
 
 type MonthYearFilterProps = {
   month: string;
@@ -23,46 +24,34 @@ export default function MonthYearFilter({
 
   return (
     <View style={styles.filterRow}>
-      <View style={[styles.filterBox, { minWidth: filterBoxMinWidth }]}>
-        <Picker
-          selectedValue={month}
-          onValueChange={onMonthChange}
-          style={styles.picker}
-          dropdownIconColor="#334155"
-        >
-          {MONTH_OPTIONS.map((item) => (
-            <Picker.Item
-              key={item.value}
-              label={t(`months.${item.value}`)}
-              value={item.value}
-            />
-          ))}
-        </Picker>
-      </View>
-      <View style={[styles.filterBox, { minWidth: filterBoxMinWidth }]}>
-        <Picker
-          selectedValue={year}
-          onValueChange={onYearChange}
-          style={styles.picker}
-          dropdownIconColor="#334155"
-        >
-          {YEAR_OPTIONS.map((item) => (
-            <Picker.Item key={item} label={item} value={item} />
-          ))}
-        </Picker>
-      </View>
+      <AppPicker
+        minWidth={filterBoxMinWidth}
+        selectedValue={month}
+        onValueChange={onMonthChange}
+        dropdownIconColor="#334155"
+      >
+        {MONTH_OPTIONS.map((item) => (
+          <Picker.Item
+            key={item.value}
+            label={t(`months.${item.value}`)}
+            value={item.value}
+          />
+        ))}
+      </AppPicker>
+      <AppPicker
+        minWidth={filterBoxMinWidth}
+        selectedValue={year}
+        onValueChange={onYearChange}
+        dropdownIconColor="#334155"
+      >
+        {YEAR_OPTIONS.map((item) => (
+          <Picker.Item key={item} label={item} value={item} />
+        ))}
+      </AppPicker>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
   filterRow: { flexDirection: "row", gap: 8 },
-  filterBox: {
-    backgroundColor: "#F1F5F9",
-    borderRadius: 10,
-    justifyContent: "center",
-    height: 38,
-    overflow: "hidden",
-  },
-  picker: { color: "#334155", marginHorizontal: -6 },
 });

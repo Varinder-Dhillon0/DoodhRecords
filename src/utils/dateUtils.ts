@@ -40,3 +40,37 @@ export const parseLocalDate = (dateString?: string): Date => {
   if (!year || !month || !day) return new Date();
   return new Date(year, month - 1, day);
 };
+
+/** Formats a stored YYYY-MM-DD date for display without interpreting it in local time. */
+export const formatDisplayDate = (
+  dateString?: string,
+  language = "en",
+): string => {
+  if (!dateString) return "";
+  const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(dateString);
+  if (!match) return dateString;
+
+  const [, year, month, day] = match;
+  const utcDate = new Date(
+    Date.UTC(Number(year), Number(month) - 1, Number(day)),
+  );
+  if (
+    utcDate.getUTCFullYear() !== Number(year) ||
+    utcDate.getUTCMonth() !== Number(month) - 1 ||
+    utcDate.getUTCDate() !== Number(day)
+  ) {
+    return dateString;
+  }
+
+  const locale = language.startsWith("pa") ? "pa-IN" : "en-GB";
+  const parts = new Intl.DateTimeFormat(locale, {
+    day: "2-digit",
+    month: "long",
+    year: "numeric",
+    timeZone: "UTC",
+  }).formatToParts(utcDate);
+  const part = (type: Intl.DateTimeFormatPartTypes) =>
+    parts.find((item) => item.type === type)?.value ?? "";
+
+  return `${part("day")} ${part("month")}, ${part("year")}`;
+};

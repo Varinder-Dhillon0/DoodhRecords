@@ -5,10 +5,12 @@ import {
   Pressable,
   Alert,
   ScrollView,
+  KeyboardAvoidingView,
+  Platform,
 } from "react-native";
-import { Picker } from "@react-native-picker/picker";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { Picker } from "@react-native-picker/picker";
 import { APP_VERSION, COLORS } from "../constants";
 import { useDoodhContext } from "../context/DoodhContext";
 import { getLocalDateString } from "../utils/dateUtils";
@@ -18,8 +20,10 @@ import { changeAppLanguage, SupportedLanguage } from "../i18n";
 import Text from "../components/ScaledText";
 import { ScaledTextInput as TextInput } from "../components/ScaledText";
 import { TYPOGRAPHY } from "../constants/typography";
+import AppPicker from "../components/AppPicker";
 import Slider from "@react-native-community/slider";
 import { useFontScale } from "../context/FontScaleContext";
+import useKeyboardAwareScroll from "../hooks/useKeyboardAwareScroll";
 import {
   FONT_SCALE_RANGE,
   getNearestFontScaleOption,
@@ -29,6 +33,7 @@ export default function SettingsScreen() {
   const { t, i18n } = useTranslation();
   const { fontScale, setFontScale } = useFontScale();
   const insets = useSafeAreaInsets();
+  const { scrollViewRef, onInputFocus } = useKeyboardAwareScroll(200);
   const { pricingConfig, saveConfig } = useDoodhContext();
 
   const todayStr = getLocalDateString();
@@ -74,7 +79,10 @@ export default function SettingsScreen() {
   };
 
   return (
-    <View style={styles.container}>
+    <KeyboardAvoidingView
+      style={styles.container}
+      behavior={Platform.OS === "ios" ? "padding" : "height"}
+    >
       <View
         style={[styles.header, { paddingTop: Math.max(insets.top + 12, 44) }]}
       >
@@ -82,25 +90,29 @@ export default function SettingsScreen() {
       </View>
 
       <ScrollView
+        ref={scrollViewRef}
         style={styles.content}
         contentContainerStyle={styles.contentPad}
         showsVerticalScrollIndicator={false}
+        keyboardShouldPersistTaps="handled"
       >
         <View style={styles.sectionHeader}>
           <Text style={styles.sectionTitle}>{t("settings.language")}</Text>
-          <View style={styles.filterBox}>
-            <Picker
-              selectedValue={i18n.language.startsWith("pa") ? "pa" : "en"}
-              onValueChange={(value: SupportedLanguage) => {
-                void changeAppLanguage(value);
-              }}
-              style={styles.picker}
-              dropdownIconColor="#334155"
-            >
-              <Picker.Item label={t("settings.english")} value="en" />
-              <Picker.Item label={t("settings.punjabi")} value="pa" />
-            </Picker>
-          </View>
+          <AppPicker
+            minWidth={100}
+            selectedValue={
+              (i18n.language.startsWith("pa")
+                ? "pa"
+                : "en") as SupportedLanguage
+            }
+            onValueChange={(value: SupportedLanguage) => {
+              void changeAppLanguage(value);
+            }}
+            dropdownIconColor="#334155"
+          >
+            <Picker.Item label={t("settings.english")} value="en" />
+            <Picker.Item label={t("settings.punjabi")} value="pa" />
+          </AppPicker>
         </View>
 
         <View>
@@ -138,7 +150,9 @@ export default function SettingsScreen() {
               size={16}
               color={COLORS.brand}
             />
-            <Text style={styles.sectionTitle}>{t("settings.pricingConfig")}</Text>
+            <Text style={styles.sectionTitle}>
+              {t("settings.pricingConfig")}
+            </Text>
           </View>
           <MonthYearFilter
             month={month}
@@ -149,9 +163,7 @@ export default function SettingsScreen() {
           />
         </View>
 
-        <Text style={styles.helpText}>
-          {t("settings.pricingHelp")}
-        </Text>
+        <Text style={styles.helpText}>{t("settings.pricingHelp")}</Text>
 
         <View style={styles.card}>
           <View style={styles.row}>
@@ -165,13 +177,16 @@ export default function SettingsScreen() {
               </View>
               <View>
                 <Text style={styles.rowTitle}>{t("settings.cowRate")}</Text>
-                <Text style={styles.rowSubtitle}>{t("settings.rateDescription")}</Text>
+                <Text style={styles.rowSubtitle}>
+                  {t("settings.rateDescription")}
+                </Text>
               </View>
             </View>
             <View style={styles.priceBox}>
               <Text style={styles.currency}>₹</Text>
               <TextInput
                 value={cowPrice}
+                onFocus={onInputFocus}
                 keyboardType="decimal-pad"
                 onChangeText={setCowPrice}
                 style={styles.priceInput}
@@ -186,13 +201,16 @@ export default function SettingsScreen() {
               </View>
               <View>
                 <Text style={styles.rowTitle}>{t("settings.buffaloRate")}</Text>
-                <Text style={styles.rowSubtitle}>{t("settings.rateDescription")}</Text>
+                <Text style={styles.rowSubtitle}>
+                  {t("settings.rateDescription")}
+                </Text>
               </View>
             </View>
             <View style={styles.priceBox}>
               <Text style={styles.currency}>₹</Text>
               <TextInput
                 value={buffaloPrice}
+                onFocus={onInputFocus}
                 keyboardType="decimal-pad"
                 onChangeText={setBuffaloPrice}
                 style={styles.priceInput}
@@ -224,7 +242,7 @@ export default function SettingsScreen() {
           <Text style={styles.infoValue}>v{APP_VERSION}</Text>
         </View>
       </ScrollView>
-    </View>
+    </KeyboardAvoidingView>
   );
 }
 
@@ -237,7 +255,11 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1,
     borderBottomColor: "#E2E8F0",
   },
-  title: { fontSize: TYPOGRAPHY.screenTitle, fontWeight: "800", color: "#0F172A" },
+  title: {
+    fontSize: TYPOGRAPHY.screenTitle,
+    fontWeight: "800",
+    color: "#0F172A",
+  },
   content: { flex: 1 },
   contentPad: { padding: 18, paddingBottom: 100 },
   sectionHeader: {
@@ -254,16 +276,11 @@ const styles = StyleSheet.create({
     color: COLORS.brand,
     textTransform: "uppercase",
   },
-  filterBox: {
-    minWidth: 100,
-    backgroundColor: "#F1F5F9",
-    borderRadius: 10,
-    justifyContent: "center",
-    height: 38,
-    overflow: "hidden",
+  helpText: {
+    fontSize: TYPOGRAPHY.caption,
+    color: "#64748B",
+    marginBottom: 16,
   },
-  picker: { color: "#334155", marginHorizontal: -6 },
-  helpText: { fontSize: TYPOGRAPHY.caption, color: "#64748B", marginBottom: 16 },
   card: {
     backgroundColor: "#fff",
     borderRadius: 16,
@@ -346,7 +363,11 @@ const styles = StyleSheet.create({
     elevation: 3,
   },
   buttonPressed: { opacity: 0.85, transform: [{ scale: 0.99 }] },
-  saveButtonText: { color: "#fff", fontWeight: "800", fontSize: TYPOGRAPHY.bodyLarge },
+  saveButtonText: {
+    color: "#fff",
+    fontWeight: "800",
+    fontSize: TYPOGRAPHY.bodyLarge,
+  },
   infoBox: {
     backgroundColor: "#fff",
     borderRadius: 16,
@@ -358,6 +379,14 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   infoLeft: { flexDirection: "row", alignItems: "center", gap: 8 },
-  infoLabel: { fontSize: TYPOGRAPHY.label, color: "#64748B", fontWeight: "700" },
-  infoValue: { fontSize: TYPOGRAPHY.bodySmall, fontWeight: "800", color: "#0F172A" },
+  infoLabel: {
+    fontSize: TYPOGRAPHY.label,
+    color: "#64748B",
+    fontWeight: "700",
+  },
+  infoValue: {
+    fontSize: TYPOGRAPHY.bodySmall,
+    fontWeight: "800",
+    color: "#0F172A",
+  },
 });

@@ -6,7 +6,7 @@ import { StackNavigationProp } from "@react-navigation/stack";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { COLORS } from "../constants";
 import { useDoodhContext } from "../context/DoodhContext";
-import { getLocalDateString } from "../utils/dateUtils";
+import { formatDisplayDate, getLocalDateString } from "../utils/dateUtils";
 import { calculateSummary } from "../utils/calculations";
 import { formatCurrency, formatNumber } from "../utils/formatters";
 import { MilkEntry, RootStackParamList } from "../types";
@@ -17,7 +17,7 @@ import { TYPOGRAPHY } from "../constants/typography";
 type HomeScreenNavigationProp = StackNavigationProp<RootStackParamList>;
 
 export default function HomeScreen() {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const navigation = useNavigation<HomeScreenNavigationProp>();
   const insets = useSafeAreaInsets();
   const { entries } = useDoodhContext();
@@ -66,7 +66,9 @@ export default function HomeScreen() {
           <View style={styles.summaryHeader}>
             <View>
               <Text style={styles.summaryTitle}>{t("home.summaryTitle")}</Text>
-              <Text style={styles.summaryDate}>{dateToday}</Text>
+              <Text style={styles.summaryDate}>
+                {formatDisplayDate(dateToday, i18n.language)}
+              </Text>
             </View>
             <View style={styles.calendarBadge}>
               <MaterialCommunityIcons
@@ -181,7 +183,9 @@ export default function HomeScreen() {
                         ({t(`animals.${entry.animal.toLowerCase()}`)})
                       </Text>
                     </Text>
-                    <Text style={styles.entryDate}>{entry.date}</Text>
+                    <Text style={styles.entryDate}>
+                      {formatDisplayDate(entry.date, i18n.language)}
+                    </Text>
                   </View>
                 </View>
                 <View style={styles.entryRight}>
