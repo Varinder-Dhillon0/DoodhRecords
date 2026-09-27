@@ -52,6 +52,18 @@
     "empty": "ਹਾਲੇ ਕੋਈ ਐਂਟਰੀ ਦਰਜ ਨਹੀਂ ਕੀਤੀ।",
     "milkAndFat": "{{quantity}}kg • {{fat}}% fat"
   },
+  "welcome": {
+    "title": "ਦੁੱਧ ਰਿਕਾਰਡ",
+    "subtitle": "ਆਪਣੀ ਰੋਜ਼ਾਨਾ ਦੁੱਧ ਦੀ ਵਿਕਰੀ ਆਸਾਨੀ ਨਾਲ ਦਰਜ ਕਰੋ",
+    "recordTitle": "ਰੋਜ਼ਾਨਾ ਵਿਕਰੀ ਦਰਜ ਕਰੋ",
+    "recordDescription": "ਦੁੱਧ ਦੀ ਮਾਤਰਾ ਅਤੇ ਫੈਟ % ਜੋੜੋ",
+    "reportsTitle": "ਰਿਪੋਰਟਾਂ ਵੇਖੋ",
+    "reportsDescription": "ਕੁੱਲ ਵਿਕਰੀ ਅਤੇ ਔਸਤ ਵੇਖੋ",
+    "simpleTitle": "ਸੌਖਾ ਅਤੇ ਤੇਜ਼",
+    "simpleDescription": "ਰੋਜ਼ਾਨਾ ਵਰਤੋਂ ਲਈ ਬਣਾਇਆ ਗਿਆ",
+    "continue": "ਸ਼ੁਰੂ ਕਰੋ",
+    "illustration": "ਗਾਂ ਅਤੇ ਦੁੱਧ ਦੇ ਡੱਬੇ ਦੀ ਤਸਵੀਰ"
+  },
   "entries": {
     "title": "ਸਾਰੀਆਂ ਐਂਟਰੀਆਂ",
     "dateShift": "ਤਾਰੀਖ / ਵਾਰੀ",

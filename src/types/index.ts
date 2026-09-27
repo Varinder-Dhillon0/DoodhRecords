@@ -58,6 +58,7 @@ export interface DoodhContextType {
 }
 
 export type RootStackParamList = {
+  Welcome: undefined;
   MainTabs: undefined;
   EntryForm: { entry?: MilkEntry } | undefined;
 };

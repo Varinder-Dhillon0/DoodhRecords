@@ -19,6 +19,7 @@ import EntriesScreen from "./src/screens/EntriesScreen";
 import ReportsScreen from "./src/screens/ReportsScreen";
 import SettingsScreen from "./src/screens/SettingsScreen";
 import EntryFormScreen from "./src/screens/EntryFormScreen";
+import WelcomeScreen from "./src/screens/WelcomeScreen";
 import { getStoredFontScale } from "./src/utils/storageManager";
 import { SnackbarProvider } from "./src/context/SnackbarContext";
 
@@ -88,7 +89,8 @@ function MainNavigator() {
   }
 
   return (
-    <Stack.Navigator screenOptions={{ headerShown: false }}>
+    <Stack.Navigator initialRouteName="Welcome" screenOptions={{ headerShown: false }}>
+      <Stack.Screen name="Welcome" component={WelcomeScreen} />
       <Stack.Screen name="MainTabs" component={Tabs} />
       <Stack.Screen name="EntryForm" component={EntryFormScreen} />
     </Stack.Navigator>

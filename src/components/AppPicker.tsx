@@ -43,6 +43,7 @@ type PickerOptionRowProps = {
   index: number;
   visible: boolean;
   onPress: () => void;
+  onSelectedLayout?: (y: number) => void;
 };
 
 function PickerOptionRow({
@@ -51,6 +52,7 @@ function PickerOptionRow({
   index,
   visible,
   onPress,
+  onSelectedLayout,
 }: PickerOptionRowProps) {
   const progress = useRef(new Animated.Value(0)).current;
 
@@ -69,6 +71,7 @@ function PickerOptionRow({
 
   return (
     <Animated.View
+      onLayout={(event) => onSelectedLayout?.(event.nativeEvent.layout.y)}
       style={{
         opacity: progress,
         transform: [
@@ -118,6 +121,7 @@ export default function AppPicker<T extends string | number>({
   const insets = useSafeAreaInsets();
   const { t } = useTranslation();
   const anchorRef = useRef<View>(null);
+  const optionsScrollRef = useRef<ScrollView>(null);
   const popupProgress = useRef(new Animated.Value(0)).current;
   const [visible, setVisible] = useState(false);
   const [position, setPosition] = useState<PopupPosition | null>(null);
@@ -249,6 +253,7 @@ export default function AppPicker<T extends string | number>({
               ]}
             >
               <ScrollView
+                ref={optionsScrollRef}
                 bounces={false}
                 keyboardShouldPersistTaps="handled"
                 showsVerticalScrollIndicator={options.length > 5}
@@ -260,6 +265,11 @@ export default function AppPicker<T extends string | number>({
                     selected={index === selectedIndex}
                     index={index}
                     visible={visible}
+                    onSelectedLayout={
+                      index === selectedIndex
+                        ? (y) => optionsScrollRef.current?.scrollTo({ y, animated: false })
+                        : undefined
+                    }
                     onPress={() => selectOption(option.value, index)}
                   />
                 ))}

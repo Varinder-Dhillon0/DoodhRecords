@@ -3,6 +3,7 @@
     "name": "Doodh Records",
     "slug": "doodh-records",
     "version": "1.0.0",
+    "icon": "./assets/app-icon.png",
     "orientation": "portrait",
     "userInterfaceStyle": "light",
     "assetBundlePatterns": [
@@ -10,7 +11,11 @@
     ],
     "android": {
       "package": "com.doodhrecords.app",
-      "permissions": []
+      "permissions": [],
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/app-icon.png",
+        "backgroundColor": "#FFFFFF"
+      }
     },
     "plugins": [
       "expo-font",

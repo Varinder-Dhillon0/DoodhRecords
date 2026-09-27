@@ -1,5 +1,5 @@
 import React, { useMemo } from "react";
-import { View, ScrollView, StyleSheet } from "react-native";
+import { View, ScrollView, StyleSheet, Image } from "react-native";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 import { useNavigation } from "@react-navigation/native";
 import { StackNavigationProp } from "@react-navigation/stack";
@@ -208,10 +208,11 @@ export default function HomeScreen() {
             ))
           ) : (
             <View style={styles.emptyContainer}>
-              <MaterialCommunityIcons
-                name="clipboard-text-outline"
-                size={36}
-                color="#94A3B8"
+              <Image
+                source={require("../../assets/nullstate.png")}
+                style={styles.emptyImage}
+                resizeMode="contain"
+                accessibilityIgnoresInvertColors
               />
               <Text style={styles.emptyText}>{t("home.empty")}</Text>
             </View>
@@ -477,6 +478,7 @@ const styles = StyleSheet.create({
     padding: 32,
     gap: 8,
   },
+  emptyImage: { width: 180, height: 134 },
   emptyText: {
     textAlign: "center",
     color: "#94A3B8",

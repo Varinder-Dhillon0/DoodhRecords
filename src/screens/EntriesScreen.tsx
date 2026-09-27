@@ -1,11 +1,13 @@
-import React, { useMemo, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import {
+  Animated,
   View,
   ScrollView,
   Pressable,
   StyleSheet,
   Modal,
   Alert,
+  Image,
 } from "react-native";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 import { useNavigation } from "@react-navigation/native";
@@ -40,6 +42,17 @@ export default function EntriesScreen() {
   const [selectedMonth, setSelectedMonth] = useState<string>(currentMonth);
   const [selectedYear, setSelectedYear] = useState<string>(currentYear);
   const [sheetEntry, setSheetEntry] = useState<MilkEntry | null>(null);
+  const sheetProgress = useRef(new Animated.Value(0)).current;
+
+  useEffect(() => {
+    if (!sheetEntry) return;
+    sheetProgress.setValue(0);
+    Animated.timing(sheetProgress, {
+      toValue: 1,
+      duration: 180,
+      useNativeDriver: true,
+    }).start();
+  }, [sheetEntry, sheetProgress]);
 
   const pricedEntries = useMemo(
     () =>
@@ -183,10 +196,11 @@ export default function EntriesScreen() {
           ))
         ) : (
           <View style={styles.emptyContainer}>
-            <MaterialCommunityIcons
-              name="file-document-outline"
-              size={42}
-              color="#CBD5E1"
+            <Image
+              source={require("../../assets/nullstate.png")}
+              style={styles.emptyImage}
+              resizeMode="contain"
+              accessibilityIgnoresInvertColors
             />
             <Text style={styles.emptyTitle}>{t("entries.emptyTitle")}</Text>
             <Text style={styles.emptySubtitle}>
@@ -199,97 +213,115 @@ export default function EntriesScreen() {
       <Modal
         transparent
         visible={!!sheetEntry}
-        animationType="slide"
+        animationType="none"
         onRequestClose={closeEntrySheet}
       >
         <Pressable style={styles.sheetBackdrop} onPress={closeEntrySheet}>
-          <Pressable style={styles.sheet} onPress={(e) => e.stopPropagation()}>
-            <View style={styles.sheetIndicator} />
-            <View style={styles.sheetHeader}>
-              <View>
-                <Text style={styles.sheetTitle}>
-                  {sheetEntry &&
-                    t("entries.entryTitle", {
-                      shift: t(`shifts.${sheetEntry.shift.toLowerCase()}`),
-                      animal: t(`animals.${sheetEntry.animal.toLowerCase()}`),
-                    })}
-                </Text>
-                <Text style={styles.sheetStats}>
-                  {formatDisplayDate(sheetEntry?.date, i18n.language)} •{" "}
-                  {formatNumber(sheetEntry?.milk_quantity, 1)}kg •{" "}
-                  {formatCurrency(
-                    (sheetEntry?.fat_percentage ?? 0) *
-                      (sheetEntry?.milk_quantity ?? 0) *
-                      (sheetEntry?.price ?? 0),
-                  )}
-                </Text>
+          <Animated.View
+            style={[
+              styles.sheet,
+              {
+                transform: [
+                  {
+                    translateY: sheetProgress.interpolate({
+                      inputRange: [0, 1],
+                      outputRange: [72, 0],
+                    }),
+                  },
+                ],
+              },
+            ]}
+          >
+            <Pressable onPress={(e) => e.stopPropagation()}>
+              <View style={styles.sheetIndicator} />
+              <View style={styles.sheetHeader}>
+                <View>
+                  <Text style={styles.sheetTitle}>
+                    {sheetEntry &&
+                      t("entries.entryTitle", {
+                        shift: t(`shifts.${sheetEntry.shift.toLowerCase()}`),
+                        animal: t(`animals.${sheetEntry.animal.toLowerCase()}`),
+                      })}
+                  </Text>
+                  <Text style={styles.sheetStats}>
+                    {formatDisplayDate(sheetEntry?.date, i18n.language)} •{" "}
+                    {formatNumber(sheetEntry?.milk_quantity, 1)}kg •{" "}
+                    {formatCurrency(
+                      (sheetEntry?.fat_percentage ?? 0) *
+                        (sheetEntry?.milk_quantity ?? 0) *
+                        (sheetEntry?.price ?? 0),
+                    )}
+                  </Text>
+                </View>
+                <Button
+                  size="sm"
+                  onPress={closeEntrySheet}
+                  style={styles.closeButton}
+                >
+                  <MaterialCommunityIcons
+                    name="close"
+                    size={20}
+                    color="#64748B"
+                  />
+                </Button>
               </View>
-              <Button
-                size="sm"
-                onPress={closeEntrySheet}
-                style={styles.closeButton}
-              >
-                <MaterialCommunityIcons
-                  name="close"
-                  size={20}
-                  color="#64748B"
-                />
-              </Button>
-            </View>
 
-            <View style={styles.sheetActions}>
-              <Button
-                size="sm"
-                onPress={handleEdit}
-                style={styles.actionButton}
-              >
-                <View
-                  style={[styles.actionIcon, { backgroundColor: "#E9F7EC" }]}
+              <View style={styles.sheetActions}>
+                <Button
+                  size="sm"
+                  onPress={handleEdit}
+                  style={styles.actionButton}
                 >
-                  <MaterialCommunityIcons
-                    name="pencil"
-                    size={18}
-                    color={COLORS.brand}
-                  />
-                </View>
-                <Text style={styles.actionText}>{t("entries.edit")}</Text>
-              </Button>
+                  <View
+                    style={[styles.actionIcon, { backgroundColor: "#E9F7EC" }]}
+                  >
+                    <MaterialCommunityIcons
+                      name="pencil"
+                      size={18}
+                      color={COLORS.brand}
+                    />
+                  </View>
+                  <Text style={styles.actionText}>{t("entries.edit")}</Text>
+                </Button>
 
-              <Button
-                size="sm"
-                onPress={handleDuplicate}
-                style={styles.actionButton}
-              >
-                <View
-                  style={[styles.actionIcon, { backgroundColor: "#EFF6FF" }]}
+                <Button
+                  size="sm"
+                  onPress={handleDuplicate}
+                  style={styles.actionButton}
                 >
-                  <MaterialCommunityIcons
-                    name="content-copy"
-                    size={18}
-                    color="#2563EB"
-                  />
-                </View>
-                <Text style={styles.actionText}>{t("entries.duplicate")}</Text>
-              </Button>
+                  <View
+                    style={[styles.actionIcon, { backgroundColor: "#EFF6FF" }]}
+                  >
+                    <MaterialCommunityIcons
+                      name="content-copy"
+                      size={18}
+                      color="#2563EB"
+                    />
+                  </View>
+                  <Text style={styles.actionText}>
+                    {t("entries.duplicate")}
+                  </Text>
+                </Button>
 
-              <Button
-                size="sm"
-                onPress={handleDelete}
-                style={[styles.actionButton, styles.deleteActionButton]}
-              >
-                <View
-                  style={[styles.actionIcon, { backgroundColor: "#FEE2E2" }]}
+                <Button
+                  size="sm"
+                  onPress={handleDelete}
+                  style={[styles.actionButton, styles.deleteActionButton]}
                 >
-                  <MaterialCommunityIcons
-                    name="trash-can-outline"
-                    size={18}
-                    color="#DC2626"
-                  />
-                </View>
-                <Text style={styles.deleteText}>{t("entries.delete")}</Text>
-              </Button>
-            </View>
-          </Pressable>
+                  <View
+                    style={[styles.actionIcon, { backgroundColor: "#FEE2E2" }]}
+                  >
+                    <MaterialCommunityIcons
+                      name="trash-can-outline"
+                      size={18}
+                      color="#DC2626"
+                    />
+                  </View>
+                  <Text style={styles.deleteText}>{t("entries.delete")}</Text>
+                </Button>
+              </View>
+            </Pressable>
+          </Animated.View>
         </Pressable>
       </Modal>
     </View>
@@ -384,6 +416,7 @@ const styles = StyleSheet.create({
     padding: 40,
     gap: 6,
   },
+  emptyImage: { width: 220, height: 184 },
   emptyTitle: {
     fontSize: TYPOGRAPHY.bodyLarge,
     fontWeight: "700",
@@ -405,7 +438,7 @@ const styles = StyleSheet.create({
     borderTopLeftRadius: 24,
     borderTopRightRadius: 24,
     padding: 20,
-    paddingBottom: 36,
+    paddingBottom: 20,
   },
   sheetIndicator: {
     width: 36,

@@ -52,6 +52,18 @@
     "empty": "No entries recorded yet.",
     "milkAndFat": "{{quantity}}kg • {{fat}}% Fat"
   },
+  "welcome": {
+    "title": "Doodh Records",
+    "subtitle": "Keep track of your daily milk sales easily",
+    "recordTitle": "Record daily sales",
+    "recordDescription": "Add milk quantity and fat %",
+    "reportsTitle": "View reports",
+    "reportsDescription": "See total sales and averages",
+    "simpleTitle": "Simple & fast",
+    "simpleDescription": "Designed for daily use",
+    "continue": "Get Started",
+    "illustration": "Cow and milk can illustration"
+  },
   "entries": {
     "title": "All Entries",
     "dateShift": "Date / Shift",
