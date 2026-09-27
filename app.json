@@ -23,6 +23,11 @@
     ],
     "ios": {
       "bundleIdentifier": "com.doodhrecords.app"
+    },
+    "extra": {
+      "eas": {
+        "projectId": "a7f6a1d1-7ff4-4d51-b72e-9c221a32d275"
+      }
     }
   }
 }

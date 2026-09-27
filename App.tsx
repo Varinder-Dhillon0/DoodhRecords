@@ -4,7 +4,7 @@ import { NavigationContainer } from "@react-navigation/native";
 import { createStackNavigator } from "@react-navigation/stack";
 import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
 import { StatusBar } from "expo-status-bar";
-import { SafeAreaProvider } from "react-native-safe-area-context";
+import { SafeAreaProvider, useSafeAreaInsets } from "react-native-safe-area-context";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 
 import { COLORS } from "./src/constants";
@@ -29,6 +29,7 @@ const Tab = createBottomTabNavigator<MainTabParamList>();
 function Tabs() {
   const { t } = useTranslation();
   const { typography } = useFontScale();
+  const insets = useSafeAreaInsets();
 
   return (
     <Tab.Navigator
@@ -37,9 +38,9 @@ function Tabs() {
         tabBarActiveTintColor: COLORS.brand,
         tabBarInactiveTintColor: "#64748B",
         tabBarStyle: {
-          height: 64,
+          height: 64 + insets.bottom,
           paddingTop: 6,
-          paddingBottom: 8,
+          paddingBottom: Math.max(insets.bottom, 8),
           backgroundColor: "#ffffff",
           borderTopWidth: 1,
           borderTopColor: "#E2E8F0",
