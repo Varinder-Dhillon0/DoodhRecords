@@ -1,14 +1,11 @@
-import * as FileSystem from "expo-file-system";
+import { Directory, File, Paths } from "expo-file-system";
 import { Animal, AnimalPricing, MilkEntry, PricingConfig } from "../types";
 import { getYearAndMonth } from "./dateUtils";
 import { calculateEarnings as calcEarnings } from "./calculations";
 
-const documentDir =
-  (FileSystem as any).documentDirectory ||
-  (FileSystem as any).cacheDirectory ||
-  "";
-const STORAGE_DIR = `${documentDir}doodh_records/`;
-export const PRICING_FILE = `${STORAGE_DIR}pricing_config.csv`;
+const baseDir = Paths.document ?? Paths.cache;
+const storageDir = new Directory(baseDir, "doodh_records");
+export const PRICING_FILE = new File(storageDir, "pricing_config.csv").uri;
 
 const csvEscape = (value: string | number | undefined | null): string => {
   const stringValue = String(value ?? "");
@@ -49,14 +46,13 @@ const parseCsvLine = (line: string): string[] => {
   return values.map((value) => value.trim());
 };
 
-const readCsvFile = async (filePath: string): Promise<string[][]> => {
+const readCsvFile = async (file: File): Promise<string[][]> => {
   try {
-    const fileInfo = await FileSystem.getInfoAsync(filePath);
-    if (!fileInfo.exists) {
+    if (!file.exists) {
       return [];
     }
 
-    const content = await FileSystem.readAsStringAsync(filePath);
+    const content = await file.text();
     if (!content.trim()) {
       return [];
     }
@@ -66,41 +62,37 @@ const readCsvFile = async (filePath: string): Promise<string[][]> => {
       .filter((line) => line.trim())
       .map((line) => parseCsvLine(line));
   } catch (err) {
-    console.error(`Error reading CSV file at ${filePath}:`, err);
+    console.error(`Error reading CSV file at ${file.uri}:`, err);
     return [];
   }
 };
 
 const writeCsvFile = async (
-  filePath: string,
+  file: File,
   rows: (string | number)[][],
 ): Promise<void> => {
   try {
-    const dirInfo = await FileSystem.getInfoAsync(STORAGE_DIR);
-    if (!dirInfo.exists) {
-      await FileSystem.makeDirectoryAsync(STORAGE_DIR, { intermediates: true });
+    if (!storageDir.exists) {
+      storageDir.create();
     }
 
     const content = rows.map((row) => row.map(csvEscape).join(",")).join("\n");
-    await FileSystem.writeAsStringAsync(filePath, `${content}\n`);
+    file.write(`${content}\n`);
   } catch (err) {
-    console.error(`Error writing CSV file at ${filePath}:`, err);
+    console.error(`Error writing CSV file at ${file.uri}:`, err);
   }
 };
 
-const getMonthlyFilePath = (yearStr: string, monthStr: string): string => {
+const getMonthlyFile = (yearStr: string, monthStr: string): File => {
   const year = String(yearStr);
   const month = String(monthStr).padStart(2, "0");
-  return `${STORAGE_DIR}entries_${year}_${month}.csv`;
+  return new File(storageDir, `entries_${year}_${month}.csv`);
 };
 
-const getMonthlyPricingFilePath = (
-  yearStr: string,
-  monthStr: string,
-): string => {
+const getMonthlyPricingFile = (yearStr: string, monthStr: string): File => {
   const year = String(yearStr);
   const month = String(monthStr).padStart(2, "0");
-  return `${STORAGE_DIR}pricing_${year}_${month}.csv`;
+  return new File(storageDir, `pricing_${year}_${month}.csv`);
 };
 
 const getHeaders = (): string[] => [
@@ -115,23 +107,18 @@ const getHeaders = (): string[] => [
 ];
 
 export const initializeStorage = async (): Promise<void> => {
-  const dirInfo = await FileSystem.getInfoAsync(STORAGE_DIR);
-  if (!dirInfo.exists) {
-    await FileSystem.makeDirectoryAsync(STORAGE_DIR, { intermediates: true });
+  if (!storageDir.exists) {
+    storageDir.create();
   }
 
-  const pricingInfo = await FileSystem.getInfoAsync(PRICING_FILE);
-  if (!pricingInfo.exists) {
-    await FileSystem.writeAsStringAsync(
-      PRICING_FILE,
-      "month,year,animal,price_per_fat\n",
-    );
+  const pricingFile = new File(storageDir, "pricing_config.csv");
+  if (!pricingFile.exists) {
+    pricingFile.write("month,year,animal,price_per_fat\n");
   }
 
   const { year, month } = getYearAndMonth();
-  const filePath = getMonthlyFilePath(year, month);
-  const fileInfo = await FileSystem.getInfoAsync(filePath);
-  if (!fileInfo.exists) {
+  const filePath = getMonthlyFile(year, month);
+  if (!filePath.exists) {
     await writeCsvFile(filePath, [getHeaders()]);
   }
 };
@@ -140,7 +127,8 @@ export const getPricingConfig = async (): Promise<PricingConfig> => {
   const config: PricingConfig = {};
 
   // 1. Read global pricing_config.csv
-  const rows = await readCsvFile(PRICING_FILE);
+  const pricingFile = new File(storageDir, "pricing_config.csv");
+  const rows = await readCsvFile(pricingFile);
   if (rows.length > 0) {
     const dataRows = rows[0][0] === "month" ? rows.slice(1) : rows;
     dataRows.forEach((row) => {
@@ -160,22 +148,22 @@ export const getPricingConfig = async (): Promise<PricingConfig> => {
 
   // 2. Scan monthly pricing files pricing_YYYY_MM.csv
   try {
-    const dirInfo = await FileSystem.getInfoAsync(STORAGE_DIR);
-    if (dirInfo.exists) {
-      const files = await FileSystem.readDirectoryAsync(STORAGE_DIR);
-      const pricingFiles = files.filter(
-        (f) =>
-          f.startsWith("pricing_") &&
-          f.endsWith(".csv") &&
-          f !== "pricing_config.csv",
+    if (storageDir.exists) {
+      const contents = storageDir.list();
+      const pricingFiles = contents.filter(
+        (item): item is File =>
+          item instanceof File &&
+          item.name.startsWith("pricing_") &&
+          item.name.endsWith(".csv") &&
+          item.name !== "pricing_config.csv",
       );
 
       for (const file of pricingFiles) {
-        const match = file.match(/^pricing_(\d{4})_(\d{2})\.csv$/);
+        const match = file.name.match(/^pricing_(\d{4})_(\d{2})\.csv$/);
         if (match) {
           const [, year, month] = match;
           const key = `${year}-${month}`;
-          const monthlyRows = await readCsvFile(`${STORAGE_DIR}${file}`);
+          const monthlyRows = await readCsvFile(file);
           const dataRows =
             monthlyRows.length > 0 && monthlyRows[0][0] === "animal"
               ? monthlyRows.slice(1)
@@ -213,7 +201,8 @@ export const savePricingConfig = async (
   const month = String(monthStr).padStart(2, "0");
 
   // 1. Update global pricing_config.csv
-  const rows = await readCsvFile(PRICING_FILE);
+  const pricingFile = new File(storageDir, "pricing_config.csv");
+  const rows = await readCsvFile(pricingFile);
   const dataRows =
     rows.length > 0 && rows[0][0] === "month" ? rows.slice(1) : rows;
   const filteredRows = dataRows.filter(
@@ -221,13 +210,13 @@ export const savePricingConfig = async (
   );
   const mergedRows = [...filteredRows, [month, year, animal, String(price)]];
   const header = ["month", "year", "animal", "price_per_fat"];
-  await writeCsvFile(PRICING_FILE, [
+  await writeCsvFile(pricingFile, [
     header,
     ...mergedRows.filter((row) => row.length >= 4),
   ]);
 
   // 2. Maintain monthly pricing CSV: pricing_YYYY_MM.csv
-  const monthlyFilePath = getMonthlyPricingFilePath(year, month);
+  const monthlyFile = getMonthlyPricingFile(year, month);
   const currentConfig = await getPricingConfig();
   const existingMonthly = currentConfig[`${year}-${month}`] || {
     Cow: 8,
@@ -244,7 +233,7 @@ export const savePricingConfig = async (
     ["Cow", String(updatedMonthly.Cow)],
     ["Buffalo", String(updatedMonthly.Buffalo)],
   ];
-  await writeCsvFile(monthlyFilePath, monthlyRows);
+  await writeCsvFile(monthlyFile, monthlyRows);
 };
 
 export const getPricingForDate = async (
@@ -278,12 +267,11 @@ export const ensureMonthlyFile = async (
 ): Promise<string> => {
   const year = String(yearStr);
   const month = String(monthStr).padStart(2, "0");
-  const filePath = getMonthlyFilePath(year, month);
-  const fileInfo = await FileSystem.getInfoAsync(filePath);
-  if (!fileInfo.exists) {
-    await writeCsvFile(filePath, [getHeaders()]);
+  const file = getMonthlyFile(year, month);
+  if (!file.exists) {
+    await writeCsvFile(file, [getHeaders()]);
   }
-  return filePath;
+  return file.uri;
 };
 
 export const readEntriesForMonth = async (
@@ -292,8 +280,12 @@ export const readEntriesForMonth = async (
 ): Promise<MilkEntry[]> => {
   const year = String(yearStr);
   const month = String(monthStr).padStart(2, "0");
-  const filePath = await ensureMonthlyFile(year, month);
-  const rows = await readCsvFile(filePath);
+  const file = getMonthlyFile(year, month);
+  if (!file.exists) {
+    await writeCsvFile(file, [getHeaders()]);
+  }
+
+  const rows = await readCsvFile(file);
   if (rows.length <= 1) {
     return [];
   }
@@ -325,7 +317,11 @@ export const writeEntriesForMonth = async (
 ): Promise<void> => {
   const year = String(yearStr);
   const month = String(monthStr).padStart(2, "0");
-  const filePath = await ensureMonthlyFile(year, month);
+  const file = getMonthlyFile(year, month);
+  if (!file.exists) {
+    await writeCsvFile(file, [getHeaders()]);
+  }
+
   const rows: (string | number)[][] = [getHeaders()];
 
   entries.forEach((entry) => {
@@ -341,7 +337,7 @@ export const writeEntriesForMonth = async (
     ]);
   });
 
-  await writeCsvFile(filePath, rows);
+  await writeCsvFile(file, rows);
 };
 
 export const addEntry = async (
@@ -430,17 +426,19 @@ export const deleteEntry = async (
 
 export const readAllEntries = async (): Promise<MilkEntry[]> => {
   try {
-    const dirInfo = await FileSystem.getInfoAsync(STORAGE_DIR);
-    if (!dirInfo.exists) return [];
+    if (!storageDir.exists) return [];
 
-    const files = await FileSystem.readDirectoryAsync(STORAGE_DIR);
-    const entryFiles = files.filter(
-      (f) => f.startsWith("entries_") && f.endsWith(".csv"),
+    const contents = storageDir.list();
+    const entryFiles = contents.filter(
+      (item): item is File =>
+        item instanceof File &&
+        item.name.startsWith("entries_") &&
+        item.name.endsWith(".csv"),
     );
 
     const allEntries: MilkEntry[] = [];
     for (const file of entryFiles) {
-      const match = file.match(/^entries_(\d{4})_(\d{2})\.csv$/);
+      const match = file.name.match(/^entries_(\d{4})_(\d{2})\.csv$/);
       if (match) {
         const [, year, month] = match;
         const entries = await readEntriesForMonth(year, month);
