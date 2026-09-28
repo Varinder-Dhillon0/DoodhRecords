@@ -4,7 +4,10 @@ import { NavigationContainer } from "@react-navigation/native";
 import { createStackNavigator } from "@react-navigation/stack";
 import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
 import { StatusBar } from "expo-status-bar";
-import { SafeAreaProvider, useSafeAreaInsets } from "react-native-safe-area-context";
+import {
+  SafeAreaProvider,
+  useSafeAreaInsets,
+} from "react-native-safe-area-context";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 
 import { COLORS } from "./src/constants";
@@ -12,7 +15,10 @@ import { FONT_SCALE_RANGE } from "./src/constants/typography";
 import { initializeI18n } from "./src/i18n";
 import { useTranslation } from "react-i18next";
 import { DoodhProvider, useDoodhContext } from "./src/context/DoodhContext";
-import { FontScaleProvider, useFontScale } from "./src/context/FontScaleContext";
+import {
+  FontScaleProvider,
+  useFontScale,
+} from "./src/context/FontScaleContext";
 import { MainTabParamList, RootStackParamList } from "./src/types";
 import HomeScreen from "./src/screens/HomeScreen";
 import EntriesScreen from "./src/screens/EntriesScreen";
@@ -90,7 +96,10 @@ function MainNavigator() {
   }
 
   return (
-    <Stack.Navigator initialRouteName="Welcome" screenOptions={{ headerShown: false }}>
+    <Stack.Navigator
+      initialRouteName="Welcome"
+      screenOptions={{ headerShown: false }}
+    >
       <Stack.Screen name="Welcome" component={WelcomeScreen} />
       <Stack.Screen name="MainTabs" component={Tabs} />
       <Stack.Screen name="EntryForm" component={EntryFormScreen} />
