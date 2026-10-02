@@ -1,31 +1,34 @@
 export const BASE_FONT_SIZES = {
-  xs: 11,
-  sm: 12,
-  md: 13,
-  bodySmall: 14,
+  labelCaps: 11,
+  bodySm: 12,
+  titleMd: 14,
+  bodyMd: 14,
   body: 15,
-  bodyLarge: 16,
+  bodyLg: 16,
+  titleLg: 16,
   metric: 17,
-  headingSmall: 18,
-  heading: 20,
-  title: 22,
-  hero: 24,
-  display: 28,
+  headlineSm: 18,
+  headlineMd: 20,
+  headlineLg: 24,
+  metricDisplay: 28,
+  headlineXl: 32,
 } as const;
 
 export const TYPOGRAPHY = {
-  micro: BASE_FONT_SIZES.xs,
-  caption: BASE_FONT_SIZES.sm,
-  label: BASE_FONT_SIZES.md,
-  bodySmall: BASE_FONT_SIZES.bodySmall,
-  body: BASE_FONT_SIZES.body,
-  bodyLarge: BASE_FONT_SIZES.bodyLarge,
+  micro: BASE_FONT_SIZES.labelCaps,
+  caption: BASE_FONT_SIZES.bodySm,
+  label: BASE_FONT_SIZES.titleMd,
+  bodySmall: BASE_FONT_SIZES.bodySm,
+  body: BASE_FONT_SIZES.bodyMd,
+  bodyLarge: BASE_FONT_SIZES.bodyLg,
+  title: BASE_FONT_SIZES.titleLg,
   metric: BASE_FONT_SIZES.metric,
-  headingSmall: BASE_FONT_SIZES.headingSmall,
-  heading: BASE_FONT_SIZES.heading,
-  screenTitle: BASE_FONT_SIZES.title,
-  brandTitle: BASE_FONT_SIZES.hero,
-  display: BASE_FONT_SIZES.display,
+  headingSmall: BASE_FONT_SIZES.headlineSm,
+  heading: BASE_FONT_SIZES.headlineMd,
+  screenTitle: BASE_FONT_SIZES.headlineMd,
+  brandTitle: BASE_FONT_SIZES.headlineLg,
+  display: BASE_FONT_SIZES.metricDisplay,
+  headlineXl: BASE_FONT_SIZES.headlineXl,
 } as const;
 
 export type TypographyName = keyof typeof TYPOGRAPHY;
@@ -95,12 +98,17 @@ export const getNearestFontScaleOption = (value: number): FontScaleOption =>
       : nearest,
   );
 
+const baseSizeToName = new Map<number, TypographyName>(
+  (Object.keys(TYPOGRAPHY) as TypographyName[]).map((name) => [
+    TYPOGRAPHY[name],
+    name,
+  ]),
+);
+
 export const getTypographySize = (
   baseSize: number,
   runtimeTypography: RuntimeTypography,
 ): number => {
-  const semanticName = Object.keys(TYPOGRAPHY).find(
-    (name) => TYPOGRAPHY[name as TypographyName] === baseSize,
-  ) as TypographyName | undefined;
+  const semanticName = baseSizeToName.get(baseSize);
   return semanticName ? runtimeTypography[semanticName] : baseSize;
 };

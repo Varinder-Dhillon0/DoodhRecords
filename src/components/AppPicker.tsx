@@ -14,6 +14,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useTranslation } from "react-i18next";
 import Text from "./ScaledText";
 import { useFontScale } from "../context/FontScaleContext";
+import { COLORS, RADII, SHADOWS, withAlpha } from "../constants";
 
 export type AppPickerOption<T extends string | number> = {
   label: string;
@@ -100,7 +101,11 @@ function PickerOptionRow({
           {label}
         </Text>
         {selected && (
-          <MaterialCommunityIcons name="check" size={18} color="#1E5631" />
+          <MaterialCommunityIcons
+            name="check"
+            size={18}
+            color={COLORS.brand}
+          />
         )}
       </Pressable>
     </Animated.View>
@@ -212,7 +217,7 @@ export default function AppPicker<T extends string | number>({
           <MaterialCommunityIcons
             name="chevron-down"
             size={20}
-            color={variant === "field" ? "#0F172A" : "#334155"}
+            color={variant === "field" ? COLORS.text : COLORS.muted}
           />
         </Pressable>
       </View>
@@ -286,46 +291,45 @@ const styles = StyleSheet.create({
   container: {
     justifyContent: "center",
     overflow: "hidden",
-    borderRadius: 10,
+    borderRadius: RADII.pill,
   },
   filter: {
     minWidth: 110,
-    height: 44,
-    backgroundColor: "#F1F5F9",
+    height: 38,
+    backgroundColor: COLORS.surfaceLow,
+    borderWidth: 1,
+    borderColor: COLORS.borderSoft,
   },
   field: {
     height: 50,
-    backgroundColor: "#fff",
-    borderRadius: 14,
+    backgroundColor: COLORS.surface,
+    borderRadius: RADII.control,
     borderWidth: 1,
-    borderColor: "#CBD5E1",
+    borderColor: COLORS.surfaceContainer,
   },
   trigger: {
     flex: 1,
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
-    paddingHorizontal: 10,
+    paddingHorizontal: 14,
   },
-  valueText: { flex: 1, color: "#334155", paddingRight: 4 },
-  fieldValueText: { color: "#0F172A" },
+  valueText: { flex: 1, color: COLORS.muted, paddingRight: 4 },
+  fieldValueText: { color: COLORS.text },
   disabled: { opacity: 0.5 },
   modalRoot: { flex: 1 },
   backdrop: {
     ...StyleSheet.absoluteFill,
-    backgroundColor: "rgba(15,23,42,0.12)",
+    backgroundColor: withAlpha("#0F172A", 0.16),
   },
   popup: {
     position: "absolute",
-    backgroundColor: "#fff",
-    borderRadius: 12,
+    backgroundColor: COLORS.surface,
+    borderRadius: RADII.control,
     paddingVertical: 4,
     paddingHorizontal: 4,
+    ...SHADOWS.card,
     elevation: 8,
-    shadowColor: "#000",
-    shadowOpacity: 0.16,
-    shadowRadius: 10,
-    shadowOffset: { width: 0, height: 4 },
   },
   option: {
     minHeight: 48,
@@ -334,11 +338,11 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
-    borderRadius: 8,
+    borderRadius: RADII.control,
     gap: 8,
   },
-  selectedOption: { backgroundColor: "#E9F7EC" },
+  selectedOption: { backgroundColor: withAlpha(COLORS.brandLight, 0.55) },
   pressedOption: { opacity: 0.72 },
-  optionText: { flex: 1, color: "#334155" },
-  selectedOptionText: { color: "#1E5631", fontWeight: "700" },
+  optionText: { flex: 1, color: COLORS.muted },
+  selectedOptionText: { color: COLORS.brand, fontWeight: "700" },
 });

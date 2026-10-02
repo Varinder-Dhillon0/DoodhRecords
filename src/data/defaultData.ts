@@ -14,7 +14,6 @@ export const defaultEntries: MilkEntry[] = [
     milk_quantity: 15,
     fat_percentage: 6.5,
     price: 9,
-    earnings: 877.5,
     notes: "Good quality morning yield",
   },
   {
@@ -25,7 +24,6 @@ export const defaultEntries: MilkEntry[] = [
     milk_quantity: 20,
     fat_percentage: 4.2,
     price: 8,
-    earnings: 672,
     notes: "",
   },
   {
@@ -36,7 +34,6 @@ export const defaultEntries: MilkEntry[] = [
     milk_quantity: 14,
     fat_percentage: 7,
     price: 9,
-    earnings: 882,
     notes: "",
   },
   {
@@ -47,7 +44,6 @@ export const defaultEntries: MilkEntry[] = [
     milk_quantity: 22,
     fat_percentage: 4,
     price: 8,
-    earnings: 704,
     notes: "",
   },
   {
@@ -58,7 +54,6 @@ export const defaultEntries: MilkEntry[] = [
     milk_quantity: 18,
     fat_percentage: 4.5,
     price: 7.5,
-    earnings: 607.5,
     notes: "Independence day collection",
   },
 ];

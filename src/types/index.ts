@@ -1,3 +1,5 @@
+import type { NavigatorScreenParams } from "@react-navigation/native";
+
 export type Animal = "Cow" | "Buffalo";
 export type Shift = "Morning" | "Evening";
 
@@ -44,9 +46,8 @@ export interface DoodhContextType {
     price: number,
   ) => Promise<void>;
   addEntry: (
-    entry: Omit<MilkEntry, "id" | "earnings" | "price"> & {
+    entry: Omit<MilkEntry, "id" | "price"> & {
       id?: number;
-      earnings?: number;
       price?: number;
     },
   ) => Promise<MilkEntry>;
@@ -59,7 +60,7 @@ export interface DoodhContextType {
 
 export type RootStackParamList = {
   Welcome: undefined;
-  MainTabs: undefined;
+  MainTabs: NavigatorScreenParams<MainTabParamList> | undefined;
   EntryForm: { entry?: MilkEntry } | undefined;
 };
 

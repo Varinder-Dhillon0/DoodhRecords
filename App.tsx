@@ -10,7 +10,8 @@ import {
 } from "react-native-safe-area-context";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 
-import { COLORS } from "./src/constants";
+import { COLORS, RADII } from "./src/constants";
+import { FONT_FAMILY, loadAppFonts } from "./src/constants/fonts";
 import { FONT_SCALE_RANGE } from "./src/constants/typography";
 import { initializeI18n } from "./src/i18n";
 import { useTranslation } from "react-i18next";
@@ -42,34 +43,43 @@ function Tabs() {
       screenOptions={({ route }) => ({
         headerShown: false,
         tabBarActiveTintColor: COLORS.brand,
-        tabBarInactiveTintColor: "#64748B",
+        tabBarInactiveTintColor: COLORS.muted,
         tabBarStyle: {
           height: 64 + insets.bottom,
           paddingTop: 6,
           paddingBottom: Math.max(insets.bottom, 8),
-          backgroundColor: "#ffffff",
-          borderTopWidth: 1,
-          borderTopColor: "#E2E8F0",
+          backgroundColor: COLORS.background,
+          borderTopWidth: 0,
+          borderTopLeftRadius: RADII.card,
+          borderTopRightRadius: RADII.card,
+          shadowColor: "#0F172A",
+          shadowOpacity: 0.08,
+          shadowRadius: 16,
+          shadowOffset: { width: 0, height: -4 },
+          elevation: 12,
+        },
+        tabBarItemStyle: {
+          borderRadius: RADII.control,
         },
         tabBarLabelStyle: {
-          fontSize: typography.micro,
-          fontWeight: "700",
+          fontFamily: FONT_FAMILY.bold,
+          fontSize: typography.caption,
           marginBottom: 2,
         },
         tabBarLabel: t(`navigation.${route.name.toLowerCase()}`),
-        tabBarIcon: ({ color, size }) => {
+        tabBarIcon: ({ focused, color, size }) => {
           const iconName =
             {
-              Home: "home-variant",
-              Entries: "clipboard-text",
-              Reports: "chart-box",
-              Settings: "cog",
+              Home: focused ? "home" : "home-outline",
+              Entries: focused ? "clipboard-text" : "clipboard-text-outline",
+              Reports: focused ? "chart-box" : "chart-box-outline",
+              Settings: focused ? "cog" : "cog-outline",
             }[route.name] || "circle";
 
           return (
             <MaterialCommunityIcons
               name={iconName as any}
-              size={size ?? 22}
+              size={size ?? 24}
               color={color}
             />
           );
@@ -102,12 +112,22 @@ function MainNavigator() {
     >
       <Stack.Screen name="Welcome" component={WelcomeScreen} />
       <Stack.Screen name="MainTabs" component={Tabs} />
-      <Stack.Screen name="EntryForm" component={EntryFormScreen} />
+      <Stack.Screen
+        name="EntryForm"
+        component={EntryFormScreen}
+        options={{
+          presentation: "transparentModal",
+          animation: "none",
+          cardOverlayEnabled: false,
+          gestureEnabled: false,
+        }}
+      />
     </Stack.Navigator>
   );
 }
 
 export default function App() {
+  const [fontsLoaded] = loadAppFonts();
   const [initialFontScale, setInitialFontScale] = useState<number | null>(null);
 
   useEffect(() => {
@@ -116,24 +136,26 @@ export default function App() {
     );
   }, []);
 
+  if (!fontsLoaded || initialFontScale === null) {
+    return (
+      <View style={styles.loadingContainer}>
+        <ActivityIndicator size="large" color={COLORS.brand} />
+      </View>
+    );
+  }
+
   return (
     <SafeAreaProvider>
       <StatusBar style="dark" />
-      {initialFontScale !== null ? (
-        <FontScaleProvider initialScale={initialFontScale}>
-          <DoodhProvider>
-            <SnackbarProvider>
-              <NavigationContainer>
-                <MainNavigator />
-              </NavigationContainer>
-            </SnackbarProvider>
-          </DoodhProvider>
-        </FontScaleProvider>
-      ) : (
-        <View style={styles.loadingContainer}>
-          <ActivityIndicator size="large" color={COLORS.brand} />
-        </View>
-      )}
+      <FontScaleProvider initialScale={initialFontScale}>
+        <DoodhProvider>
+          <SnackbarProvider>
+            <NavigationContainer>
+              <MainNavigator />
+            </NavigationContainer>
+          </SnackbarProvider>
+        </DoodhProvider>
+      </FontScaleProvider>
     </SafeAreaProvider>
   );
 }
@@ -143,6 +165,6 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: "center",
     alignItems: "center",
-    backgroundColor: "#F8FAFC",
+    backgroundColor: COLORS.background,
   },
 });

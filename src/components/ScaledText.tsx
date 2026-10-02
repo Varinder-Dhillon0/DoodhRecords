@@ -10,14 +10,28 @@ import {
 } from "react-native";
 import { useFontScale } from "../context/FontScaleContext";
 import { getTypographySize } from "../constants/typography";
+import { resolveFontFamily } from "../constants/fonts";
 
 function useScaledTextStyle(style: StyleProp<TextStyle>): StyleProp<TextStyle> {
   const { typography } = useFontScale();
   return useMemo(() => {
-    const baseFontSize = StyleSheet.flatten(style)?.fontSize;
-    if (typeof baseFontSize !== "number") return style;
+    const flat = StyleSheet.flatten(style);
+    if (!flat) return style;
 
-    return [style, { fontSize: getTypographySize(baseFontSize, typography) }];
+    const fontFamily = resolveFontFamily(flat);
+    const baseFontSize = flat.fontSize;
+    const fontSize =
+      typeof baseFontSize === "number"
+        ? getTypographySize(baseFontSize, typography)
+        : undefined;
+
+    // The static Plus Jakarta Sans families already carry their weight, so the
+    // weight is neutralised to stop the platform from synthesising extra bolding.
+    if (fontSize === undefined) {
+      return [style, { fontFamily, fontWeight: "normal" }];
+    }
+
+    return [style, { fontFamily, fontWeight: "normal", fontSize }];
   }, [style, typography]);
 }
 

@@ -7,7 +7,7 @@ import {
   StyleSheet,
   ViewStyle,
 } from "react-native";
-import { COLORS } from "../constants";
+import { COLORS, RADII, SHADOWS } from "../constants";
 
 export type ButtonSize = "sm" | "md" | "lg";
 export type ButtonVariant = "primary" | "secondary" | "outline" | "custom";
@@ -46,7 +46,7 @@ const Button = forwardRef<React.ElementRef<typeof Pressable>, ButtonProps>(
       <>
         {loading ? (
           <ActivityIndicator
-            color={variant === "primary" ? "#fff" : COLORS.brand}
+            color={variant === "primary" ? COLORS.white : COLORS.brand}
           />
         ) : iconPosition === "left" ? (
           icon
@@ -84,11 +84,12 @@ export default Button;
 
 const styles = StyleSheet.create({
   primary: {
-    backgroundColor: COLORS.brand,
+    backgroundColor: COLORS.greenAccent,
     alignItems: "center",
     justifyContent: "center",
     flexDirection: "row",
     gap: 8,
+    ...SHADOWS.control,
   },
   secondary: {
     backgroundColor: COLORS.brandLight,
@@ -98,17 +99,17 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   outline: {
-    backgroundColor: "#fff",
+    backgroundColor: COLORS.surface,
     borderWidth: 1,
-    borderColor: COLORS.border,
+    borderColor: COLORS.borderSoft,
     alignItems: "center",
     justifyContent: "center",
     flexDirection: "row",
     gap: 8,
   },
-  sm: { minHeight: 24, paddingHorizontal: 10, borderRadius: 8 },
-  md: { minHeight: 36, paddingHorizontal: 12, borderRadius: 10 },
-  lg: { minHeight: 44, paddingHorizontal: 16, borderRadius: 12 },
+  sm: { minHeight: 32, paddingHorizontal: 12, borderRadius: RADII.pill },
+  md: { minHeight: 40, paddingHorizontal: 14, borderRadius: RADII.control },
+  lg: { minHeight: 48, paddingHorizontal: 20, borderRadius: RADII.control },
   disabled: { opacity: 0.5 },
   fullWidth: { width: "100%" },
 });

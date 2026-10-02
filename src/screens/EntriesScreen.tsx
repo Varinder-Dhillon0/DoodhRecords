@@ -7,13 +7,11 @@ import {
   StyleSheet,
   Modal,
   Alert,
-  Image,
 } from "react-native";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 import { useNavigation } from "@react-navigation/native";
 import { StackNavigationProp } from "@react-navigation/stack";
-import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { COLORS } from "../constants";
+import { COLORS, RADII, withAlpha } from "../constants";
 import { useDoodhContext } from "../context/DoodhContext";
 import { formatDisplayDate, getLocalDateString } from "../utils/dateUtils";
 import { calculateEntryEarnings } from "../utils/calculations";
@@ -23,7 +21,8 @@ import MonthYearFilter from "../components/MonthYearFilter";
 import { useTranslation } from "react-i18next";
 import Text from "../components/ScaledText";
 import { TYPOGRAPHY } from "../constants/typography";
-import Button from "../components/Button";
+import AppHeader from "../components/AppHeader";
+import EntryRow from "../components/EntryRow";
 import { useSnackbar } from "../context/SnackbarContext";
 
 type EntriesScreenNavigationProp = StackNavigationProp<RootStackParamList>;
@@ -32,7 +31,6 @@ export default function EntriesScreen() {
   const { t, i18n } = useTranslation();
   const { showSnackbar } = useSnackbar();
   const navigation = useNavigation<EntriesScreenNavigationProp>();
-  const insets = useSafeAreaInsets();
   const { entries, pricingConfig, deleteEntry } = useDoodhContext();
 
   const todayStr = getLocalDateString();
@@ -120,10 +118,9 @@ export default function EntriesScreen() {
 
   return (
     <View style={styles.container}>
-      <View
-        style={[styles.header, { paddingTop: Math.max(insets.top + 12, 44) }]}
-      >
-        <Text style={styles.title}>{t("entries.title")}</Text>
+      <AppHeader eyebrow={t("home.appTitle")} title={t("entries.title")} />
+
+      <View style={styles.filterBar}>
         <MonthYearFilter
           month={selectedMonth}
           year={selectedYear}
@@ -137,75 +134,28 @@ export default function EntriesScreen() {
         contentContainerStyle={styles.listContent}
         showsVerticalScrollIndicator={false}
       >
-        <View style={styles.tableHeader}>
-          <Text style={styles.headerCellLeft}>{t("entries.dateShift")}</Text>
-          <Text style={styles.headerCellCenter}>{t("entries.milkFat")}</Text>
-          <Text style={styles.headerCellRight}>{t("entries.earnings")}</Text>
-        </View>
-
         {filteredEntries.length > 0 ? (
-          filteredEntries.map((entry: MilkEntry, index: number) => (
-            <Button
-              size="sm"
-              key={`${entry.id}-${entry.date}-${index}`}
-              onPress={() => openEntrySheet(entry)}
-              style={({ pressed }) => [
-                styles.row,
-                pressed && styles.rowPressed,
-              ]}
-            >
-              <View style={styles.rowDateBlock}>
-                <Text style={styles.dateText}>
-                  {formatDisplayDate(entry.date, i18n.language)}
-                </Text>
-                <Text
-                  style={[
-                    styles.shiftText,
-                    entry.animal === "Cow"
-                      ? styles.cowText
-                      : styles.buffaloText,
-                  ]}
-                >
-                  {t("entries.shiftAnimal", {
-                    shift: t(`shifts.${entry.shift.toLowerCase()}`),
-                    animal: t(`animals.${entry.animal.toLowerCase()}`),
-                  })}
-                </Text>
-              </View>
-
-              <View style={styles.rowCenter}>
-                <Text style={styles.milkText}>
-                  {formatNumber(entry.milk_quantity, 1)}{" "}
-                  <Text style={styles.unit}>{t("common.kg")}</Text>
-                </Text>
-                <Text style={styles.fatText}>
-                  {t("entries.fatValue", {
-                    value: formatNumber(entry.fat_percentage, 1),
-                  })}
-                </Text>
-              </View>
-
-              <View style={styles.rowRight}>
-                <Text style={styles.earningsText}>
-                  {formatCurrency(
-                    entry.fat_percentage * entry.milk_quantity * entry.price,
-                  )}
-                </Text>
-              </View>
-            </Button>
-          ))
+          <View style={styles.listCard}>
+            {filteredEntries.map((entry: MilkEntry, index: number) => (
+              <EntryRow
+                key={`${entry.id}-${entry.date}-${index}`}
+                entry={entry}
+                showDivider={index < filteredEntries.length - 1}
+                onPress={openEntrySheet}
+              />
+            ))}
+          </View>
         ) : (
           <View style={styles.emptyContainer}>
-            <Image
-              source={require("../../assets/nullstate.png")}
-              style={styles.emptyImage}
-              resizeMode="contain"
-              accessibilityIgnoresInvertColors
-            />
+            <View style={styles.emptyIcon}>
+              <MaterialCommunityIcons
+                name="clipboard-text-outline"
+                size={32}
+                color={COLORS.muted}
+              />
+            </View>
             <Text style={styles.emptyTitle}>{t("entries.emptyTitle")}</Text>
-            <Text style={styles.emptySubtitle}>
-              {t("entries.emptySubtitle")}
-            </Text>
+            <Text style={styles.emptySubtitle}>{t("entries.emptySubtitle")}</Text>
           </View>
         )}
       </ScrollView>
@@ -235,7 +185,7 @@ export default function EntriesScreen() {
             <Pressable onPress={(e) => e.stopPropagation()}>
               <View style={styles.sheetIndicator} />
               <View style={styles.sheetHeader}>
-                <View>
+                <View style={styles.sheetHeading}>
                   <Text style={styles.sheetTitle}>
                     {sheetEntry &&
                       t("entries.entryTitle", {
@@ -253,27 +203,34 @@ export default function EntriesScreen() {
                     )}
                   </Text>
                 </View>
-                <Button
-                  size="sm"
+                <Pressable
+                  accessibilityRole="button"
+                  accessibilityLabel={t("common.close")}
                   onPress={closeEntrySheet}
-                  style={styles.closeButton}
+                  style={({ pressed }) => [
+                    styles.closeButton,
+                    pressed && styles.pressedControl,
+                  ]}
                 >
                   <MaterialCommunityIcons
                     name="close"
                     size={20}
-                    color="#64748B"
+                    color={COLORS.muted}
                   />
-                </Button>
+                </Pressable>
               </View>
 
               <View style={styles.sheetActions}>
-                <Button
-                  size="sm"
+                <Pressable
+                  accessibilityRole="button"
                   onPress={handleEdit}
-                  style={styles.actionButton}
+                  style={({ pressed }) => [
+                    styles.actionButton,
+                    pressed && styles.pressedControl,
+                  ]}
                 >
                   <View
-                    style={[styles.actionIcon, { backgroundColor: "#E9F7EC" }]}
+                    style={[styles.actionIcon, { backgroundColor: withAlpha(COLORS.brandLight, 0.5) }]}
                   >
                     <MaterialCommunityIcons
                       name="pencil"
@@ -282,43 +239,47 @@ export default function EntriesScreen() {
                     />
                   </View>
                   <Text style={styles.actionText}>{t("entries.edit")}</Text>
-                </Button>
+                </Pressable>
 
-                <Button
-                  size="sm"
+                <Pressable
+                  accessibilityRole="button"
                   onPress={handleDuplicate}
-                  style={styles.actionButton}
+                  style={({ pressed }) => [
+                    styles.actionButton,
+                    pressed && styles.pressedControl,
+                  ]}
                 >
                   <View
-                    style={[styles.actionIcon, { backgroundColor: "#EFF6FF" }]}
+                    style={[styles.actionIcon, { backgroundColor: COLORS.blueFixed }]}
                   >
                     <MaterialCommunityIcons
                       name="content-copy"
                       size={18}
-                      color="#2563EB"
+                      color={COLORS.blue}
                     />
                   </View>
-                  <Text style={styles.actionText}>
-                    {t("entries.duplicate")}
-                  </Text>
-                </Button>
+                  <Text style={styles.actionText}>{t("entries.duplicate")}</Text>
+                </Pressable>
 
-                <Button
-                  size="sm"
+                <Pressable
+                  accessibilityRole="button"
                   onPress={handleDelete}
-                  style={[styles.actionButton, styles.deleteActionButton]}
+                  style={({ pressed }) => [
+                    styles.actionButton,
+                    pressed && styles.pressedControl,
+                  ]}
                 >
                   <View
-                    style={[styles.actionIcon, { backgroundColor: "#FEE2E2" }]}
+                    style={[styles.actionIcon, { backgroundColor: COLORS.redContainer }]}
                   >
                     <MaterialCommunityIcons
                       name="trash-can-outline"
                       size={18}
-                      color="#DC2626"
+                      color={COLORS.red}
                     />
                   </View>
                   <Text style={styles.deleteText}>{t("entries.delete")}</Text>
-                </Button>
+                </Pressable>
               </View>
             </Pressable>
           </Animated.View>
@@ -329,178 +290,112 @@ export default function EntriesScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: "#F8FAFC" },
-  header: {
-    alignItems: "flex-start",
-    backgroundColor: "#fff",
-    paddingHorizontal: 18,
-    paddingBottom: 14,
-    gap: 12,
-    borderBottomWidth: 1,
-    borderBottomColor: "#E2E8F0",
-  },
-  title: {
-    fontSize: TYPOGRAPHY.screenTitle,
-    fontWeight: "800",
-    color: "#0F172A",
-  },
+  container: { flex: 1, backgroundColor: COLORS.background },
+  filterBar: { paddingHorizontal: 16, paddingBottom: 12 },
   list: { flex: 1 },
-  listContent: { padding: 14, paddingBottom: 100 },
-  tableHeader: {
-    flexDirection: "row",
-    alignItems: "center",
-    backgroundColor: "#F1F5F9",
-    borderRadius: 10,
-    paddingHorizontal: 14,
-    paddingVertical: 10,
-    marginBottom: 8,
-  },
-  headerCellLeft: {
-    flex: 4,
-    fontSize: TYPOGRAPHY.micro,
-    fontWeight: "800",
-    color: "#64748B",
-    textTransform: "uppercase",
-  },
-  headerCellCenter: {
-    flex: 3,
-    fontSize: TYPOGRAPHY.micro,
-    fontWeight: "800",
-    color: "#64748B",
-    textTransform: "uppercase",
-    textAlign: "center",
-  },
-  headerCellRight: {
-    flex: 3,
-    fontSize: TYPOGRAPHY.micro,
-    fontWeight: "800",
-    color: "#64748B",
-    textTransform: "uppercase",
-    textAlign: "right",
-  },
-  row: {
-    flexDirection: "row",
-    alignItems: "center",
-    backgroundColor: "#fff",
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: "#E2E8F0",
-    paddingHorizontal: 14,
-    paddingVertical: 13,
-    marginBottom: 8,
-  },
-  rowPressed: { backgroundColor: "#F8FAFC" },
-  rowDateBlock: { flex: 4 },
-  dateText: { fontSize: TYPOGRAPHY.label, fontWeight: "700", color: "#0F172A" },
-  shiftText: { fontSize: TYPOGRAPHY.micro, fontWeight: "600", marginTop: 2 },
-  cowText: { color: COLORS.brand },
-  buffaloText: { color: "#475569" },
-  rowCenter: { flex: 3, alignItems: "center" },
-  milkText: { fontSize: TYPOGRAPHY.body, fontWeight: "800", color: "#0F172A" },
-  unit: { fontSize: TYPOGRAPHY.micro, color: "#64748B", fontWeight: "500" },
-  fatText: {
-    fontSize: TYPOGRAPHY.micro,
-    fontWeight: "700",
-    color: "#D97706",
-    marginTop: 2,
-  },
-  rowRight: { flex: 3, alignItems: "flex-end" },
-  earningsText: {
-    fontSize: TYPOGRAPHY.body,
-    fontWeight: "800",
-    color: COLORS.brand,
+  listContent: { paddingHorizontal: 16, paddingBottom: 100 },
+  listCard: {
+    backgroundColor: COLORS.surface,
+    borderRadius: RADII.card,
+    overflow: "hidden",
   },
   emptyContainer: {
     alignItems: "center",
     justifyContent: "center",
     padding: 40,
-    gap: 6,
+    gap: 8,
   },
-  emptyImage: { width: 220, height: 184 },
+  emptyIcon: {
+    width: 64,
+    height: 64,
+    borderRadius: RADII.pill,
+    backgroundColor: COLORS.surfaceContainer,
+    alignItems: "center",
+    justifyContent: "center",
+  },
   emptyTitle: {
     fontSize: TYPOGRAPHY.bodyLarge,
     fontWeight: "700",
-    color: "#475569",
-    marginTop: 6,
+    color: COLORS.text,
   },
   emptySubtitle: {
     fontSize: TYPOGRAPHY.caption,
-    color: "#94A3B8",
+    color: COLORS.muted,
     textAlign: "center",
   },
   sheetBackdrop: {
     flex: 1,
     justifyContent: "flex-end",
-    backgroundColor: "rgba(15,23,42,0.4)",
+    backgroundColor: withAlpha("#0F172A", 0.5),
   },
   sheet: {
-    backgroundColor: "#fff",
-    borderTopLeftRadius: 24,
-    borderTopRightRadius: 24,
-    padding: 20,
-    paddingBottom: 20,
+    backgroundColor: COLORS.surface,
+    borderTopLeftRadius: RADII.sheet,
+    borderTopRightRadius: RADII.sheet,
+    paddingHorizontal: 20,
+    paddingTop: 12,
+    paddingBottom: 24,
   },
   sheetIndicator: {
-    width: 36,
-    height: 4,
-    borderRadius: 2,
-    backgroundColor: "#E2E8F0",
+    width: 48,
+    height: 6,
+    borderRadius: 3,
+    backgroundColor: COLORS.surfaceDim,
     alignSelf: "center",
-    marginBottom: 16,
+    marginBottom: 6,
   },
   sheetHeader: {
     flexDirection: "row",
     justifyContent: "space-between",
-    alignItems: "flex-start",
-    marginBottom: 20,
+    alignItems: "center",
+    gap: 12,
+    marginBottom: 16,
   },
+  sheetHeading: { flex: 1 },
   sheetTitle: {
     fontSize: TYPOGRAPHY.heading,
     fontWeight: "800",
-    color: "#0F172A",
+    color: COLORS.text,
   },
   sheetStats: {
-    fontSize: TYPOGRAPHY.label,
-    color: "#64748B",
+    fontSize: TYPOGRAPHY.caption,
+    color: COLORS.muted,
     marginTop: 4,
-    fontWeight: "500",
   },
   closeButton: {
     width: 32,
     height: 32,
-    borderRadius: 16,
-    backgroundColor: "#F1F5F9",
+    borderRadius: RADII.pill,
+    backgroundColor: COLORS.surfaceContainer,
     alignItems: "center",
     justifyContent: "center",
   },
-  sheetActions: { gap: 10 },
+  sheetActions: { gap: 12 },
   actionButton: {
-    backgroundColor: "#fff",
-    borderWidth: 1,
-    borderColor: "#E2E8F0",
-    borderRadius: 14,
+    minHeight: 56,
+    backgroundColor: COLORS.surfaceLow,
+    borderRadius: RADII.control,
     paddingHorizontal: 16,
-    paddingVertical: 12,
     flexDirection: "row",
     alignItems: "center",
-    gap: 14,
+    gap: 12,
   },
-  deleteActionButton: { borderColor: "#FECACA" },
   actionIcon: {
     width: 36,
     height: 36,
-    borderRadius: 10,
+    borderRadius: RADII.sm,
     justifyContent: "center",
     alignItems: "center",
   },
   actionText: {
     fontSize: TYPOGRAPHY.body,
     fontWeight: "700",
-    color: "#0F172A",
+    color: COLORS.text,
   },
   deleteText: {
     fontSize: TYPOGRAPHY.body,
     fontWeight: "700",
-    color: "#DC2626",
+    color: COLORS.red,
   },
+  pressedControl: { opacity: 0.78 },
 });

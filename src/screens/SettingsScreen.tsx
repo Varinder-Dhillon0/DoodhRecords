@@ -6,22 +6,21 @@ import {
   ScrollView,
   KeyboardAvoidingView,
   Platform,
+  Pressable,
 } from "react-native";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
-import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { APP_VERSION, COLORS } from "../constants";
+import { useTranslation } from "react-i18next";
+import { APP_VERSION, COLORS, RADII, SHADOWS, withAlpha } from "../constants";
 import { useDoodhContext } from "../context/DoodhContext";
 import { getLocalDateString } from "../utils/dateUtils";
 import MonthYearFilter from "../components/MonthYearFilter";
-import { useTranslation } from "react-i18next";
 import { changeAppLanguage, SupportedLanguage } from "../i18n";
-import Text from "../components/ScaledText";
-import { ScaledTextInput as TextInput } from "../components/ScaledText";
+import Text, { ScaledTextInput as TextInput } from "../components/ScaledText";
 import { TYPOGRAPHY } from "../constants/typography";
+import AppHeader from "../components/AppHeader";
 import AppPicker from "../components/AppPicker";
 import Slider from "@react-native-community/slider";
 import * as Sharing from "expo-sharing";
-import Button from "../components/Button";
 import { useFontScale } from "../context/FontScaleContext";
 import useKeyboardAwareScroll from "../hooks/useKeyboardAwareScroll";
 import {
@@ -35,7 +34,6 @@ export default function SettingsScreen() {
   const { t, i18n } = useTranslation();
   const { showSnackbar } = useSnackbar();
   const { fontScale, setFontScale } = useFontScale();
-  const insets = useSafeAreaInsets();
   const { scrollViewRef, onInputFocus } = useKeyboardAwareScroll(200);
   const { pricingConfig, saveConfig } = useDoodhContext();
 
@@ -105,11 +103,7 @@ export default function SettingsScreen() {
       style={styles.container}
       behavior={Platform.OS === "ios" ? "padding" : "height"}
     >
-      <View
-        style={[styles.header, { paddingTop: Math.max(insets.top + 12, 44) }]}
-      >
-        <Text style={styles.title}>{t("settings.title")}</Text>
-      </View>
+      <AppHeader eyebrow={t("home.appTitle")} title={t("settings.title")} />
 
       <ScrollView
         ref={scrollViewRef}
@@ -118,15 +112,34 @@ export default function SettingsScreen() {
         showsVerticalScrollIndicator={false}
         keyboardShouldPersistTaps="handled"
       >
-        <View style={[styles.settingCard, styles.settingCardPadding]}>
-          <View style={styles.sectionHeader}>
-            <Text style={styles.sectionTitle}>{t("settings.language")}</Text>
+        <View style={styles.hero}>
+          <View style={styles.heroText}>
+            <Text style={styles.heroEyebrow}>{t("settings.heroEyebrow")}</Text>
+            <Text style={styles.heroTitle}>{t("settings.heroTitle")}</Text>
+            <Text style={styles.heroSubtitle}>{t("settings.heroSubtitle")}</Text>
+          </View>
+          <View style={styles.heroIcon}>
+            <MaterialCommunityIcons name="tune" size={28} color={COLORS.brandLight} />
+          </View>
+          <View style={styles.heroGlow} />
+        </View>
+
+        <View style={styles.card}>
+          <View style={styles.cardHeaderRow}>
+            <View style={styles.cardHeaderLeft}>
+              <View style={styles.cardIcon}>
+                <MaterialCommunityIcons
+                  name="translate"
+                  size={18}
+                  color={COLORS.brand}
+                />
+              </View>
+              <Text style={styles.cardTitle}>{t("settings.language")}</Text>
+            </View>
             <AppPicker
-              minWidth={100}
+              minWidth={120}
               selectedValue={
-                (i18n.language.startsWith("pa")
-                  ? "pa"
-                  : "en") as SupportedLanguage
+                (i18n.language.startsWith("pa") ? "pa" : "en") as SupportedLanguage
               }
               onValueChange={(value: SupportedLanguage) => {
                 void changeAppLanguage(value);
@@ -140,12 +153,23 @@ export default function SettingsScreen() {
           </View>
         </View>
 
-        <View style={[styles.settingCard, styles.settingCardPadding]}>
-          <View style={styles.sectionHeader}>
-            <Text style={styles.sectionTitle}>{t("settings.fontSize")}</Text>
-            <Text style={styles.infoValue}>
-              {t(getNearestFontScaleOption(fontScale).labelKey)}
-            </Text>
+        <View style={styles.card}>
+          <View style={styles.cardHeaderRow}>
+            <View style={styles.cardHeaderLeft}>
+              <View style={styles.cardIcon}>
+                <MaterialCommunityIcons
+                  name="format-size"
+                  size={18}
+                  color={COLORS.brand}
+                />
+              </View>
+              <Text style={styles.cardTitle}>{t("settings.fontSize")}</Text>
+            </View>
+            <View style={styles.pillBadge}>
+              <Text style={styles.pillBadgeText}>
+                {t(getNearestFontScaleOption(fontScale).labelKey)}
+              </Text>
+            </View>
           </View>
           <Slider
             accessibilityLabel={t("settings.fontSize")}
@@ -161,158 +185,140 @@ export default function SettingsScreen() {
             step={FONT_SCALE_RANGE.step}
             value={fontScale}
             onValueChange={setFontScale}
-            minimumTrackTintColor={COLORS.brand}
-            maximumTrackTintColor={COLORS.border}
-            thumbTintColor={COLORS.brand}
+            minimumTrackTintColor={COLORS.greenAccent}
+            maximumTrackTintColor={COLORS.surfaceHigh}
+            thumbTintColor={COLORS.greenAccent}
             style={styles.fontSizeSlider}
           />
+          <View style={styles.sliderScale}>
+            <Text style={styles.sliderScaleText}>{t("settings.fontSizeSmall")}</Text>
+            <Text style={styles.sliderScaleText}>{t("settings.fontSizeDefault")}</Text>
+            <Text style={styles.sliderScaleText}>{t("settings.fontSizeLarge")}</Text>
+          </View>
         </View>
 
         <View style={styles.card}>
-          <View style={[styles.sectionHeader, styles.cardSectionHeader]}>
-            <View style={styles.sectionTitleRow}>
-              <MaterialCommunityIcons
-                name="currency-inr"
-                size={16}
-                color={COLORS.brand}
+          <View style={styles.cardHeaderRow}>
+            <View style={styles.cardHeaderLeft}>
+              <View style={styles.cardIcon}>
+                <MaterialCommunityIcons
+                  name="currency-inr"
+                  size={18}
+                  color={COLORS.brand}
+                />
+              </View>
+              <Text style={styles.cardTitle}>{t("settings.pricingConfig")}</Text>
+            </View>
+            <View style={styles.statusDot} />
+          </View>
+
+          <MonthYearFilter
+            month={month}
+            year={year}
+            onMonthChange={setMonth}
+            onYearChange={setYear}
+          />
+
+          <Text style={styles.helpText}>{t("settings.pricingHelp")}</Text>
+
+          <View style={styles.rateRow}>
+            <View style={styles.rateLeft}>
+              <View style={styles.iconGreen}>
+                <MaterialCommunityIcons name="cow" size={20} color={COLORS.brand} />
+              </View>
+              <View>
+                <Text style={styles.rowTitle}>{t("settings.cowRate")}</Text>
+                <Text style={styles.rowSubtitle}>{t("settings.rateDescription")}</Text>
+              </View>
+            </View>
+            <View style={styles.priceBox}>
+              <Text style={styles.currency}>₹</Text>
+              <TextInput
+                value={cowPrice}
+                onFocus={onInputFocus}
+                keyboardType="decimal-pad"
+                onChangeText={setCowPrice}
+                style={styles.priceInput}
+                accessibilityLabel={t("settings.cowRate")}
               />
-              <Text style={styles.sectionTitle}>
-                {t("settings.pricingConfig")}
-              </Text>
             </View>
           </View>
 
-          <View style={{ padding: 10 }}>
-            <MonthYearFilter
-              month={month}
-              year={year}
-              onMonthChange={setMonth}
-              onYearChange={setYear}
-              filterBoxMinWidth={100}
-            />
-          </View>
-
-          <Text style={[styles.helpText, styles.cardHorizontalPadding]}>
-            {t("settings.pricingHelp")}
-          </Text>
-
-          <View>
-            <View style={styles.row}>
-              <View style={styles.leftCell}>
-                <View style={styles.iconGreen}>
-                  <MaterialCommunityIcons
-                    name="cow"
-                    size={20}
-                    color={COLORS.brand}
-                  />
-                </View>
-                <View>
-                  <Text style={styles.rowTitle}>{t("settings.cowRate")}</Text>
-                  <Text style={styles.rowSubtitle}>
-                    {t("settings.rateDescription")}
-                  </Text>
-                </View>
+          <View style={styles.rateRow}>
+            <View style={styles.rateLeft}>
+              <View style={styles.iconGray}>
+                <MaterialCommunityIcons name="cow" size={20} color={COLORS.muted} />
               </View>
-              <View style={styles.priceBox}>
-                <Text style={styles.currency}>₹</Text>
-                <TextInput
-                  value={cowPrice}
-                  onFocus={onInputFocus}
-                  keyboardType="decimal-pad"
-                  onChangeText={setCowPrice}
-                  style={styles.priceInput}
-                />
+              <View>
+                <Text style={styles.rowTitle}>{t("settings.buffaloRate")}</Text>
+                <Text style={styles.rowSubtitle}>{t("settings.rateDescription")}</Text>
               </View>
             </View>
-
-            <View style={styles.row}>
-              <View style={styles.leftCell}>
-                <View style={styles.iconGray}>
-                  <MaterialCommunityIcons
-                    name="cow"
-                    size={20}
-                    color="#334155"
-                  />
-                </View>
-                <View>
-                  <Text style={styles.rowTitle}>
-                    {t("settings.buffaloRate")}
-                  </Text>
-                  <Text style={styles.rowSubtitle}>
-                    {t("settings.rateDescription")}
-                  </Text>
-                </View>
-              </View>
-              <View style={styles.priceBox}>
-                <Text style={styles.currency}>₹</Text>
-                <TextInput
-                  value={buffaloPrice}
-                  onFocus={onInputFocus}
-                  keyboardType="decimal-pad"
-                  onChangeText={setBuffaloPrice}
-                  style={styles.priceInput}
-                />
-              </View>
+            <View style={styles.priceBox}>
+              <Text style={styles.currency}>₹</Text>
+              <TextInput
+                value={buffaloPrice}
+                onFocus={onInputFocus}
+                keyboardType="decimal-pad"
+                onChangeText={setBuffaloPrice}
+                style={styles.priceInput}
+                accessibilityLabel={t("settings.buffaloRate")}
+              />
             </View>
           </View>
 
-          <Button
-            size="sm"
+          <Pressable
+            accessibilityRole="button"
             onPress={handleSave}
-            style={({ pressed }) => [
-              styles.saveButton,
-              pressed && styles.buttonPressed,
-            ]}
+            style={({ pressed }) => [styles.saveButton, pressed && styles.pressedControl]}
           >
-            <MaterialCommunityIcons
-              name="content-save"
-              size={20}
-              color="#fff"
-            />
-            <Text style={styles.saveButtonText}>
-              {t("settings.savePricing")}
-            </Text>
-          </Button>
+            <MaterialCommunityIcons name="content-save" size={20} color={COLORS.white} />
+            <Text style={styles.saveButtonText}>{t("settings.savePricing")}</Text>
+          </Pressable>
         </View>
 
-        <View style={[styles.settingCard, styles.settingCardPadding]}>
-          <Text style={styles.sectionTitle}>
-            {t("settings.dataManagement")}
-          </Text>
-          <Text style={styles.helpText}>
-            {t("settings.exportDataDescription")}
-          </Text>
-          <Button
-            size="sm"
-            variant="outline"
-            fullWidth
-            loading={isExporting}
+        <View style={styles.card}>
+          <View style={styles.cardHeaderLeft}>
+            <View style={styles.cardIcon}>
+              <MaterialCommunityIcons name="database" size={18} color={COLORS.brand} />
+            </View>
+            <Text style={styles.cardTitle}>{t("settings.dataManagement")}</Text>
+          </View>
+          <Text style={styles.helpText}>{t("settings.exportDataDescription")}</Text>
+          <Pressable
+            accessibilityRole="button"
             disabled={isExporting}
             onPress={handleExport}
-            icon={
-              <MaterialCommunityIcons
-                name="export-variant"
-                size={20}
-                color={COLORS.brand}
-              />
-            }
+            style={({ pressed }) => [
+              styles.exportButton,
+              pressed && styles.pressedControl,
+              isExporting && styles.disabledControl,
+            ]}
           >
-            <Text style={styles.exportButtonText}>
-              {t("settings.exportData")}
-            </Text>
-          </Button>
+            <View style={styles.exportLeft}>
+              <MaterialCommunityIcons
+                name="file-download-outline"
+                size={20}
+                color={COLORS.blue}
+              />
+              <Text style={styles.exportText}>
+                {isExporting ? t("settings.exporting") : t("settings.exportData")}
+              </Text>
+            </View>
+            <View style={styles.jsonBadge}>
+              <Text style={styles.jsonBadgeText}>JSON</Text>
+            </View>
+          </Pressable>
         </View>
 
-        <View style={styles.infoBox}>
-          <View style={styles.infoLeft}>
-            <MaterialCommunityIcons
-              name="information-outline"
-              size={20}
-              color="#64748B"
-            />
-            <Text style={styles.infoLabel}>{t("settings.appVersion")}</Text>
+        <View style={styles.footer}>
+          <View style={styles.footerLeft}>
+            <View style={styles.statusDot} />
+            <Text style={styles.footerText}>
+              {t("settings.appVersion")} v{APP_VERSION}
+            </Text>
           </View>
-          <Text style={styles.infoValue}>v{APP_VERSION}</Text>
+          <Text style={styles.footerBadge}>{t("settings.offlineReady")}</Text>
         </View>
       </ScrollView>
     </KeyboardAvoidingView>
@@ -320,105 +326,153 @@ export default function SettingsScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: "#F8FAFC" },
-  header: {
-    backgroundColor: "#fff",
-    paddingHorizontal: 18,
-    paddingBottom: 14,
-    borderBottomWidth: 1,
-    borderBottomColor: "#E2E8F0",
-  },
-  title: {
-    fontSize: TYPOGRAPHY.screenTitle,
-    fontWeight: "800",
-    color: "#0F172A",
-  },
+  container: { flex: 1, backgroundColor: COLORS.background },
   content: { flex: 1 },
-  contentPad: { padding: 18, paddingBottom: 100 },
-  settingCard: {
-    backgroundColor: "#fff",
-    borderRadius: 16,
-    borderWidth: 1,
-    borderColor: "#E2E8F0",
-    marginBottom: 14,
-  },
-  settingCardPadding: { padding: 16 },
-  sectionHeader: {
+  contentPad: { paddingHorizontal: 16, paddingBottom: 100, gap: 16 },
+  hero: {
+    position: "relative",
+    overflow: "hidden",
+    borderRadius: RADII.control,
+    backgroundColor: COLORS.greenAccent,
+    padding: 16,
     flexDirection: "row",
-    justifyContent: "space-between",
     alignItems: "center",
-    marginBottom: 8,
+    justifyContent: "space-between",
+    ...SHADOWS.control,
   },
-  fontSizeSlider: { width: "100%", height: 40 },
-  sectionTitleRow: { flexDirection: "row", alignItems: "center", gap: 6 },
-  sectionTitle: {
-    fontSize: TYPOGRAPHY.label,
-    fontWeight: "800",
-    color: COLORS.brand,
+  heroText: { flex: 1, zIndex: 1 },
+  heroEyebrow: {
+    fontSize: TYPOGRAPHY.micro,
+    fontWeight: "700",
+    letterSpacing: 1.2,
     textTransform: "uppercase",
+    color: COLORS.brandLight,
   },
-  helpText: {
+  heroTitle: {
+    fontSize: TYPOGRAPHY.headingSmall,
+    fontWeight: "800",
+    letterSpacing: -0.2,
+    color: COLORS.white,
+    marginTop: 2,
+  },
+  heroSubtitle: {
     fontSize: TYPOGRAPHY.caption,
-    color: "#64748B",
-    marginBottom: 16,
+    color: withAlpha(COLORS.brandDim, 0.9),
+    marginTop: 2,
+  },
+  heroIcon: {
+    width: 48,
+    height: 48,
+    borderRadius: RADII.control,
+    backgroundColor: withAlpha(COLORS.white, 0.12),
+    alignItems: "center",
+    justifyContent: "center",
+    zIndex: 1,
+  },
+  heroGlow: {
+    position: "absolute",
+    right: -32,
+    bottom: -36,
+    width: 112,
+    height: 112,
+    borderRadius: 56,
+    backgroundColor: withAlpha(COLORS.brandLight, 0.1),
   },
   card: {
-    backgroundColor: "#fff",
-    borderRadius: 16,
-    borderWidth: 1,
-    borderColor: "#E2E8F0",
-    overflow: "hidden",
-    marginBottom: 18,
-    paddingTop: 16,
+    backgroundColor: COLORS.surface,
+    borderRadius: RADII.control,
+    padding: 16,
+    gap: 12,
+    ...SHADOWS.card,
   },
-  cardSectionHeader: { paddingHorizontal: 16 },
-  cardHorizontalPadding: { marginHorizontal: 16 },
-  row: {
+  cardHeaderRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    gap: 12,
+  },
+  cardHeaderLeft: { flexDirection: "row", alignItems: "center", gap: 8, flex: 1 },
+  cardIcon: {
+    width: 32,
+    height: 32,
+    borderRadius: RADII.sm,
+    backgroundColor: COLORS.surfaceLow,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  cardTitle: {
+    flex: 1,
+    fontSize: TYPOGRAPHY.micro,
+    fontWeight: "700",
+    letterSpacing: 0.8,
+    textTransform: "uppercase",
+    color: COLORS.brand,
+  },
+  statusDot: {
+    width: 8,
+    height: 8,
+    borderRadius: RADII.pill,
+    backgroundColor: COLORS.brandDim,
+  },
+  pillBadge: {
+    backgroundColor: COLORS.surfaceLow,
+    borderRadius: RADII.pill,
+    paddingHorizontal: 10,
+    paddingVertical: 3,
+  },
+  pillBadgeText: { fontSize: TYPOGRAPHY.caption, fontWeight: "600", color: COLORS.text },
+  fontSizeSlider: { width: "100%", height: 40 },
+  sliderScale: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    paddingHorizontal: 4,
+  },
+  sliderScaleText: { fontSize: TYPOGRAPHY.caption, color: COLORS.muted },
+  helpText: { fontSize: TYPOGRAPHY.caption, color: COLORS.muted },
+  rateRow: {
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
-    paddingHorizontal: 16,
-    paddingVertical: 14,
-    borderBottomWidth: 1,
-    borderBottomColor: "#F1F5F9",
+    gap: 12,
   },
-  leftCell: { flexDirection: "row", alignItems: "center", gap: 12 },
+  rateLeft: { flexDirection: "row", alignItems: "center", gap: 12, flex: 1 },
   iconGreen: {
     width: 40,
     height: 40,
-    borderRadius: 12,
-    backgroundColor: COLORS.brandLight,
+    borderRadius: RADII.control,
+    backgroundColor: withAlpha(COLORS.brandLight, 0.5),
     justifyContent: "center",
     alignItems: "center",
   },
   iconGray: {
     width: 40,
     height: 40,
-    borderRadius: 12,
-    backgroundColor: "#F1F5F9",
+    borderRadius: RADII.control,
+    backgroundColor: COLORS.surfaceLow,
     justifyContent: "center",
     alignItems: "center",
   },
-  rowTitle: { fontSize: TYPOGRAPHY.body, fontWeight: "700", color: "#0F172A" },
+  rowTitle: { fontSize: TYPOGRAPHY.bodySmall, fontWeight: "700", color: COLORS.text },
   rowSubtitle: {
     fontSize: TYPOGRAPHY.micro,
-    color: "#64748B",
+    color: COLORS.muted,
     fontWeight: "500",
     marginTop: 2,
   },
   priceBox: {
     flexDirection: "row",
     alignItems: "center",
-    borderRadius: 10,
+    borderRadius: RADII.sm,
     borderWidth: 1,
-    borderColor: "#CBD5E1",
-    backgroundColor: "#F8FAFC",
+    borderColor: COLORS.surfaceContainer,
+    backgroundColor: COLORS.surfaceLow,
     paddingHorizontal: 10,
-    height: 42,
-    minWidth: 95,
+    height: 44,
+    minWidth: 96,
   },
   currency: {
-    color: "#64748B",
+    color: COLORS.muted,
     fontWeight: "700",
     fontSize: TYPOGRAPHY.bodyLarge,
     marginRight: 4,
@@ -427,56 +481,59 @@ const styles = StyleSheet.create({
     flex: 1,
     textAlign: "right",
     fontSize: TYPOGRAPHY.bodyLarge,
-    color: "#0F172A",
+    color: COLORS.text,
     fontWeight: "800",
-    height: 42,
+    height: 44,
   },
   saveButton: {
+    minHeight: 48,
     backgroundColor: COLORS.brand,
-    borderRadius: 14,
+    borderRadius: RADII.control,
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
     gap: 8,
-    paddingVertical: 15,
-    marginBottom: 18,
-    marginHorizontal: 16,
-    shadowColor: COLORS.brand,
-    shadowOpacity: 0.2,
-    shadowRadius: 8,
-    shadowOffset: { width: 0, height: 4 },
-    elevation: 3,
   },
-  buttonPressed: { opacity: 0.85, transform: [{ scale: 0.99 }] },
   saveButtonText: {
-    color: "#fff",
-    fontWeight: "800",
-    fontSize: TYPOGRAPHY.bodyLarge,
-  },
-  exportButtonText: {
-    color: COLORS.brand,
-    fontWeight: "800",
-    fontSize: TYPOGRAPHY.bodyLarge,
-  },
-  infoBox: {
-    backgroundColor: "#fff",
-    borderRadius: 16,
-    borderWidth: 1,
-    borderColor: "#E2E8F0",
-    padding: 16,
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-  },
-  infoLeft: { flexDirection: "row", alignItems: "center", gap: 8 },
-  infoLabel: {
-    fontSize: TYPOGRAPHY.label,
-    color: "#64748B",
+    color: COLORS.white,
     fontWeight: "700",
+    fontSize: TYPOGRAPHY.bodyLarge,
   },
-  infoValue: {
-    fontSize: TYPOGRAPHY.bodySmall,
-    fontWeight: "800",
-    color: "#0F172A",
+  exportButton: {
+    minHeight: 48,
+    backgroundColor: COLORS.surfaceLow,
+    borderRadius: RADII.control,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    paddingHorizontal: 16,
   },
+  exportLeft: { flexDirection: "row", alignItems: "center", gap: 8 },
+  exportText: { color: COLORS.text, fontSize: TYPOGRAPHY.bodyLarge, fontWeight: "600" },
+  jsonBadge: {
+    alignItems: "center",
+    justifyContent: "center",
+    height: 22,
+    backgroundColor: COLORS.surfaceHigh,
+    borderRadius: RADII.sm,
+    paddingHorizontal: 8,
+  },
+  jsonBadgeText: { fontSize: TYPOGRAPHY.micro, fontWeight: "700", color: COLORS.muted },
+  footer: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    paddingVertical: 8,
+  },
+  footerLeft: { flexDirection: "row", alignItems: "center", gap: 8 },
+  footerText: { fontSize: TYPOGRAPHY.caption, color: COLORS.muted },
+  footerBadge: {
+    fontSize: TYPOGRAPHY.micro,
+    fontWeight: "700",
+    letterSpacing: 0.6,
+    textTransform: "uppercase",
+    color: COLORS.brand,
+  },
+  pressedControl: { opacity: 0.82 },
+  disabledControl: { opacity: 0.6 },
 });

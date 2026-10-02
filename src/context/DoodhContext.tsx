@@ -17,7 +17,7 @@ import {
   savePricingConfig,
   updateEntry as storageUpdateEntry,
 } from "../utils/storageManager";
-import { calculateEarnings } from "../utils/calculations";
+
 
 const DoodhContext = createContext<DoodhContextType | null>(null);
 
@@ -74,22 +74,15 @@ export function DoodhProvider({ children }: { children: React.ReactNode }) {
 
   const handleAddEntry = useCallback(
     async (
-      entry: Omit<MilkEntry, "id" | "earnings" | "price"> & {
+      entry: Omit<MilkEntry, "id" | "price"> & {
         id?: number;
-        earnings?: number;
         price?: number;
       },
     ): Promise<MilkEntry> => {
       const savedPrice = await getPriceForEntry(entry.animal, entry.date);
-      const nextEarnings = calculateEarnings(
-        entry.milk_quantity,
-        entry.fat_percentage,
-        savedPrice,
-      );
       const newEntry = await storageAddEntry({
         ...entry,
         price: savedPrice,
-        earnings: nextEarnings,
       });
       setEntries((prev) => [...prev, newEntry]);
       return newEntry;
@@ -103,15 +96,9 @@ export function DoodhProvider({ children }: { children: React.ReactNode }) {
       oldDate: string | null = null,
     ): Promise<MilkEntry> => {
       const savedPrice = await getPriceForEntry(entry.animal, entry.date);
-      const nextEarnings = calculateEarnings(
-        entry.milk_quantity,
-        entry.fat_percentage,
-        savedPrice,
-      );
       const updatedEntry: MilkEntry = {
         ...entry,
         price: savedPrice,
-        earnings: nextEarnings,
       };
       await storageUpdateEntry(updatedEntry, oldDate);
       setEntries((prev) =>

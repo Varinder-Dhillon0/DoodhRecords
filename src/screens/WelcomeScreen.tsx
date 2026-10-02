@@ -1,5 +1,5 @@
 import React from "react";
-import { Image, ScrollView, StyleSheet, View } from "react-native";
+import { ScrollView, StyleSheet, View } from "react-native";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 import { StackNavigationProp } from "@react-navigation/stack";
 import { useNavigation } from "@react-navigation/native";
@@ -8,32 +8,32 @@ import { useTranslation } from "react-i18next";
 import { RootStackParamList } from "../types";
 import Text from "../components/ScaledText";
 import Button from "../components/Button";
-import { COLORS } from "../constants";
+import { COLORS, RADII, SHADOWS, withAlpha } from "../constants";
 import { TYPOGRAPHY } from "../constants/typography";
 
 type WelcomeNavigation = StackNavigationProp<RootStackParamList, "Welcome">;
 
 const FEATURES = [
   {
-    icon: "chart-box",
+    icon: "clipboard-text-outline",
     title: "welcome.recordTitle",
     description: "welcome.recordDescription",
-    color: "#D7F1D8",
-    iconColor: "#238044",
+    color: COLORS.brandLight,
+    iconColor: COLORS.brand,
   },
   {
-    icon: "chart-line",
+    icon: "chart-box-outline",
     title: "welcome.reportsTitle",
     description: "welcome.reportsDescription",
-    color: "#D9EFFB",
-    iconColor: "#1689C5",
+    color: COLORS.blueFixed,
+    iconColor: COLORS.blue,
   },
   {
-    icon: "calendar-month",
+    icon: "calendar-month-outline",
     title: "welcome.simpleTitle",
     description: "welcome.simpleDescription",
-    color: "#FFE9A3",
-    iconColor: "#B77908",
+    color: COLORS.amberFixed,
+    iconColor: COLORS.amber,
   },
 ] as const;
 
@@ -47,20 +47,21 @@ export default function WelcomeScreen() {
       <ScrollView
         contentContainerStyle={[
           styles.content,
-          { paddingTop: Math.max(insets.top + 8, 16), paddingBottom: Math.max(insets.bottom + 20, 28) },
+          {
+            paddingTop: Math.max(insets.top + 8, 16),
+            paddingBottom: Math.max(insets.bottom + 20, 28),
+          },
         ]}
         showsVerticalScrollIndicator={false}
       >
-        <Image
-          source={require("../../assets/nullstate.png")}
-          style={styles.heroImage}
-          resizeMode="contain"
-          accessibilityLabel={t("welcome.illustration")}
-        />
-
-        <View style={styles.intro}>
+        <View style={styles.hero}>
+          <View style={styles.heroIconTile}>
+            <MaterialCommunityIcons name="cup-water" size={40} color={COLORS.white} />
+          </View>
+          <Text style={styles.heroEyebrow}>{t("home.brandEyebrow")}</Text>
           <Text style={styles.title}>{t("welcome.title")}</Text>
           <Text style={styles.subtitle}>{t("welcome.subtitle")}</Text>
+          <View style={styles.heroGlow} />
         </View>
 
         <View style={styles.features}>
@@ -69,7 +70,7 @@ export default function WelcomeScreen() {
               <View style={[styles.featureIcon, { backgroundColor: feature.color }]}>
                 <MaterialCommunityIcons
                   name={feature.icon}
-                  size={25}
+                  size={22}
                   color={feature.iconColor}
                 />
               </View>
@@ -91,7 +92,7 @@ export default function WelcomeScreen() {
           style={styles.continueButton}
         >
           <Text style={styles.continueText}>{t("welcome.continue")}</Text>
-          <MaterialCommunityIcons name="arrow-right" size={20} color="#fff" />
+          <MaterialCommunityIcons name="arrow-right" size={20} color={COLORS.white} />
         </Button>
       </ScrollView>
     </View>
@@ -99,48 +100,92 @@ export default function WelcomeScreen() {
 }
 
 const styles = StyleSheet.create({
-  screen: { flex: 1, backgroundColor: "#FCFAF2" },
+  screen: { flex: 1, backgroundColor: COLORS.background },
   content: {
     flexGrow: 1,
-    paddingHorizontal: 28,
+    paddingHorizontal: 16,
     alignItems: "center",
   },
-  heroImage: { width: "100%", height: 260 },
-  intro: { alignItems: "center", marginTop: 4, marginBottom: 22 },
-  title: {
-    color: COLORS.brandDark,
-    fontSize: TYPOGRAPHY.brandTitle,
-    fontWeight: "800",
-    textAlign: "center",
+  hero: {
+    position: "relative",
+    overflow: "hidden",
+    width: "100%",
+    borderRadius: RADII.card,
+    backgroundColor: COLORS.brand,
+    paddingVertical: 32,
+    paddingHorizontal: 20,
+    alignItems: "center",
+    ...SHADOWS.control,
   },
-  subtitle: {
-    color: "#475569",
-    fontSize: TYPOGRAPHY.bodyLarge,
-    lineHeight: 25,
+  heroIconTile: {
+    width: 72,
+    height: 72,
+    borderRadius: RADII.card,
+    backgroundColor: withAlpha(COLORS.greenAccent, 0.6),
+    alignItems: "center",
+    justifyContent: "center",
+    marginBottom: 16,
+  },
+  heroEyebrow: {
+    fontSize: TYPOGRAPHY.micro,
+    fontWeight: "700",
+    letterSpacing: 1.2,
+    textTransform: "uppercase",
+    color: withAlpha(COLORS.brandLight, 0.9),
+  },
+  title: {
+    color: COLORS.white,
+    fontSize: TYPOGRAPHY.headlineXl,
+    fontWeight: "800",
+    letterSpacing: -0.6,
     textAlign: "center",
     marginTop: 4,
+  },
+  subtitle: {
+    color: withAlpha(COLORS.inversePrimary, 0.85),
+    fontSize: TYPOGRAPHY.bodySmall,
+    lineHeight: 20,
+    textAlign: "center",
+    marginTop: 6,
     maxWidth: 300,
   },
-  features: { width: "100%", gap: 16, marginBottom: 22 },
-  featureRow: { flexDirection: "row", alignItems: "center", gap: 16 },
+  heroGlow: {
+    position: "absolute",
+    right: -48,
+    bottom: -56,
+    width: 176,
+    height: 176,
+    borderRadius: 88,
+    backgroundColor: withAlpha(COLORS.brandLight, 0.08),
+  },
+  features: { width: "100%", gap: 12, marginTop: 20, marginBottom: 20 },
+  featureRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 12,
+    backgroundColor: COLORS.surface,
+    borderRadius: RADII.control,
+    padding: 14,
+    ...SHADOWS.card,
+  },
   featureIcon: {
-    width: 52,
-    height: 52,
-    borderRadius: 14,
+    width: 44,
+    height: 44,
+    borderRadius: RADII.control,
     alignItems: "center",
     justifyContent: "center",
   },
   featureCopy: { flex: 1 },
   featureTitle: {
-    color: "#17212F",
-    fontSize: TYPOGRAPHY.body,
-    fontWeight: "800",
+    color: COLORS.text,
+    fontSize: TYPOGRAPHY.bodySmall,
+    fontWeight: "700",
   },
   featureDescription: {
-    color: "#64748B",
-    fontSize: TYPOGRAPHY.label,
-    marginTop: 3,
+    color: COLORS.muted,
+    fontSize: TYPOGRAPHY.caption,
+    marginTop: 2,
   },
   continueButton: { marginTop: "auto", gap: 8 },
-  continueText: { color: "#fff", fontSize: TYPOGRAPHY.body, fontWeight: "700" },
+  continueText: { color: COLORS.white, fontSize: TYPOGRAPHY.body, fontWeight: "700" },
 });

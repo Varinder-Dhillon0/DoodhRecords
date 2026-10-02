@@ -13,7 +13,7 @@ import {
   View,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { COLORS } from "../constants";
+import { COLORS, RADII } from "../constants";
 import { TYPOGRAPHY } from "../constants/typography";
 import { useFontScale } from "./FontScaleContext";
 
@@ -115,10 +115,11 @@ const styles = StyleSheet.create({
   },
   messageContainer: {
     minHeight: 48,
+    alignItems: "center",
     justifyContent: "center",
     paddingHorizontal: 16,
     paddingVertical: 12,
-    borderRadius: 10,
+    borderRadius: RADII.control,
     backgroundColor: "#1F2937",
   },
   text: {

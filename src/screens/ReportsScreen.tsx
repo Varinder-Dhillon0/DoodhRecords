@@ -1,24 +1,28 @@
 import React, { useMemo, useState } from "react";
-import { View, ScrollView, StyleSheet, Dimensions } from "react-native";
+import { View, ScrollView, StyleSheet, Dimensions, Alert, Pressable } from "react-native";
 import { LineChart } from "react-native-chart-kit";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
-import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { COLORS } from "../constants";
+import { useTranslation } from "react-i18next";
+import { COLORS, RADII, SHADOWS, withAlpha } from "../constants";
 import { useDoodhContext } from "../context/DoodhContext";
 import { getLocalDateString } from "../utils/dateUtils";
 import { calculateEntryEarnings, calculateSummary } from "../utils/calculations";
 import { formatCurrency, formatNumber } from "../utils/formatters";
 import MonthYearFilter from "../components/MonthYearFilter";
 import ReportChartCard from "../components/ReportChartCard";
-import { useTranslation } from "react-i18next";
+import AppHeader from "../components/AppHeader";
 import Text from "../components/ScaledText";
 import { TYPOGRAPHY } from "../constants/typography";
+import { FONT_FAMILY } from "../constants/fonts";
 import { useFontScale } from "../context/FontScaleContext";
+import { createDataExportFile } from "../utils/storageManager";
+import { useSnackbar } from "../context/SnackbarContext";
+import * as Sharing from "expo-sharing";
 
 export default function ReportsScreen() {
   const { t } = useTranslation();
+  const { showSnackbar } = useSnackbar();
   const { typography } = useFontScale();
-  const insets = useSafeAreaInsets();
   const { entries, pricingConfig } = useDoodhContext();
 
   const todayStr = getLocalDateString();
@@ -27,6 +31,29 @@ export default function ReportsScreen() {
 
   const [selectedMonth, setSelectedMonth] = useState<string>(currentMonth);
   const [selectedYear, setSelectedYear] = useState<string>(currentYear);
+  const [isExporting, setIsExporting] = useState(false);
+
+  const handleExport = async () => {
+    setIsExporting(true);
+    try {
+      if (!(await Sharing.isAvailableAsync())) {
+        Alert.alert(t("common.error"), t("settings.exportUnavailable"));
+        return;
+      }
+      const { uri } = await createDataExportFile();
+      await Sharing.shareAsync(uri, {
+        dialogTitle: t("settings.exportDialogTitle"),
+        mimeType: "application/json",
+        UTI: "public.json",
+      });
+      showSnackbar(t("settings.exportSuccess"));
+    } catch (error) {
+      console.error("Error exporting app data:", error);
+      Alert.alert(t("common.error"), t("settings.exportError"));
+    } finally {
+      setIsExporting(false);
+    }
+  };
 
   const pricedEntries = useMemo(
     () =>
@@ -97,8 +124,14 @@ export default function ReportsScreen() {
     return { labels, milkValues, fatValues, earningValues };
   }, [filteredEntries, selectedMonth, selectedYear]);
 
+  const peakLabel = (values: number[], suffix = "", decimals = 1) => {
+    const peak = Math.max(...values, 0);
+    if (!Number.isFinite(peak) || peak <= 0) return undefined;
+    return t("reports.peak", { value: `${formatNumber(peak, decimals)}${suffix}` });
+  };
+
   const screenWidth = Dimensions.get("window").width;
-  const chartWidth = Math.max(screenWidth - 56, 280);
+  const chartWidth = Math.max(screenWidth - 64, 280);
 
   const formatXLabel = (val: string) => {
     const day = Number(val);
@@ -107,26 +140,25 @@ export default function ReportsScreen() {
   };
 
   const chartConfigBase = {
-    backgroundGradientFrom: "#ffffff",
-    backgroundGradientTo: "#ffffff",
+    backgroundGradientFrom: COLORS.surface,
+    backgroundGradientTo: COLORS.surface,
     decimalPlaces: 1,
-    labelColor: (opacity = 1) => `rgba(100, 116, 139, ${opacity})`,
+    labelColor: (opacity = 1) => withAlpha(COLORS.muted, opacity),
     propsForBackgroundLines: {
-      stroke: "#E2E8F0",
+      stroke: COLORS.surfaceContainer,
       strokeWidth: 1,
       strokeDasharray: "",
     },
     propsForDots: { r: "3", strokeWidth: "1" },
-    propsForLabels: { fontSize: typography.caption },
-    propsForVerticalLabels: { fontSize: typography.caption },
+    propsForLabels: { fontSize: typography.caption, fontFamily: FONT_FAMILY.regular },
+    propsForVerticalLabels: { fontSize: typography.caption, fontFamily: FONT_FAMILY.regular },
   };
 
   return (
     <View style={styles.container}>
-      <View
-        style={[styles.header, { paddingTop: Math.max(insets.top + 12, 44) }]}
-      >
-        <Text style={styles.title}>{t("reports.title")}</Text>
+      <AppHeader eyebrow={t("home.appTitle")} title={t("reports.title")} />
+
+      <View style={styles.filterBar}>
         <MonthYearFilter
           month={selectedMonth}
           year={selectedYear}
@@ -141,7 +173,7 @@ export default function ReportsScreen() {
         showsVerticalScrollIndicator={false}
       >
         <View style={styles.summaryCard}>
-          <View>
+          <View style={styles.summaryText}>
             <Text style={styles.summaryLabel}>
               {t("reports.totalMonthlyEarnings")}
             </Text>
@@ -152,41 +184,48 @@ export default function ReportsScreen() {
           <View style={styles.iconCircle}>
             <MaterialCommunityIcons
               name="currency-inr"
-              size={26}
-              color="#fff"
+              size={24}
+              color={COLORS.white}
             />
           </View>
+          <View style={styles.summaryGlow} />
         </View>
 
         <View style={styles.metricsGrid}>
           <View style={styles.metricCard}>
             <View style={styles.metricIconBlue}>
               <MaterialCommunityIcons
-                name="glass-mug-variant"
-                size={20}
-                color="#2563EB"
+                name="cup-water"
+                size={18}
+                color={COLORS.blue}
               />
             </View>
             <Text style={styles.metricLabel}>{t("reports.totalMilk")}</Text>
-            <Text style={styles.metricValue}>
-              {formatNumber(reportSummary.totalMilk, 1)}{" "}
+            <View style={styles.metricValueRow}>
+              <Text style={styles.metricValue}>
+                {formatNumber(reportSummary.totalMilk, 1)}
+              </Text>
               <Text style={styles.metricUnit}>{t("common.kg")}</Text>
-            </Text>
+            </View>
           </View>
 
           <View style={styles.metricCard}>
             <View style={styles.metricIconAmber}>
-              <MaterialCommunityIcons name="water" size={20} color="#D97706" />
+              <MaterialCommunityIcons name="water" size={18} color={COLORS.amber} />
             </View>
             <Text style={styles.metricLabel}>{t("reports.averageFat")}</Text>
-            <Text style={styles.metricValue}>{reportSummary.avgFat}%</Text>
+            <View style={styles.metricValueRow}>
+              <Text style={styles.metricValue}>{reportSummary.avgFat}</Text>
+              <Text style={styles.metricUnit}>%</Text>
+            </View>
           </View>
         </View>
 
         <ReportChartCard
           icon="chart-bell-curve-cumulative"
-          color="#2563EB"
+          color={COLORS.blue}
           title={t("reports.dailyMilk")}
+          peakLabel={peakLabel(chartData.milkValues, " kg")}
         >
           <LineChart
             data={{
@@ -198,8 +237,8 @@ export default function ReportsScreen() {
             formatXLabel={formatXLabel}
             chartConfig={{
               ...chartConfigBase,
-              color: (opacity = 1) => `rgba(37, 99, 235, ${opacity})`,
-              propsForDots: { r: "3", strokeWidth: "1", stroke: "#2563EB" },
+              color: (opacity = 1) => withAlpha(COLORS.blue, opacity),
+              propsForDots: { r: "3", strokeWidth: "1", stroke: COLORS.blue },
             }}
             bezier
             style={styles.chart}
@@ -208,8 +247,9 @@ export default function ReportsScreen() {
 
         <ReportChartCard
           icon="water-percent"
-          color="#D97706"
+          color={COLORS.amber}
           title={t("reports.dailyFat")}
+          peakLabel={peakLabel(chartData.fatValues, "%")}
         >
           <LineChart
             data={{
@@ -221,8 +261,8 @@ export default function ReportsScreen() {
             formatXLabel={formatXLabel}
             chartConfig={{
               ...chartConfigBase,
-              color: (opacity = 1) => `rgba(217, 119, 6, ${opacity})`,
-              propsForDots: { r: "3", strokeWidth: "1", stroke: "#D97706" },
+              color: (opacity = 1) => withAlpha(COLORS.amber, opacity),
+              propsForDots: { r: "3", strokeWidth: "1", stroke: COLORS.amber },
             }}
             bezier
             style={styles.chart}
@@ -231,8 +271,9 @@ export default function ReportsScreen() {
 
         <ReportChartCard
           icon="cash-multiple"
-          color={COLORS.brand}
+          color={COLORS.greenAccent}
           title={t("reports.dailyEarnings")}
+          peakLabel={peakLabel(chartData.earningValues, "", 0)}
         >
           <LineChart
             data={{
@@ -245,95 +286,170 @@ export default function ReportsScreen() {
             chartConfig={{
               ...chartConfigBase,
               decimalPlaces: 0,
-              color: (opacity = 1) => `rgba(30, 86, 49, ${opacity})`,
+              color: (opacity = 1) => withAlpha(COLORS.brand, opacity),
               propsForDots: { r: "3", strokeWidth: "1", stroke: COLORS.brand },
             }}
             bezier
             style={styles.chart}
           />
         </ReportChartCard>
+
+        <Pressable
+          accessibilityRole="button"
+          disabled={isExporting}
+          onPress={handleExport}
+          style={({ pressed }) => [
+            styles.exportButton,
+            pressed && styles.exportButtonPressed,
+            isExporting && styles.exportButtonDisabled,
+          ]}
+        >
+          <View style={styles.exportLeft}>
+            <MaterialCommunityIcons
+              name="file-download-outline"
+              size={20}
+              color={COLORS.blue}
+            />
+            <Text style={styles.exportText}>
+              {isExporting ? t("settings.exporting") : t("settings.exportData")}
+            </Text>
+          </View>
+          <View style={styles.exportBadge}>
+            <Text style={styles.exportBadgeText}>JSON</Text>
+          </View>
+        </Pressable>
       </ScrollView>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: "#F8FAFC" },
-  header: {
-    alignItems: "flex-start",
-    backgroundColor: "#fff",
-    paddingHorizontal: 18,
-    paddingBottom: 14,
-    gap: 12,
-    borderBottomWidth: 1,
-    borderBottomColor: "#E2E8F0",
-  },
-  title: { fontSize: TYPOGRAPHY.screenTitle, fontWeight: "800", color: "#0F172A" },
+  container: { flex: 1, backgroundColor: COLORS.background },
+  filterBar: { paddingHorizontal: 16, paddingBottom: 12 },
   content: { flex: 1 },
-  contentPad: { padding: 18, paddingBottom: 100 },
+  contentPad: { paddingHorizontal: 16, paddingBottom: 100 },
   summaryCard: {
-    backgroundColor: COLORS.brand,
-    borderRadius: 20,
+    position: "relative",
+    overflow: "hidden",
+    backgroundColor: COLORS.greenAccent,
+    borderRadius: RADII.card,
     padding: 20,
     marginBottom: 16,
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
-    shadowColor: COLORS.brand,
-    shadowOpacity: 0.2,
-    shadowRadius: 10,
-    shadowOffset: { width: 0, height: 4 },
-    elevation: 3,
+    ...SHADOWS.control,
   },
+  summaryText: { zIndex: 1 },
   summaryLabel: {
-    fontSize: TYPOGRAPHY.label,
+    fontSize: TYPOGRAPHY.micro,
     fontWeight: "700",
-    color: "#E9F7EC",
+    letterSpacing: 0.6,
+    textTransform: "uppercase",
+    color: COLORS.brandDim,
     marginBottom: 4,
   },
-  summaryValue: { fontSize: TYPOGRAPHY.display, fontWeight: "900", color: "#fff" },
+  summaryValue: {
+    fontSize: TYPOGRAPHY.display,
+    fontWeight: "800",
+    letterSpacing: -0.5,
+    color: COLORS.white,
+  },
   iconCircle: {
     width: 48,
     height: 48,
-    borderRadius: 24,
-    backgroundColor: "rgba(255,255,255,0.2)",
+    borderRadius: RADII.pill,
+    backgroundColor: withAlpha(COLORS.white, 0.2),
     justifyContent: "center",
     alignItems: "center",
+    zIndex: 1,
   },
-  metricsGrid: { flexDirection: "row", gap: 12, marginBottom: 16 },
+  summaryGlow: {
+    position: "absolute",
+    right: -40,
+    top: -40,
+    width: 160,
+    height: 160,
+    borderRadius: 80,
+    backgroundColor: withAlpha(COLORS.white, 0.06),
+  },
+  exportButton: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    backgroundColor: COLORS.surface,
+    borderRadius: RADII.card,
+    padding: 16,
+    borderWidth: 1,
+    borderColor: COLORS.blueFixed,
+    ...SHADOWS.card,
+  },
+  exportButtonPressed: { backgroundColor: COLORS.blueFixed },
+  exportButtonDisabled: { opacity: 0.6 },
+  exportLeft: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+  },
+  exportText: {
+    fontSize: TYPOGRAPHY.body,
+    fontWeight: "600",
+    color: COLORS.text,
+  },
+  exportBadge: {
+    alignItems: "center",
+    justifyContent: "center",
+    height: 22,
+    paddingHorizontal: 8,
+    borderRadius: RADII.sm,
+    backgroundColor: COLORS.blueFixed,
+  },
+  exportBadgeText: {
+    fontSize: TYPOGRAPHY.micro,
+    fontWeight: "700",
+    letterSpacing: 0.5,
+    color: COLORS.blue,
+  },
+  metricsGrid: { flexDirection: "row", alignItems: "stretch", gap: 12, marginBottom: 16 },
   metricCard: {
     flex: 1,
-    backgroundColor: "#fff",
-    borderRadius: 16,
+    backgroundColor: COLORS.surface,
+    borderRadius: RADII.control,
     borderWidth: 1,
-    borderColor: "#E2E8F0",
-    padding: 14,
+    borderColor: COLORS.borderSoft,
+    padding: 12,
   },
   metricIconBlue: {
-    width: 38,
-    height: 38,
-    borderRadius: 12,
-    backgroundColor: "#EFF6FF",
+    width: 32,
+    height: 32,
+    borderRadius: RADII.sm,
+    backgroundColor: COLORS.blueFixed,
     justifyContent: "center",
     alignItems: "center",
     marginBottom: 8,
   },
   metricIconAmber: {
-    width: 38,
-    height: 38,
-    borderRadius: 12,
-    backgroundColor: "#FFFBEB",
+    width: 32,
+    height: 32,
+    borderRadius: RADII.sm,
+    backgroundColor: COLORS.amberFixed,
     justifyContent: "center",
     alignItems: "center",
     marginBottom: 8,
   },
   metricLabel: {
-    color: "#64748B",
+    color: COLORS.muted,
     fontSize: TYPOGRAPHY.caption,
-    fontWeight: "700",
+    fontWeight: "600",
     marginBottom: 4,
   },
-  metricValue: { fontSize: TYPOGRAPHY.headingSmall, fontWeight: "800", color: "#0F172A" },
-  metricUnit: { fontSize: TYPOGRAPHY.caption, color: "#64748B", fontWeight: "600" },
-  chart: { marginVertical: 4, borderRadius: 12 },
+  metricValueRow: { flexDirection: "row", alignItems: "baseline", gap: 3 },
+  metricValue: {
+    fontSize: TYPOGRAPHY.heading,
+    fontWeight: "800",
+    letterSpacing: -0.4,
+    color: COLORS.text,
+  },
+  metricUnit: { fontSize: TYPOGRAPHY.caption, fontWeight: "600", color: COLORS.muted },
+  chart: { marginVertical: 4, borderRadius: RADII.control },
 });

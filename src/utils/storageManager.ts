@@ -358,7 +358,6 @@ export const readEntriesForMonth = async (
       milk_quantity: Number(entry.milk_quantity) || 0,
       fat_percentage: Number(entry.fat_percentage) || 0,
       price: Number(entry.price) || 0,
-      earnings: 0,
       notes: entry.notes || "",
     };
   });
@@ -395,9 +394,8 @@ export const writeEntriesForMonth = async (
 };
 
 export const addEntry = async (
-  entry: Omit<MilkEntry, "id" | "earnings" | "price"> & {
+  entry: Omit<MilkEntry, "id" | "price"> & {
     id?: number;
-    earnings?: number;
     price?: number;
   },
 ): Promise<MilkEntry> => {
@@ -412,11 +410,6 @@ export const addEntry = async (
 
   const savedPrice =
     entry.price ?? (await getPriceForEntry(entry.animal, entry.date));
-  const computedEarnings = calcEarnings(
-    entry.milk_quantity,
-    entry.fat_percentage,
-    savedPrice,
-  );
 
   const newEntry: MilkEntry = {
     ...entry,
