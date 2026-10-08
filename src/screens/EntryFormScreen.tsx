@@ -151,7 +151,7 @@ function StepperField({
           >
             <MaterialCommunityIcons
               name={icon}
-              size={15}
+              size={12}
               color={isBlue ? COLORS.blue : COLORS.amber}
             />
           </View>
