@@ -1,5 +1,6 @@
-import { MilkEntry, PricingConfig, SummaryMetrics } from "../types";
+import type { MilkEntry, PricingConfig, SummaryMetrics } from "../types";
 import { getYearAndMonth } from "./dateUtils";
+import { resolveAnimalRate } from "../domain/pricing";
 
 /**
  * Mathematical calculations for dairy earnings and statistics
@@ -25,12 +26,17 @@ export const calculateEntryEarnings = (
   pricingConfig: PricingConfig,
 ): number => {
   const { year, month } = getYearAndMonth(entry.date);
-  const price =
-    pricingConfig[`${year}-${month}`]?.[entry.animal] ??
-    (entry.animal === "Cow" ? 8 : 9);
+  const price = resolveAnimalRate(pricingConfig, year, month, entry.animal);
 
   return calculateEarnings(entry.milk_quantity, entry.fat_percentage, price);
 };
+
+export const getStoredEntryEarnings = (
+  entry: Pick<MilkEntry, "milk_quantity" | "fat_percentage" | "price">,
+): number =>
+  Number(entry.milk_quantity || 0) *
+  Number(entry.fat_percentage || 0) *
+  Number(entry.price || 0);
 
 export const calculateSummary = (entries: MilkEntry[] = []): SummaryMetrics => {
   let totalMilk = 0;

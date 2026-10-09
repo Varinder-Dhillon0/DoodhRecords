@@ -9,7 +9,7 @@ import {
   TextStyle,
 } from "react-native";
 import { useFontScale } from "../context/FontScaleContext";
-import { getTypographySize } from "../constants/typography";
+import { getTypographySize, TEXT_VARIANTS, TextVariantName } from "../constants/typography";
 import { resolveFontFamily } from "../constants/fonts";
 
 function useScaledTextStyle(style: StyleProp<TextStyle>): StyleProp<TextStyle> {
@@ -35,12 +35,24 @@ function useScaledTextStyle(style: StyleProp<TextStyle>): StyleProp<TextStyle> {
   }, [style, typography]);
 }
 
-export default function ScaledText(props: TextProps) {
-  const style = useScaledTextStyle(props.style);
-  return <NativeText {...props} style={style} />;
+type ScaledTextProps = TextProps & { textVariant?: TextVariantName };
+type ScaledTextInputProps = TextInputProps & { textVariant?: TextVariantName };
+
+const withVariant = (
+  style: StyleProp<TextStyle>,
+  textVariant?: TextVariantName,
+): StyleProp<TextStyle> => {
+  if (!textVariant) return style;
+  const variantStyle = TEXT_VARIANTS[textVariant];
+  return style ? [variantStyle, style] : variantStyle;
+};
+
+export default function ScaledText({ textVariant, style, ...rest }: ScaledTextProps) {
+  const scaledStyle = useScaledTextStyle(withVariant(style, textVariant));
+  return <NativeText {...rest} style={scaledStyle} />;
 }
 
-export function ScaledTextInput(props: TextInputProps) {
-  const style = useScaledTextStyle(props.style);
-  return <NativeTextInput {...props} style={style} />;
+export function ScaledTextInput({ textVariant, style, ...rest }: ScaledTextInputProps) {
+  const scaledStyle = useScaledTextStyle(withVariant(style, textVariant));
+  return <NativeTextInput {...rest} style={scaledStyle} />;
 }

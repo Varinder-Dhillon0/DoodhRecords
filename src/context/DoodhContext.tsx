@@ -7,16 +7,15 @@ import React, {
 } from "react";
 import { Animal, DoodhContextType, MilkEntry, PricingConfig } from "../types";
 import { defaultEntries, defaultPricing } from "../data/defaultData";
+import { getDefaultAnimalPricing, getMonthKey } from "../domain/pricing";
 import {
-  addEntry as storageAddEntry,
-  deleteEntry as storageDeleteEntry,
-  getPriceForEntry,
-  getPricingConfig,
-  initializeStorage,
-  readAllEntries,
-  savePricingConfig,
-  updateEntry as storageUpdateEntry,
-} from "../utils/storageManager";
+  createRecord,
+  deleteRecord,
+  initializeRecordStore,
+  listRecords,
+  updateRecord,
+} from "../services/recordService";
+import { getRateForRecord, loadPricing, saveRate } from "../services/pricingService";
 
 
 const DoodhContext = createContext<DoodhContextType | null>(null);
@@ -30,12 +29,20 @@ export function DoodhProvider({ children }: { children: React.ReactNode }) {
   const loadData = useCallback(async () => {
     setIsLoading(true);
     try {
-      await initializeStorage();
-      const savedPricing = await getPricingConfig();
-      const savedEntries = await readAllEntries();
+      const initializeResult = await initializeRecordStore();
+      if (!initializeResult.ok) throw initializeResult.error;
+      const [pricingResult, entriesResult] = await Promise.all([
+        loadPricing(),
+        listRecords(),
+      ]);
 
-      setPricingConfig({ ...defaultPricing, ...savedPricing });
-      setEntries(savedEntries.length ? savedEntries : defaultEntries);
+      if (!pricingResult.ok) throw pricingResult.error;
+      if (!entriesResult.ok) throw entriesResult.error;
+
+      setPricingConfig(pricingResult.value);
+      setEntries(
+        entriesResult.value.length ? entriesResult.value : defaultEntries,
+      );
     } catch (error) {
       console.error("Unable to load Doodh data:", error);
       setPricingConfig(defaultPricing);
@@ -58,16 +65,18 @@ export function DoodhProvider({ children }: { children: React.ReactNode }) {
     ) => {
       const month = String(monthStr).padStart(2, "0");
       const year = String(yearStr);
-      const key = `${year}-${month}`;
+      const key = getMonthKey(year, month);
 
-      await savePricingConfig(year, month, animal, price);
+      const saveResult = await saveRate(year, month, animal, price);
+      if (!saveResult.ok) return saveResult;
       setPricingConfig((prev) => ({
         ...prev,
         [key]: {
-          ...(prev[key] || { Cow: 8, Buffalo: 9 }),
+          ...(prev[key] || getDefaultAnimalPricing()),
           [animal]: Number(price),
         },
       }));
+      return { ok: true as const, value: undefined };
     },
     [],
   );
@@ -78,55 +87,65 @@ export function DoodhProvider({ children }: { children: React.ReactNode }) {
         id?: number;
         price?: number;
       },
-    ): Promise<MilkEntry> => {
-      const savedPrice = await getPriceForEntry(entry.animal, entry.date);
-      const newEntry = await storageAddEntry({
+    ) => {
+      const rateResult = await getRateForRecord(entry.animal, entry.date);
+      if (!rateResult.ok) return rateResult;
+      const createResult = await createRecord({
         ...entry,
-        price: savedPrice,
+        price: rateResult.value,
       });
-      setEntries((prev) => [...prev, newEntry]);
-      return newEntry;
+      if (!createResult.ok) return createResult;
+      setEntries((prev) => [...prev, createResult.value]);
+      return { ok: true as const, value: createResult.value };
     },
     [],
   );
 
   const handleUpdateEntry = useCallback(
-    async (
-      entry: MilkEntry,
-      oldDate: string | null = null,
-    ): Promise<MilkEntry> => {
-      const savedPrice = await getPriceForEntry(entry.animal, entry.date);
+    async (entry: MilkEntry, oldDate: string | null = null) => {
+      const rateResult = await getRateForRecord(entry.animal, entry.date);
+      if (!rateResult.ok) return rateResult;
       const updatedEntry: MilkEntry = {
         ...entry,
-        price: savedPrice,
+        price: rateResult.value,
       };
-      await storageUpdateEntry(updatedEntry, oldDate);
+      const updateResult = await updateRecord(updatedEntry, oldDate);
+      if (!updateResult.ok) return updateResult;
       setEntries((prev) =>
         prev.map((item) =>
-          Number(item.id) === Number(updatedEntry.id) ? updatedEntry : item,
+          Number(item.id) === Number(updateResult.value.id) ? updateResult.value : item,
         ),
       );
-      return updatedEntry;
+      return { ok: true as const, value: updateResult.value };
     },
     [],
   );
 
   const handleDeleteEntry = useCallback(
-    async (entryId: number, dateString: string): Promise<void> => {
-      await storageDeleteEntry(entryId, dateString);
+    async (entryId: number, dateString: string) => {
+      const deleteResult = await deleteRecord(entryId, dateString);
+      if (!deleteResult.ok) return deleteResult;
       setEntries((prev) =>
         prev.filter(
           (item) =>
-            !(Number(item.id) === Number(entryId) && item.date === dateString),
+            !(
+              Number(item.id) === Number(entryId) &&
+              item.date === dateString
+            ),
         ),
       );
+      return { ok: true as const, value: undefined };
     },
     [],
   );
 
   const refreshEntries = useCallback(async () => {
-    const saved = await readAllEntries();
-    setEntries(saved.length ? saved : defaultEntries);
+    const savedResult = await listRecords();
+    if (!savedResult.ok) return savedResult;
+    setEntries(
+      savedResult.value.length ? savedResult.value : defaultEntries,
+    );
+    return { ok: true as const, value: undefined };
   }, []);
 
   const value: DoodhContextType = {

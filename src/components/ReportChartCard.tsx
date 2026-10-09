@@ -2,6 +2,7 @@ import React from "react";
 import { StyleSheet, View } from "react-native";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 import Text from "./ScaledText";
+import Card from "./ui/Card";
 import { COLORS, RADII, SHADOWS } from "../constants";
 import { TYPOGRAPHY } from "../constants/typography";
 
@@ -21,7 +22,7 @@ export default function ReportChartCard({
   children,
 }: ReportChartCardProps) {
   return (
-    <View style={styles.chartCard}>
+    <Card style={styles.chartCard}>
       <View style={styles.chartTitleRow}>
         <View style={[styles.iconTile, { backgroundColor: color }]}>
           <MaterialCommunityIcons name={icon} size={18} color={COLORS.white} />
@@ -41,19 +42,13 @@ export default function ReportChartCard({
         ) : null}
       </View>
       {children}
-    </View>
+    </Card>
   );
 }
 
 const styles = StyleSheet.create({
   chartCard: {
-    backgroundColor: COLORS.surface,
-    borderRadius: RADII.card,
-    borderWidth: 1,
-    borderColor: COLORS.borderSoft,
-    padding: 16,
     marginBottom: 16,
-    ...SHADOWS.card,
   },
   chartTitleRow: {
     flexDirection: "row",

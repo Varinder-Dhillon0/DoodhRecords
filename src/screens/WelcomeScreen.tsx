@@ -91,7 +91,7 @@ export default function WelcomeScreen() {
           onPress={() => navigation.replace("MainTabs")}
           style={styles.continueButton}
         >
-          <Text style={styles.continueText}>{t("welcome.continue")}</Text>
+          <Text textVariant="button" style={styles.continueText}>{t("welcome.continue")}</Text>
           <MaterialCommunityIcons name="arrow-right" size={20} color={COLORS.white} />
         </Button>
       </ScrollView>
@@ -187,5 +187,5 @@ const styles = StyleSheet.create({
     marginTop: 2,
   },
   continueButton: { marginTop: "auto", gap: 8 },
-  continueText: { color: COLORS.white, fontSize: TYPOGRAPHY.body, fontWeight: "700" },
+  continueText: { color: COLORS.white },
 });

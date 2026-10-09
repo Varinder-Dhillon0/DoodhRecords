@@ -1,16 +1,19 @@
-import { Directory, File, Paths } from "expo-file-system";
-import { Animal, AnimalPricing, MilkEntry, PricingConfig } from "../types";
-import { ANIMALS, APP_VERSION } from "../constants";
+import type { Animal, AnimalPricing, MilkEntry, PricingConfig } from "../types";
+import { getStorageDirectory } from "./fileStorage";
+import type { StoredFile } from "./fileStorage";
 import { getYearAndMonth } from "./dateUtils";
-import { calculateEarnings as calcEarnings } from "./calculations";
+import { parseCsvContent, serializeCsvRows } from "../data/csv";
+import {
+  getDefaultAnimalPricing,
+  getMonthKey,
+  resolveAnimalPricing,
+} from "../domain/pricing";
 
-const baseDir = Paths.document ?? Paths.cache;
-const storageDir = new Directory(baseDir, "doodh_records");
-export const PRICING_FILE = new File(storageDir, "pricing_config.csv").uri;
+const storageDir = getStorageDirectory();
 
 export const getStoredLanguage = async (): Promise<string | null> => {
   try {
-    const languageFile = new File(storageDir, "language.txt");
+    const languageFile = storageDir.file("language.txt");
     if (!languageFile.exists) return null;
     const language = (await languageFile.text()).trim();
     return language || null;
@@ -25,7 +28,7 @@ export const saveStoredLanguage = async (language: string): Promise<void> => {
     if (!storageDir.exists) {
       storageDir.create();
     }
-    new File(storageDir, "language.txt").write(language);
+    storageDir.file("language.txt").write(language);
   } catch (err) {
     console.error("Error saving language preference:", err);
   }
@@ -33,7 +36,7 @@ export const saveStoredLanguage = async (language: string): Promise<void> => {
 
 export const getStoredFontScale = async (): Promise<number | null> => {
   try {
-    const scaleFile = new File(storageDir, "font_scale.txt");
+    const scaleFile = storageDir.file("font_scale.txt");
     if (!scaleFile.exists) return null;
     const scale = Number((await scaleFile.text()).trim());
     return Number.isFinite(scale) ? scale : null;
@@ -48,66 +51,20 @@ export const saveStoredFontScale = async (scale: number): Promise<void> => {
     if (!storageDir.exists) {
       storageDir.create();
     }
-    new File(storageDir, "font_scale.txt").write(String(scale));
+    storageDir.file("font_scale.txt").write(String(scale));
   } catch (err) {
     console.error("Error saving font scale preference:", err);
   }
 };
 
-const csvEscape = (value: string | number | undefined | null): string => {
-  const stringValue = String(value ?? "");
-  if (
-    stringValue.includes(",") ||
-    stringValue.includes('"') ||
-    stringValue.includes("\n") ||
-    stringValue.includes("\r")
-  ) {
-    return `"${stringValue.replace(/"/g, '""')}"`;
-  }
-  return stringValue;
-};
-
-const parseCsvLine = (line: string): string[] => {
-  const values: string[] = [];
-  let current = "";
-  let inQuotes = false;
-
-  for (let i = 0; i < line.length; i += 1) {
-    const char = line[i];
-    if (char === '"') {
-      if (inQuotes && line[i + 1] === '"') {
-        current += '"';
-        i += 1;
-      } else {
-        inQuotes = !inQuotes;
-      }
-    } else if (char === "," && !inQuotes) {
-      values.push(current);
-      current = "";
-    } else {
-      current += char;
-    }
-  }
-
-  values.push(current);
-  return values.map((value) => value.trim());
-};
-
-const readCsvFile = async (file: File): Promise<string[][]> => {
+const readCsvFile = async (file: StoredFile): Promise<string[][]> => {
   try {
     if (!file.exists) {
       return [];
     }
 
     const content = await file.text();
-    if (!content.trim()) {
-      return [];
-    }
-
-    return content
-      .split(/\r?\n/)
-      .filter((line) => line.trim())
-      .map((line) => parseCsvLine(line));
+    return parseCsvContent(content);
   } catch (err) {
     console.error(`Error reading CSV file at ${file.uri}:`, err);
     return [];
@@ -115,7 +72,7 @@ const readCsvFile = async (file: File): Promise<string[][]> => {
 };
 
 const writeCsvFile = async (
-  file: File,
+  file: StoredFile,
   rows: (string | number)[][],
 ): Promise<void> => {
   try {
@@ -123,23 +80,26 @@ const writeCsvFile = async (
       storageDir.create();
     }
 
-    const content = rows.map((row) => row.map(csvEscape).join(",")).join("\n");
-    file.write(`${content}\n`);
+    const content = serializeCsvRows(rows);
+    file.write(content);
   } catch (err) {
     console.error(`Error writing CSV file at ${file.uri}:`, err);
   }
 };
 
-const getMonthlyFile = (yearStr: string, monthStr: string): File => {
+const getMonthlyFile = (yearStr: string, monthStr: string): StoredFile => {
   const year = String(yearStr);
   const month = String(monthStr).padStart(2, "0");
-  return new File(storageDir, `entries_${year}_${month}.csv`);
+  return storageDir.file(`entries_${year}_${month}.csv`);
 };
 
-const getMonthlyPricingFile = (yearStr: string, monthStr: string): File => {
+const getMonthlyPricingFile = (
+  yearStr: string,
+  monthStr: string,
+): StoredFile => {
   const year = String(yearStr);
   const month = String(monthStr).padStart(2, "0");
-  return new File(storageDir, `pricing_${year}_${month}.csv`);
+  return storageDir.file(`pricing_${year}_${month}.csv`);
 };
 
 const getHeaders = (): string[] => [
@@ -158,7 +118,7 @@ export const initializeStorage = async (): Promise<void> => {
     storageDir.create();
   }
 
-  const pricingFile = new File(storageDir, "pricing_config.csv");
+  const pricingFile = storageDir.file("pricing_config.csv");
   if (!pricingFile.exists) {
     pricingFile.write("month,year,animal,price_per_fat\n");
   }
@@ -174,7 +134,7 @@ export const getPricingConfig = async (): Promise<PricingConfig> => {
   const config: PricingConfig = {};
 
   // 1. Read global pricing_config.csv
-  const pricingFile = new File(storageDir, "pricing_config.csv");
+  const pricingFile = storageDir.file("pricing_config.csv");
   const rows = await readCsvFile(pricingFile);
   if (rows.length > 0) {
     const dataRows = rows[0][0] === "month" ? rows.slice(1) : rows;
@@ -183,9 +143,9 @@ export const getPricingConfig = async (): Promise<PricingConfig> => {
       const [monthRaw, yearRaw, animal, price] = row;
       const month = String(monthRaw).padStart(2, "0");
       const year = String(yearRaw);
-      const key = `${year}-${month}`;
+      const key = getMonthKey(year, month);
       if (!config[key]) {
-        config[key] = { Cow: 8, Buffalo: 9 };
+        config[key] = getDefaultAnimalPricing();
       }
       if (animal === "Cow" || animal === "Buffalo") {
         config[key][animal as Animal] = Number(price) || 0;
@@ -196,10 +156,8 @@ export const getPricingConfig = async (): Promise<PricingConfig> => {
   // 2. Scan monthly pricing files pricing_YYYY_MM.csv
   try {
     if (storageDir.exists) {
-      const contents = storageDir.list();
-      const pricingFiles = contents.filter(
-        (item): item is File =>
-          item instanceof File &&
+      const pricingFiles = storageDir.list().filter(
+        (item) =>
           item.name.startsWith("pricing_") &&
           item.name.endsWith(".csv") &&
           item.name !== "pricing_config.csv",
@@ -209,7 +167,7 @@ export const getPricingConfig = async (): Promise<PricingConfig> => {
         const match = file.name.match(/^pricing_(\d{4})_(\d{2})\.csv$/);
         if (match) {
           const [, year, month] = match;
-          const key = `${year}-${month}`;
+          const key = getMonthKey(year, month);
           const monthlyRows = await readCsvFile(file);
           const dataRows =
             monthlyRows.length > 0 && monthlyRows[0][0] === "animal"
@@ -217,7 +175,7 @@ export const getPricingConfig = async (): Promise<PricingConfig> => {
               : monthlyRows;
 
           if (!config[key]) {
-            config[key] = { Cow: 8, Buffalo: 9 };
+            config[key] = getDefaultAnimalPricing();
           }
 
           dataRows.forEach((row) => {
@@ -248,7 +206,7 @@ export const savePricingConfig = async (
   const month = String(monthStr).padStart(2, "0");
 
   // 1. Update global pricing_config.csv
-  const pricingFile = new File(storageDir, "pricing_config.csv");
+  const pricingFile = storageDir.file("pricing_config.csv");
   const rows = await readCsvFile(pricingFile);
   const dataRows =
     rows.length > 0 && rows[0][0] === "month" ? rows.slice(1) : rows;
@@ -265,10 +223,8 @@ export const savePricingConfig = async (
   // 2. Maintain monthly pricing CSV: pricing_YYYY_MM.csv
   const monthlyFile = getMonthlyPricingFile(year, month);
   const currentConfig = await getPricingConfig();
-  const existingMonthly = currentConfig[`${year}-${month}`] || {
-    Cow: 8,
-    Buffalo: 9,
-  };
+  const existingMonthly =
+    currentConfig[getMonthKey(year, month)] || getDefaultAnimalPricing();
   const updatedMonthly: AnimalPricing = {
     ...existingMonthly,
     [animal]: Number(price),
@@ -288,11 +244,10 @@ export const getPricingForDate = async (
 ): Promise<{ cowPrice: number; buffaloPrice: number }> => {
   const { year, month } = getYearAndMonth(dateString);
   const config = await getPricingConfig();
-  const key = `${year}-${month}`;
-  const pricing = config[key] || { Cow: 8, Buffalo: 9 };
+  const pricing = resolveAnimalPricing(config, year, month);
   return {
-    cowPrice: Number(pricing.Cow ?? 8),
-    buffaloPrice: Number(pricing.Buffalo ?? 9),
+    cowPrice: pricing.Cow,
+    buffaloPrice: pricing.Buffalo,
   };
 };
 
@@ -302,29 +257,6 @@ export const getPriceForEntry = async (
 ): Promise<number> => {
   const pricing = await getPricingForDate(dateString);
   return animal === "Cow" ? pricing.cowPrice : pricing.buffaloPrice;
-};
-
-export const calculateEarnings = async (
-  milkQuantity: number | string,
-  fatPercentage: number | string,
-  animal: Animal,
-  dateString: string,
-): Promise<number> => {
-  const pricePerFat = await getPriceForEntry(animal, dateString);
-  return calcEarnings(milkQuantity, fatPercentage, pricePerFat);
-};
-
-export const ensureMonthlyFile = async (
-  yearStr: string,
-  monthStr: string,
-): Promise<string> => {
-  const year = String(yearStr);
-  const month = String(monthStr).padStart(2, "0");
-  const file = getMonthlyFile(year, month);
-  if (!file.exists) {
-    await writeCsvFile(file, [getHeaders()]);
-  }
-  return file.uri;
 };
 
 export const readEntriesForMonth = async (
@@ -469,13 +401,12 @@ export const readAllEntries = async (): Promise<MilkEntry[]> => {
   try {
     if (!storageDir.exists) return [];
 
-    const contents = storageDir.list();
-    const entryFiles = contents.filter(
-      (item): item is File =>
-        item instanceof File &&
-        item.name.startsWith("entries_") &&
-        item.name.endsWith(".csv"),
-    );
+    const entryFiles = storageDir
+      .list()
+      .filter(
+        (item) =>
+          item.name.startsWith("entries_") && item.name.endsWith(".csv"),
+      );
 
     const allEntries: MilkEntry[] = [];
     for (const file of entryFiles) {
@@ -492,35 +423,4 @@ export const readAllEntries = async (): Promise<MilkEntry[]> => {
     console.error("Error in readAllEntries:", err);
     return [];
   }
-};
-
-export const createDataExportFile = async (): Promise<{
-  uri: string;
-  fileName: string;
-}> => {
-  const [milkEntries, pricingConfigurations, language, fontScale] =
-    await Promise.all([
-      readAllEntries(),
-      getPricingConfig(),
-      getStoredLanguage(),
-      getStoredFontScale(),
-    ]);
-  const exportData = {
-    format: "doodh-records-export",
-    formatVersion: 1,
-    exportedAt: new Date().toISOString(),
-    appVersion: APP_VERSION,
-    data: {
-      milkEntries,
-      pricingConfigurations,
-      animalTypes: ANIMALS,
-      preferences: { language, fontScale },
-    },
-  };
-  const fileName = `doodh_records_export_${new Date()
-    .toISOString()
-    .replace(/[:.]/g, "-")}.json`;
-  const file = new File(Paths.cache, fileName);
-  file.write(JSON.stringify(exportData, null, 2));
-  return { uri: file.uri, fileName };
 };

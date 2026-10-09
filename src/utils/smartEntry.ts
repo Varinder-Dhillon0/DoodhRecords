@@ -6,7 +6,7 @@
  *  - which values are worth offering as one-tap quick selections, learned from
  *    the user's own history instead of a hardcoded list
  */
-import { Animal, MilkEntry, Shift } from "../types";
+import type { Animal, MilkEntry, Shift } from "../types";
 import { getLocalDateString, parseLocalDate } from "./dateUtils";
 
 export type EntryCombination = {

@@ -7,6 +7,7 @@ import { COLORS, RADII } from "../constants";
 import { TYPOGRAPHY } from "../constants/typography";
 import { MilkEntry } from "../types";
 import { formatDisplayDate } from "../utils/dateUtils";
+import { getStoredEntryEarnings } from "../utils/calculations";
 import { formatCurrency, formatNumber } from "../utils/formatters";
 import Text from "./ScaledText";
 
@@ -59,9 +60,7 @@ export default function EntryRow({
 
       <View style={styles.right}>
         <Text style={styles.earnings}>
-          {formatCurrency(
-            entry.fat_percentage * entry.milk_quantity * entry.price,
-          )}
+          {formatCurrency(getStoredEntryEarnings(entry))}
         </Text>
         <Text style={styles.meta}>
           {t("home.milkAndFat", {

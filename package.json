@@ -9,6 +9,9 @@
     "ios": "expo run:ios",
     "web": "expo start --web",
     "typecheck": "tsc --noEmit",
+    "test": "node --experimental-strip-types --loader ./scripts/ts-test-loader.mjs scripts/test-domain.mjs",
+    "check:architecture": "node scripts/check-architecture.cjs",
+    "verify": "npm run typecheck && npm run test && npm run check:architecture && npm run validate:i18n",
     "validate:i18n": "node scripts/validate-i18n.js"
   },
   "dependencies": {
@@ -22,6 +25,7 @@
     "expo": "~57.0.0",
     "expo-file-system": "~57.0.7",
     "expo-font": "~57.0.4",
+    "expo-print": "~57.0.2",
     "expo-sharing": "~57.0.22",
     "expo-status-bar": "~57.0.1",
     "expo-system-ui": "^57.0.4",

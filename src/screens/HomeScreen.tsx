@@ -1,41 +1,38 @@
 import React, { useMemo, useState } from "react";
 import {
-  Platform,
-  Pressable,
-  ScrollView,
   StyleSheet,
   View,
 } from "react-native";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 import { useNavigation } from "@react-navigation/native";
 import { StackNavigationProp } from "@react-navigation/stack";
-import DateTimePicker, {
-  DateTimePickerChangeEvent,
-} from "@react-native-community/datetimepicker";
+import type { DateTimePickerChangeEvent } from "@react-native-community/datetimepicker";
 import { useTranslation } from "react-i18next";
 
-import { COLORS, RADII, SHADOWS, withAlpha } from "../constants";
+import { COLORS, INTERACTION, RADII, SHADOWS, withAlpha } from "../constants";
 import { TYPOGRAPHY } from "../constants/typography";
 import { useDoodhContext } from "../context/DoodhContext";
 import {
-  formatDisplayDate,
   getLocalDateString,
   parseLocalDate,
 } from "../utils/dateUtils";
 import { calculateSummary } from "../utils/calculations";
+import { calculateDayInsight } from "../domain/insights";
 import { formatCurrency, formatNumber } from "../utils/formatters";
-import { MilkEntry, RootStackParamList } from "../types";
+import { RootStackParamList } from "../types";
 import Text from "../components/ScaledText";
 import AppHeader from "../components/AppHeader";
-import EntryRow from "../components/EntryRow";
+import Button from "../components/Button";
+import DateDisplay from "../components/ui/DateDisplay";
+import ScreenContainer from "../components/ui/ScreenContainer";
+import DateField from "../components/ui/DateField";
+import EmptyState from "../components/ui/EmptyState";
+import IconButton from "../components/ui/IconButton";
+import MetricCard from "../components/ui/MetricCard";
+import EntryList from "../components/entries/EntryList";
+import SectionHeader from "../components/ui/SectionHeader";
 
 type HomeScreenNavigationProp = StackNavigationProp<RootStackParamList>;
-
-const TREND_WINDOW_DAYS = 7;
-const shiftDateString = (dateString: string, offsetDays: number): string => {
-  const [year, month, day] = dateString.split("-").map(Number);
-  return getLocalDateString(new Date(year, month - 1, day + offsetDays));
-};
 
 export default function HomeScreen() {
   const { t, i18n } = useTranslation();
@@ -56,62 +53,15 @@ export default function HomeScreen() {
     [selectedDayEntries],
   );
 
-  const insight = useMemo(() => {
-    if (!entries || entries.length === 0 || selectedDayEntries.length === 0) {
-      return null;
-    }
-
-    const byDay = new Map<
-      string,
-      { milk: number; fatWeight: number; earnings: number }
-    >();
-    for (let offset = 1; offset <= TREND_WINDOW_DAYS; offset += 1) {
-      const dayKey = shiftDateString(selectedDate, -offset);
-      const dayEntries = entries.filter((entry) => entry.date === dayKey);
-      if (dayEntries.length === 0) continue;
-
-      let milk = 0;
-      let fatWeight = 0;
-      let earnings = 0;
-      for (const entry of dayEntries) {
-        const qty = Number(entry.milk_quantity || 0);
-        milk += qty;
-        fatWeight += qty * Number(entry.fat_percentage || 0);
-        earnings += Number(
-          entry.fat_percentage * entry.milk_quantity * entry.price,
-        );
-      }
-      byDay.set(dayKey, { milk, fatWeight, earnings });
-    }
-
-    if (byDay.size === 0) return null;
-
-    const baselineEarnings =
-      Array.from(byDay.values()).reduce((sum, day) => sum + day.earnings, 0) /
-      byDay.size;
-    const baselineFat =
-      Array.from(byDay.values()).reduce((sum, day) => sum + day.fatWeight, 0) /
-      Array.from(byDay.values()).reduce((sum, day) => sum + day.milk, 0);
-
-    const currentFat = Number(summary.avgFat || 0);
-    const fatDelta = Number((currentFat - baselineFat).toFixed(1));
-
-    return {
-      activeDays: byDay.size,
-      earningsDelta:
-        baselineEarnings > 0
-          ? Number(
-              (
-                ((summary.totalEarnings - baselineEarnings) /
-                  baselineEarnings) *
-                100
-              ).toFixed(0),
-            )
-          : null,
-      fatDelta:
-        Number.isFinite(baselineFat) && baselineFat > 0 ? fatDelta : null,
-    };
-  }, [entries, selectedDayEntries, selectedDate, summary]);
+  const insight = useMemo(
+    () =>
+      calculateDayInsight({
+        entries,
+        selectedDate,
+        summary,
+      }),
+    [entries, selectedDate, summary],
+  );
 
   const recentEntries = useMemo(() => {
     if (!entries) return [];
@@ -128,15 +78,11 @@ export default function HomeScreen() {
   const isToday = selectedDate === getLocalDateString();
 
   return (
-    <View style={styles.container}>
-      <AppHeader eyebrow={t("home.appTitle")} title={t("home.screenTitle")} />
-
-      <ScrollView
-        style={styles.scroll}
-        contentContainerStyle={styles.scrollContent}
-        showsVerticalScrollIndicator={false}
-      >
-        <View style={styles.banner}>
+    <ScreenContainer
+      header={<AppHeader eyebrow={t("home.appTitle")} title={t("home.screenTitle")} />}
+      contentStyle={styles.scrollContent}
+    >
+      <View style={styles.banner}>
           <View style={styles.bannerText}>
             <Text style={styles.bannerEyebrow}>{t("home.brandEyebrow")}</Text>
             <Text style={styles.bannerTitle}>{t("home.appTitle")}</Text>
@@ -147,20 +93,21 @@ export default function HomeScreen() {
           </View>
         </View>
 
-        <Pressable
-          accessibilityRole="button"
+        <Button
+          variant="primary"
+          size="md"
+          fullWidth
           accessibilityLabel={t("home.addEntry")}
           onPress={() => navigation.navigate("EntryForm")}
-          style={({ pressed }) => [
-            styles.summaryAdd,
-            pressed && styles.pressedAddButton,
-          ]}
+          style={styles.summaryAdd}
+          icon={
+            <MaterialCommunityIcons name="plus" size={16} color={COLORS.white} />
+          }
         >
-          <MaterialCommunityIcons name="plus" size={16} color={COLORS.white} />
           <Text style={styles.summaryAddText} numberOfLines={1}>
             {t("home.addEntry")}
           </Text>
-        </Pressable>
+        </Button>
 
         <View style={styles.summaryCard}>
           <View style={styles.summaryHeader}>
@@ -168,72 +115,58 @@ export default function HomeScreen() {
               <Text style={styles.summaryTitle}>
                 {isToday ? t("home.summaryTitle") : t("home.daySummaryTitle")}
               </Text>
-              <Text style={styles.summaryDate}>
-                {formatDisplayDate(selectedDate, i18n.language)}
-              </Text>
+              <DateDisplay date={selectedDate} style={styles.summaryDate} />
             </View>
-            <Pressable
-              accessibilityRole="button"
+            <IconButton
+              icon="calendar-today"
               accessibilityLabel={t("home.selectDate")}
               onPress={() => setShowDatePicker(true)}
-              style={({ pressed }) => [
-                styles.calendarBadge,
-                pressed && styles.pressedControl,
-              ]}
-            >
-              <MaterialCommunityIcons
-                name="calendar-today"
-                size={18}
-                color={COLORS.brand}
-              />
-            </Pressable>
+              size={40}
+              iconSize={18}
+              backgroundColor={COLORS.surfaceLow}
+              iconColor={COLORS.brand}
+              borderRadius={RADII.control}
+            />
           </View>
 
           {showDatePicker ? (
-            <DateTimePicker
+            <DateField
               value={parseLocalDate(selectedDate)}
-              mode="date"
-              display={Platform.OS === "ios" ? "spinner" : "default"}
               maximumDate={parseLocalDate(getLocalDateString())}
               locale={i18n.language.startsWith("pa") ? "pa-IN" : undefined}
-              onValueChange={handleDateChange}
+              onChange={handleDateChange}
               onDismiss={() => setShowDatePicker(false)}
               style={styles.datePicker}
             />
           ) : null}
 
           <View style={styles.metricsRow}>
-            <View style={styles.metricBoxBlue}>
-              <View style={styles.metricIconBlue}>
-                <MaterialCommunityIcons
-                  name="cup-water"
-                  size={18}
-                  color={COLORS.blue}
-                />
-              </View>
-              <Text style={styles.metricLabel}>{t("home.totalMilk")}</Text>
-              <View style={styles.metricValueRow}>
-                <Text style={styles.metricValue}>
-                  {formatNumber(summary.totalMilk, 1)}
-                </Text>
-                <Text style={styles.metricUnit}>{t("common.kg")}</Text>
-              </View>
-            </View>
-
-            <View style={styles.metricBoxAmber}>
-              <View style={styles.metricIconAmber}>
-                <MaterialCommunityIcons
-                  name="water"
-                  size={18}
-                  color={COLORS.amber}
-                />
-              </View>
-              <Text style={styles.metricLabel}>{t("home.averageFat")}</Text>
-              <View style={styles.metricValueRow}>
-                <Text style={styles.metricValue}>{summary.avgFat}</Text>
-                <Text style={styles.metricUnit}>%</Text>
-              </View>
-            </View>
+            <MetricCard
+              icon="cup-water"
+              iconBackground={COLORS.blueFixed}
+              iconColor={COLORS.blue}
+              label={t("home.totalMilk")}
+              value={formatNumber(summary.totalMilk, 1)}
+              unit={t("common.kg")}
+              containerStyle={styles.metricBoxBlue}
+              iconStyle={styles.metricIconBlue}
+              labelStyle={styles.metricLabel}
+              valueStyle={styles.metricValue}
+              unitStyle={styles.metricUnit}
+            />
+            <MetricCard
+              icon="water"
+              iconBackground={COLORS.amberFixed}
+              iconColor={COLORS.amber}
+              label={t("home.averageFat")}
+              value={summary.avgFat}
+              unit="%"
+              containerStyle={styles.metricBoxAmber}
+              iconStyle={styles.metricIconAmber}
+              labelStyle={styles.metricLabel}
+              valueStyle={styles.metricValue}
+              unitStyle={styles.metricUnit}
+            />
           </View>
 
           <View style={styles.earningsBox}>
@@ -266,49 +199,21 @@ export default function HomeScreen() {
           </View>
         </View>
 
-        <View style={styles.sectionHeader}>
-          <Text style={styles.sectionTitle}>{t("home.recentEntries")}</Text>
-          <Pressable
-            accessibilityRole="button"
-            onPress={() =>
-              navigation.navigate("MainTabs", { screen: "Entries" })
-            }
-            style={styles.viewAll}
-          >
-            <Text style={styles.viewAllText}>{t("home.viewAll")}</Text>
-            <MaterialCommunityIcons
-              name="chevron-right"
-              size={18}
-              color={COLORS.brand}
-            />
-          </Pressable>
-        </View>
+        <SectionHeader
+          title={t("home.recentEntries")}
+          actionLabel={t("home.viewAll")}
+          onActionPress={() =>
+            navigation.navigate("MainTabs", { screen: "Entries" })
+          }
+        />
 
-        <View style={styles.listCard}>
-          {recentEntries.length > 0 ? (
-            recentEntries.map((entry: MilkEntry, index: number) => (
-              <EntryRow
-                key={`${entry.id}-${entry.date}-${index}`}
-                entry={entry}
-                showDivider={index < recentEntries.length - 1}
-                onPress={(selected) =>
-                  navigation.navigate("EntryForm", { entry: selected })
-                }
-              />
-            ))
-          ) : (
-            <View style={styles.emptyContainer}>
-              <View style={styles.emptyIcon}>
-                <MaterialCommunityIcons
-                  name="cup-water"
-                  size={32}
-                  color={COLORS.muted}
-                />
-              </View>
-              <Text style={styles.emptyText}>{t("home.empty")}</Text>
-            </View>
-          )}
-        </View>
+        <EntryList
+          entries={recentEntries}
+          empty={<EmptyState icon="cup-water" message={t("home.empty")} />}
+          onSelect={(selected) =>
+            navigation.navigate("EntryForm", { entry: selected })
+          }
+        />
 
         {insight?.fatDelta != null && insight.fatDelta !== 0 ? (
           <View style={styles.insightBanner}>
@@ -336,18 +241,13 @@ export default function HomeScreen() {
             </View>
           </View>
         ) : null}
-      </ScrollView>
-    </View>
+    </ScreenContainer>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: COLORS.background },
-  scroll: { flex: 1 },
   scrollContent: {
-    paddingHorizontal: 16,
     paddingTop: 16,
-    paddingBottom: 100,
     gap: 16,
   },
   banner: {
@@ -421,14 +321,6 @@ const styles = StyleSheet.create({
     color: COLORS.muted,
     fontWeight: "500",
     marginTop: 2,
-  },
-  calendarBadge: {
-    width: 40,
-    height: 40,
-    borderRadius: RADII.control,
-    backgroundColor: COLORS.surfaceLow,
-    alignItems: "center",
-    justifyContent: "center",
   },
   datePicker: { alignSelf: "stretch" },
   metricsRow: { flexDirection: "row", alignItems: "stretch", gap: 8 },
@@ -534,64 +426,11 @@ const styles = StyleSheet.create({
     color: COLORS.brand,
   },
   summaryAdd: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
-    gap: 4,
-    height: 32,
-    paddingHorizontal: 12,
     borderRadius: RADII.pill,
-    backgroundColor: COLORS.greenAccent,
-  },
-  pressedAddButton: {
-    backgroundColor: COLORS.brand,
-    transform: [{ scale: 0.99 }],
   },
   summaryAddText: {
     color: COLORS.white,
     fontWeight: "700",
-    fontSize: TYPOGRAPHY.caption,
-  },
-  sectionHeader: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-  },
-  sectionTitle: {
-    fontSize: TYPOGRAPHY.bodyLarge,
-    fontWeight: "700",
-    color: COLORS.text,
-  },
-  viewAll: { flexDirection: "row", alignItems: "center", gap: 2 },
-  viewAllText: {
-    color: COLORS.brand,
-    fontWeight: "700",
-    fontSize: TYPOGRAPHY.caption,
-  },
-  listCard: {
-    backgroundColor: COLORS.surface,
-    borderRadius: RADII.card,
-    overflow: "hidden",
-    ...SHADOWS.card,
-  },
-  emptyContainer: {
-    alignItems: "center",
-    justifyContent: "center",
-    padding: 40,
-    gap: 12,
-  },
-  emptyIcon: {
-    width: 64,
-    height: 64,
-    borderRadius: RADII.pill,
-    backgroundColor: COLORS.surfaceContainer,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  emptyText: {
-    textAlign: "center",
-    color: COLORS.muted,
-    fontWeight: "500",
     fontSize: TYPOGRAPHY.caption,
   },
   insightBanner: {
@@ -621,5 +460,5 @@ const styles = StyleSheet.create({
     color: COLORS.muted,
     marginTop: 2,
   },
-  pressedControl: { opacity: 0.78 },
+  pressedControl: { opacity: INTERACTION.pressedOpacity },
 });

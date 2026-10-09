@@ -11,9 +11,7 @@ import {
   View,
   useWindowDimensions,
 } from "react-native";
-import DateTimePicker, {
-  DateTimePickerChangeEvent,
-} from "@react-native-community/datetimepicker";
+import type { DateTimePickerChangeEvent } from "@react-native-community/datetimepicker";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 import { useNavigation, useRoute, RouteProp } from "@react-navigation/native";
 import { StackNavigationProp } from "@react-navigation/stack";
@@ -21,11 +19,12 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useTranslation } from "react-i18next";
 import { useDoodhContext } from "../context/DoodhContext";
 import {
-  formatDisplayDate,
   getLocalDateString,
   getYearAndMonth,
   parseLocalDate,
 } from "../utils/dateUtils";
+import { resolveAnimalPricing } from "../domain/pricing";
+import { validateEntryInput } from "../domain/validation";
 import { calculateEarnings } from "../utils/calculations";
 import {
   formatFieldValue,
@@ -33,236 +32,22 @@ import {
   getFieldSuggestions,
   getNextCombination,
   isDayComplete,
-  SmartField,
-  SmartSuggestion,
 } from "../utils/smartEntry";
 import { formatCurrency } from "../utils/formatters";
-import { Animal, MilkEntry, RootStackParamList, Shift } from "../types";
-import Text, { ScaledTextInput as TextInput } from "../components/ScaledText";
-import { COLORS, RADII, SHADOWS, withAlpha } from "../constants";
+import type { Animal, RootStackParamList, Shift } from "../types";
+import Text from "../components/ScaledText";
+import DateDisplay from "../components/ui/DateDisplay";
+import DateField from "../components/ui/DateField";
+import IconButton from "../components/ui/IconButton";
+import SegmentedControl from "../components/ui/SegmentedControl";
+import StepperInput from "../components/ui/StepperInput";
+import { COLORS, INTERACTION, RADII, SHADOWS, withAlpha } from "../constants";
 import { TYPOGRAPHY } from "../constants/typography";
 import useKeyboardAwareScroll from "../hooks/useKeyboardAwareScroll";
 import { useSnackbar } from "../context/SnackbarContext";
 
 type NavigationProp = StackNavigationProp<RootStackParamList, "EntryForm">;
 type EntryRoute = RouteProp<RootStackParamList, "EntryForm">;
-
-type StepperFieldProps = {
-  label: string;
-  title: string;
-  badge?: string;
-  value: string;
-  suffix?: string;
-  icon: "cup-water" | "water";
-  color: "blue" | "amber";
-  step: number;
-  max: number;
-  field: SmartField;
-  chips: SmartSuggestion[];
-  onChange: (value: string) => void;
-  onFocus: (event: any) => void;
-};
-
-/** A tap is instant; holding for half a second starts the accelerating run. */
-const HOLD_REPEAT_DELAY_MS = 500;
-const START_REPEAT_MS = 220;
-const MIN_REPEAT_MS = 70;
-const REPEAT_ACCELERATION = 0.82;
-
-function StepperField({
-  label,
-  title,
-  badge,
-  value,
-  suffix,
-  icon,
-  color,
-  step,
-  max,
-  field,
-  chips,
-  onChange,
-  onFocus,
-}: StepperFieldProps) {
-  const numericValue = Number(value || 0);
-  const holdTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const repeatTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const repeatIntervalRef = useRef(START_REPEAT_MS);
-  const repeatDirectionRef = useRef<1 | -1>(1);
-
-  // The repeat timer must build on the latest value, not the value captured
-  // when the press started, otherwise every tick rewrites the same number.
-  const latestValue = useRef(numericValue);
-  latestValue.current = numericValue;
-
-  const applyDelta = (amount: number) => {
-    const base = Number.isFinite(latestValue.current) ? latestValue.current : 0;
-    const next = Math.min(max, Math.max(0, base + amount));
-    onChange(formatFieldValue(field, next));
-  };
-
-  const stopRepeat = () => {
-    if (holdTimerRef.current !== null) {
-      clearTimeout(holdTimerRef.current);
-      holdTimerRef.current = null;
-    }
-    if (repeatTimerRef.current !== null) {
-      clearTimeout(repeatTimerRef.current);
-      repeatTimerRef.current = null;
-    }
-  };
-
-  // Each tick is slower than the last, so a long hold eases into a fast run
-  // instead of blasting through the whole range at once.
-  const scheduleRepeat = () => {
-    repeatTimerRef.current = setTimeout(() => {
-      applyDelta(repeatDirectionRef.current * step);
-      repeatIntervalRef.current = Math.max(
-        MIN_REPEAT_MS,
-        Math.round(repeatIntervalRef.current * REPEAT_ACCELERATION),
-      );
-      scheduleRepeat();
-    }, repeatIntervalRef.current);
-  };
-
-  // A tap steps once and stops. Holding for HOLD_REPEAT_DELAY_MS hands over to
-  // the accelerating repeat.
-  const startRepeat = (direction: 1 | -1) => {
-    stopRepeat();
-    repeatDirectionRef.current = direction;
-    applyDelta(direction * step);
-    repeatIntervalRef.current = START_REPEAT_MS;
-    holdTimerRef.current = setTimeout(scheduleRepeat, HOLD_REPEAT_DELAY_MS);
-  };
-
-  useEffect(() => stopRepeat, []);
-
-  const isBlue = color === "blue";
-
-  return (
-    <View style={styles.fieldSection}>
-      <View style={styles.fieldHeader}>
-        <View style={styles.fieldHeaderLeft}>
-          <View
-            style={[
-              styles.fieldIcon,
-              isBlue ? styles.fieldIconBlue : styles.fieldIconAmber,
-            ]}
-          >
-            <MaterialCommunityIcons
-              name={icon}
-              size={12}
-              color={isBlue ? COLORS.blue : COLORS.amber}
-            />
-          </View>
-          <Text style={styles.fieldTitle}>{label}</Text>
-        </View>
-        {badge && (
-          <View
-            style={[
-              styles.fieldBadge,
-              isBlue ? styles.fieldBadgeBlue : styles.fieldBadgeAmber,
-            ]}
-          >
-            {isBlue ? null : (
-              <MaterialCommunityIcons
-                name="seal"
-                size={12}
-                color={COLORS.amber}
-              />
-            )}
-            {badge && (
-              <Text
-                style={[
-                  styles.fieldBadgeText,
-                  isBlue
-                    ? styles.fieldBadgeTextBlue
-                    : styles.fieldBadgeTextAmber,
-                ]}
-              >
-                {badge}
-              </Text>
-            )}
-          </View>
-        )}
-      </View>
-
-      <View style={styles.stepperCard}>
-        <Pressable
-          accessibilityRole="button"
-          accessibilityLabel={`${label} decrease`}
-          onPressIn={() => startRepeat(-1)}
-          onPressOut={stopRepeat}
-          style={({ pressed }) => [
-            styles.stepperButton,
-            pressed && styles.pressedControl,
-          ]}
-        >
-          <MaterialCommunityIcons name="minus" size={18} color={COLORS.text} />
-        </Pressable>
-        <View style={styles.stepperValueWrap}>
-          <TextInput
-            value={value}
-            onFocus={onFocus}
-            onChangeText={onChange}
-            keyboardType="decimal-pad"
-            selectTextOnFocus
-            style={styles.stepperValue}
-            textAlign="center"
-            accessibilityLabel={`${title} ${label}`}
-          />
-          {suffix ? <Text style={styles.stepperSuffix}>{suffix}</Text> : null}
-        </View>
-        <Pressable
-          accessibilityRole="button"
-          accessibilityLabel={`${label} increase`}
-          onPressIn={() => startRepeat(1)}
-          onPressOut={stopRepeat}
-          style={({ pressed }) => [
-            styles.stepperButton,
-            styles.stepperButtonPrimary,
-            pressed && styles.pressedControl,
-          ]}
-        >
-          <MaterialCommunityIcons name="plus" size={18} color={COLORS.white} />
-        </Pressable>
-      </View>
-
-      {chips.length > 0 ? (
-        <ScrollView
-          horizontal
-          showsHorizontalScrollIndicator={false}
-          contentContainerStyle={styles.chipList}
-        >
-          {chips.map((chip) => {
-            const selected = Math.abs(numericValue - chip.value) < 0.01;
-            return (
-              <Pressable
-                key={chip.value}
-                accessibilityRole="button"
-                accessibilityState={{ selected }}
-                onPress={() => onChange(formatFieldValue(field, chip.value))}
-                style={({ pressed }) => [
-                  styles.chip,
-                  selected && styles.selectedChip,
-                  pressed && styles.pressedControl,
-                ]}
-              >
-                <Text
-                  style={[styles.chipText, selected && styles.selectedChipText]}
-                >
-                  {suffix
-                    ? `${formatFieldValue(field, chip.value)}${suffix}`
-                    : `${formatFieldValue(field, chip.value)} kg`}
-                </Text>
-              </Pressable>
-            );
-          })}
-        </ScrollView>
-      ) : null}
-    </View>
-  );
-}
 
 export default function EntryFormScreen() {
   const { t, i18n } = useTranslation();
@@ -395,10 +180,10 @@ export default function EntryFormScreen() {
 
   const priceInfo = useMemo(() => {
     const { year, month } = getYearAndMonth(date);
-    const animalConfig = pricingConfig[year + "-" + month];
+    const animalConfig = resolveAnimalPricing(pricingConfig, year, month);
     return {
-      cowPrice: Number(animalConfig?.Cow ?? 8),
-      buffaloPrice: Number(animalConfig?.Buffalo ?? 9),
+      cowPrice: animalConfig.Cow,
+      buffaloPrice: animalConfig.Buffalo,
     };
   }, [date, pricingConfig]);
 
@@ -449,17 +234,11 @@ export default function EntryFormScreen() {
   const handleSave = async () => {
     const qty = Number(milkQuantity);
     const fat = Number(fatPercentage);
-    if (isNaN(qty) || qty <= 0 || qty > 500) {
+    const validationError = validateEntryInput(qty, fat);
+    if (validationError) {
       Alert.alert(
-        t("entryForm.invalidMilkTitle"),
-        t("entryForm.invalidMilkMessage"),
-      );
-      return;
-    }
-    if (isNaN(fat) || fat <= 0 || fat > 25) {
-      Alert.alert(
-        t("entryForm.invalidFatTitle"),
-        t("entryForm.invalidFatMessage"),
+        t(validationError.titleKey),
+        t(validationError.messageKey),
       );
       return;
     }
@@ -473,18 +252,23 @@ export default function EntryFormScreen() {
       notes: entryToEdit?.notes || "",
     };
     try {
-      if (isEditing && entryToEdit?.id !== undefined) {
-        const entryToSave: MilkEntry = {
-          ...normalizedData,
-          id: entryToEdit.id,
-          price: entryToEdit.price,
-        };
-        await updateEntry(entryToSave, entryToEdit.date);
-        showSnackbar(t("entryForm.updateSuccess"));
-      } else {
-        await addEntry(normalizedData);
-        showSnackbar(t("entryForm.addSuccess"));
+      const result =
+        isEditing && entryToEdit?.id !== undefined
+          ? await updateEntry(
+              {
+                ...normalizedData,
+                id: entryToEdit.id,
+                price: entryToEdit.price,
+              },
+              entryToEdit.date,
+            )
+          : await addEntry(normalizedData);
+      if (!result.ok) {
+        throw result.error;
       }
+      showSnackbar(
+        t(isEditing ? "entryForm.updateSuccess" : "entryForm.addSuccess"),
+      );
       handleClose();
     } catch (error) {
       console.error("Error saving entry:", error);
@@ -535,21 +319,13 @@ export default function EntryFormScreen() {
         <View
           style={[styles.sheetHeader, { paddingTop: insets.top > 0 ? 4 : 0 }]}
         >
-          <Pressable
-            accessibilityRole="button"
+          <IconButton
+            icon="close"
             accessibilityLabel={t("common.close")}
             onPress={handleClose}
-            style={({ pressed }) => [
-              styles.closeButton,
-              pressed && styles.pressedControl,
-            ]}
-          >
-            <MaterialCommunityIcons
-              name="close"
-              size={20}
-              color={COLORS.muted}
-            />
-          </Pressable>
+            size={32}
+            iconSize={20}
+          />
           <View style={styles.sheetHeading}>
             <Text style={styles.sheetTitle} numberOfLines={1}>
               {isEditing
@@ -567,9 +343,7 @@ export default function EntryFormScreen() {
                 size={13}
                 color={COLORS.brand}
               />
-              <Text style={styles.sheetDate} numberOfLines={1}>
-                {formatDisplayDate(date, i18n.language)}
-              </Text>
+              <DateDisplay date={date} style={styles.sheetDate} numberOfLines={1} />
             </Pressable>
           </View>
           <Pressable
@@ -593,13 +367,11 @@ export default function EntryFormScreen() {
         </View>
 
         {showDatePicker ? (
-          <DateTimePicker
+          <DateField
             value={parseLocalDate(date)}
-            mode="date"
             maximumDate={new Date()}
-            display={Platform.OS === "ios" ? "spinner" : "default"}
             locale={i18n.language.startsWith("pa") ? "pa-IN" : undefined}
-            onValueChange={handleDateChange}
+            onChange={handleDateChange}
             onDismiss={() => setShowDatePicker(false)}
           />
         ) : null}
@@ -628,80 +400,40 @@ export default function EntryFormScreen() {
           ) : null}
 
           <View style={styles.switchGrid}>
-            <View style={styles.switchField}>
-              <Text style={styles.label}>{t("entryForm.shift")}</Text>
-              <View style={styles.segmentedControl}>
-                {(["Morning", "Evening"] as Shift[]).map((option) => {
-                  const selected = shift === option;
-                  return (
-                    <Pressable
-                      key={option}
-                      accessibilityRole="button"
-                      accessibilityState={{ selected }}
-                      onPress={() => setShift(option)}
-                      style={({ pressed }) => [
-                        styles.segment,
-                        selected && styles.selectedSegment,
-                        pressed && styles.pressedControl,
-                      ]}
-                    >
-                      <MaterialCommunityIcons
-                        name={
-                          option === "Morning"
-                            ? "weather-sunny"
-                            : "weather-night"
-                        }
-                        size={14}
-                        color={selected ? COLORS.white : COLORS.muted}
-                      />
-                      <Text
-                        style={[
-                          styles.segmentText,
-                          selected && styles.selectedSegmentText,
-                        ]}
-                      >
-                        {t("shifts." + option.toLowerCase())}
-                      </Text>
-                    </Pressable>
-                  );
-                })}
-              </View>
-            </View>
-            <View style={styles.switchField}>
-              <Text style={styles.label}>{t("entryForm.animal")}</Text>
-              <View style={styles.segmentedControl}>
-                {(["Buffalo", "Cow"] as Animal[]).map((option) => {
-                  const selected = animal === option;
-                  return (
-                    <Pressable
-                      key={option}
-                      accessibilityRole="button"
-                      accessibilityState={{ selected }}
-                      onPress={() => setAnimal(option)}
-                      style={({ pressed }) => [
-                        styles.segment,
-                        selected && styles.selectedSegment,
-                        pressed && styles.pressedControl,
-                      ]}
-                    >
-                      <MaterialCommunityIcons
-                        name="cow"
-                        size={14}
-                        color={selected ? COLORS.white : COLORS.muted}
-                      />
-                      <Text
-                        style={[
-                          styles.segmentText,
-                          selected && styles.selectedSegmentText,
-                        ]}
-                      >
-                        {t("animals." + option.toLowerCase())}
-                      </Text>
-                    </Pressable>
-                  );
-                })}
-              </View>
-            </View>
+            <SegmentedControl
+              label={t("entryForm.shift")}
+              value={shift}
+              onChange={setShift}
+              options={[
+                {
+                  value: "Morning",
+                  label: t("shifts.morning"),
+                  icon: "weather-sunny",
+                },
+                {
+                  value: "Evening",
+                  label: t("shifts.evening"),
+                  icon: "weather-night",
+                },
+              ]}
+            />
+            <SegmentedControl
+              label={t("entryForm.animal")}
+              value={animal}
+              onChange={setAnimal}
+              options={[
+                {
+                  value: "Buffalo",
+                  label: t("animals.buffalo"),
+                  icon: "cow",
+                },
+                {
+                  value: "Cow",
+                  label: t("animals.cow"),
+                  icon: "cow",
+                },
+              ]}
+            />
           </View>
 
           <View style={styles.earningsCard}>
@@ -726,13 +458,12 @@ export default function EntryFormScreen() {
             </View>
           </View>
 
-          <StepperField
+          <StepperInput
             label={t("entryForm.milkQuantity")}
             title={t("entryForm.quantityTitle")}
-            // badge={t("entryForm.yieldInput")}
             value={milkQuantity}
             icon="cup-water"
-            color="blue"
+            tone="blue"
             field="milk"
             step={getFieldStep("milk")}
             max={500}
@@ -740,14 +471,13 @@ export default function EntryFormScreen() {
             onChange={handleMilkChange}
             onFocus={onInputFocus}
           />
-          <StepperField
+          <StepperInput
             label={t("entryForm.fatPercentage")}
             title={t("entryForm.fatTitle")}
-            // badge={t("entryForm.optimalGrade")}
             value={fatPercentage}
             suffix="%"
             icon="water"
-            color="amber"
+            tone="amber"
             field="fat"
             step={getFieldStep("fat")}
             max={25}
@@ -794,14 +524,6 @@ const styles = StyleSheet.create({
     paddingBottom: 12,
     borderBottomWidth: StyleSheet.hairlineWidth,
     borderBottomColor: COLORS.surfaceContainer,
-  },
-  closeButton: {
-    width: 32,
-    height: 32,
-    borderRadius: RADII.pill,
-    backgroundColor: COLORS.surfaceContainer,
-    alignItems: "center",
-    justifyContent: "center",
   },
   sheetHeading: { flex: 1 },
   sheetTitle: {
@@ -856,40 +578,6 @@ const styles = StyleSheet.create({
     fontWeight: "700",
   },
   switchGrid: { flexDirection: "row", alignItems: "stretch", gap: 12 },
-  switchField: { flex: 1, gap: 6 },
-  label: {
-    color: COLORS.muted,
-    fontSize: TYPOGRAPHY.micro,
-    fontWeight: "700",
-    letterSpacing: 0.6,
-    textTransform: "uppercase",
-  },
-  segmentedControl: {
-    flexDirection: "row",
-    alignItems: "stretch",
-    backgroundColor: COLORS.surfaceLow,
-    borderRadius: RADII.control,
-    borderWidth: 1,
-    borderColor: COLORS.surfaceContainer,
-    padding: 4,
-    gap: 4,
-  },
-  segment: {
-    flex: 1,
-    borderRadius: RADII.sm,
-    minHeight: 34,
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
-    gap: 4,
-  },
-  selectedSegment: { backgroundColor: COLORS.greenAccent },
-  segmentText: {
-    color: COLORS.muted,
-    fontSize: TYPOGRAPHY.micro,
-    fontWeight: "600",
-  },
-  selectedSegmentText: { color: COLORS.white, fontWeight: "700" },
   earningsCard: {
     borderRadius: RADII.control,
     padding: 12,
@@ -954,113 +642,6 @@ const styles = StyleSheet.create({
     borderRadius: 40,
     backgroundColor: withAlpha(COLORS.white, 0.05),
   },
-  fieldSection: {
-    borderRadius: RADII.card,
-    backgroundColor: COLORS.surfaceLow,
-    borderWidth: 1,
-    borderColor: COLORS.surfaceContainer,
-    padding: 12,
-    gap: 8,
-  },
-  fieldHeader: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-    gap: 8,
-  },
-  fieldHeaderLeft: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 6,
-    flex: 1,
-  },
-  fieldIcon: {
-    width: 24,
-    height: 24,
-    borderRadius: RADII.sm,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  fieldIconBlue: { backgroundColor: COLORS.blueFixed },
-  fieldIconAmber: { backgroundColor: COLORS.amberFixed },
-  fieldTitle: {
-    flex: 1,
-    fontSize: TYPOGRAPHY.caption,
-    fontWeight: "700",
-    color: COLORS.text,
-  },
-  fieldBadge: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 3,
-    borderRadius: RADII.pill,
-    paddingHorizontal: 8,
-    paddingVertical: 2,
-  },
-  fieldBadgeBlue: { backgroundColor: withAlpha(COLORS.brandLight, 0.5) },
-  fieldBadgeAmber: { backgroundColor: withAlpha(COLORS.amberFixed, 0.6) },
-  fieldBadgeText: { fontSize: TYPOGRAPHY.micro, fontWeight: "700" },
-  fieldBadgeTextBlue: { color: COLORS.brand },
-  fieldBadgeTextAmber: { color: COLORS.amber },
-  stepperCard: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-    backgroundColor: COLORS.surface,
-    borderRadius: RADII.control,
-    borderWidth: 1,
-    borderColor: COLORS.surfaceContainer,
-    padding: 4,
-  },
-  stepperButton: {
-    width: 36,
-    height: 36,
-    borderRadius: RADII.sm,
-    backgroundColor: COLORS.surfaceContainer,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  stepperButtonPrimary: { backgroundColor: COLORS.greenAccent },
-  stepperValueWrap: {
-    flex: 1,
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
-    gap: 2,
-  },
-  stepperValue: {
-    minWidth: 44,
-    padding: 0,
-    color: COLORS.text,
-    fontSize: TYPOGRAPHY.body,
-    fontWeight: "800",
-  },
-  stepperSuffix: {
-    color: COLORS.muted,
-    fontSize: TYPOGRAPHY.micro,
-    fontWeight: "700",
-  },
-  chipList: { gap: 6, paddingRight: 4 },
-  chip: {
-    paddingHorizontal: 9,
-    paddingVertical: 4,
-    borderRadius: RADII.control,
-    borderWidth: 1,
-    borderColor: COLORS.surfaceContainer,
-    backgroundColor: COLORS.surface,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  selectedChip: {
-    backgroundColor: COLORS.greenAccent,
-    borderColor: COLORS.greenAccent,
-  },
-  chipText: {
-    color: COLORS.text,
-    fontSize: TYPOGRAPHY.micro,
-    fontWeight: "600",
-  },
-  selectedChipText: { color: COLORS.white, fontWeight: "700" },
-  pressedControl: { opacity: 0.78 },
+  pressedControl: { opacity: INTERACTION.pressedOpacity },
   pressedSave: { backgroundColor: COLORS.brand },
 });

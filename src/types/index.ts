@@ -33,29 +33,36 @@ export interface MonthOption {
   value: string;
 }
 
+export type OperationResult<T> =
+  | { ok: true; value: T }
+  | { ok: false; error: unknown };
+
 export interface DoodhContextType {
   entries: MilkEntry[];
   pricingConfig: PricingConfig;
   isLoading: boolean;
   loadData: () => Promise<void>;
-  refreshEntries: () => Promise<void>;
+  refreshEntries: () => Promise<OperationResult<void>>;
   saveConfig: (
     year: string,
     month: string,
     animal: Animal,
     price: number,
-  ) => Promise<void>;
+  ) => Promise<OperationResult<void>>;
   addEntry: (
     entry: Omit<MilkEntry, "id" | "price"> & {
       id?: number;
       price?: number;
     },
-  ) => Promise<MilkEntry>;
+  ) => Promise<OperationResult<MilkEntry>>;
   updateEntry: (
     entry: MilkEntry,
     oldDate?: string | null,
-  ) => Promise<MilkEntry>;
-  deleteEntry: (entryId: number, dateString: string) => Promise<void>;
+  ) => Promise<OperationResult<MilkEntry>>;
+  deleteEntry: (
+    entryId: number,
+    dateString: string,
+  ) => Promise<OperationResult<void>>;
 }
 
 export type RootStackParamList = {

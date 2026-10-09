@@ -13,6 +13,8 @@
     "error": "Error",
     "success": "Success",
     "close": "Close",
+    "decrease": "Decrease",
+    "increase": "Increase",
     "save": "Save",
     "kg": "kg",
     "fat": "Fat"
@@ -89,7 +91,19 @@
     "deleteConfirmTitle": "Delete Entry",
     "deleteConfirmMessage": "Are you sure you want to delete this milk entry?",
     "deleteSuccess": "Entry deleted successfully.",
-    "deleteFailed": "Unable to delete entry."
+    "deleteFailed": "Unable to delete entry.",
+    "monthlyReport": {
+      "title": "Monthly Milk Report",
+      "viewReport": "View Report",
+      "downloadPdf": "Download PDF",
+      "downloadLabel": "Download monthly report PDF",
+      "generating": "Preparing…",
+      "previewSubtitle": "Same layout as the downloaded PDF",
+      "emptyReport": "No entries for this month to include in the report.",
+      "shareSuccess": "Monthly report shared successfully.",
+      "shareUnavailable": "File sharing is not available on this device.",
+      "shareError": "Unable to generate the monthly report. Please try again."
+    }
   },
   "entryForm": {
     "editTitle": "Edit Entry",
@@ -135,6 +149,8 @@
     "dailyMilk": "Daily Milk Quantity (kg)",
     "dailyFat": "Daily Fat Percentage (%)",
     "dailyEarnings": "Daily Earnings (₹)",
+    "emptyTitle": "No data for this month",
+    "emptySubtitle": "Add milk entries to generate monthly charts.",
     "peak": "Peak {{value}}"
   },
   "settings": {

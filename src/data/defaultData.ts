@@ -1,4 +1,4 @@
-import { MilkEntry, PricingConfig } from "../types";
+import type { MilkEntry, PricingConfig } from "../types";
 
 export const defaultPricing: PricingConfig = {
   "2026-09": { Cow: 8, Buffalo: 9 },

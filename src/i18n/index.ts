@@ -2,7 +2,7 @@ import i18n from "i18next";
 import { initReactI18next } from "react-i18next";
 import en from "./locales/en.json";
 import pa from "./locales/pa.json";
-import { getStoredLanguage, saveStoredLanguage } from "../utils/storageManager";
+import { loadLanguagePreference, saveLanguagePreference } from "../services/preferenceService";
 
 const resources = {
   en: { translation: en },
@@ -19,7 +19,8 @@ let initialization: Promise<void> | undefined;
 export function initializeI18n(): Promise<void> {
   if (!initialization) {
     initialization = (async () => {
-      const savedLanguage = await getStoredLanguage();
+      const languageResult = await loadLanguagePreference();
+      const savedLanguage = languageResult.ok ? languageResult.value : null;
       const language = isSupportedLanguage(savedLanguage) ? savedLanguage : "en";
 
       await i18n.use(initReactI18next).init({
@@ -36,7 +37,7 @@ export function initializeI18n(): Promise<void> {
 
 export async function changeAppLanguage(language: SupportedLanguage): Promise<void> {
   await i18n.changeLanguage(language);
-  await saveStoredLanguage(language);
+  await saveLanguagePreference(language);
 }
 
 export default i18n;

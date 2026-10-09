@@ -1,128 +1,70 @@
 import React, { useMemo, useState } from "react";
-import { View, ScrollView, StyleSheet, Dimensions, Alert, Pressable } from "react-native";
+import { View, StyleSheet, Alert, useWindowDimensions } from "react-native";
 import { LineChart } from "react-native-chart-kit";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 import { useTranslation } from "react-i18next";
 import { COLORS, RADII, SHADOWS, withAlpha } from "../constants";
 import { useDoodhContext } from "../context/DoodhContext";
-import { getLocalDateString } from "../utils/dateUtils";
-import { calculateEntryEarnings, calculateSummary } from "../utils/calculations";
+import {
+  useCurrentMonthYear,
+  useEntriesForMonth,
+  usePricedEntries,
+} from "../hooks/useEntries";
+import { calculateSummary } from "../utils/calculations";
+import { buildMonthlyChartData } from "../domain/reports";
 import { formatCurrency, formatNumber } from "../utils/formatters";
 import MonthYearFilter from "../components/MonthYearFilter";
+import EmptyState from "../components/ui/EmptyState";
+import ExportCard from "../components/ui/ExportCard";
+import ScreenContainer from "../components/ui/ScreenContainer";
+import MetricCard from "../components/ui/MetricCard";
 import ReportChartCard from "../components/ReportChartCard";
 import AppHeader from "../components/AppHeader";
 import Text from "../components/ScaledText";
 import { TYPOGRAPHY } from "../constants/typography";
 import { FONT_FAMILY } from "../constants/fonts";
 import { useFontScale } from "../context/FontScaleContext";
-import { createDataExportFile } from "../utils/storageManager";
+import { useDataExport } from "../hooks/useDataExport";
 import { useSnackbar } from "../context/SnackbarContext";
-import * as Sharing from "expo-sharing";
 
 export default function ReportsScreen() {
   const { t } = useTranslation();
   const { showSnackbar } = useSnackbar();
   const { typography } = useFontScale();
   const { entries, pricingConfig } = useDoodhContext();
-
-  const todayStr = getLocalDateString();
-  const currentYear = todayStr.slice(0, 4);
-  const currentMonth = todayStr.slice(5, 7);
-
-  const [selectedMonth, setSelectedMonth] = useState<string>(currentMonth);
-  const [selectedYear, setSelectedYear] = useState<string>(currentYear);
-  const [isExporting, setIsExporting] = useState(false);
-
-  const handleExport = async () => {
-    setIsExporting(true);
-    try {
-      if (!(await Sharing.isAvailableAsync())) {
+  const {
+    month: selectedMonth,
+    year: selectedYear,
+    setMonth: setSelectedMonth,
+    setYear: setSelectedYear,
+  } = useCurrentMonthYear();
+  const { isExporting, exportData: handleExport } = useDataExport({
+    dialogTitle: t("settings.exportDialogTitle"),
+    onExported: (exported) => {
+      if (!exported) {
         Alert.alert(t("common.error"), t("settings.exportUnavailable"));
         return;
       }
-      const { uri } = await createDataExportFile();
-      await Sharing.shareAsync(uri, {
-        dialogTitle: t("settings.exportDialogTitle"),
-        mimeType: "application/json",
-        UTI: "public.json",
-      });
       showSnackbar(t("settings.exportSuccess"));
-    } catch (error) {
+    },
+    onError: (error) => {
       console.error("Error exporting app data:", error);
       Alert.alert(t("common.error"), t("settings.exportError"));
-    } finally {
-      setIsExporting(false);
-    }
-  };
+    },
+  });
 
-  const pricedEntries = useMemo(
-    () =>
-      entries.map((entry) => ({
-        ...entry,
-        earnings: calculateEntryEarnings(entry, pricingConfig),
-      })),
-    [entries, pricingConfig],
-  );
-
-  const filteredEntries = useMemo(() => {
-    const monthPad = selectedMonth.padStart(2, "0");
-    const prefix = `${selectedYear}-${monthPad}`;
-    return pricedEntries.filter(
-      (entry) => entry.date && entry.date.startsWith(prefix),
-    );
-  }, [pricedEntries, selectedMonth, selectedYear]);
+  const pricedEntries = usePricedEntries(entries, pricingConfig);
+  const filteredEntries = useEntriesForMonth(pricedEntries, selectedYear, selectedMonth);
 
   const reportSummary = useMemo(
     () => calculateSummary(filteredEntries),
     [filteredEntries],
   );
 
-  const chartData = useMemo(() => {
-    const monthNum = Number(selectedMonth);
-    const yearNum = Number(selectedYear);
-    const daysInMonth = new Date(yearNum, monthNum, 0).getDate();
-
-    const labels = Array.from(
-      { length: daysInMonth },
-      (_, index) => `${index + 1}`,
-    );
-
-    const milkValues = Array.from({ length: daysInMonth }, (_, index) => {
-      const day = String(index + 1).padStart(2, "0");
-      const targetDate = `${selectedYear}-${selectedMonth.padStart(2, "0")}-${day}`;
-      return filteredEntries
-        .filter((e) => e.date === targetDate)
-        .reduce((sum, e) => sum + Number(e.milk_quantity || 0), 0);
-    });
-
-    const fatValues = Array.from({ length: daysInMonth }, (_, index) => {
-      const day = String(index + 1).padStart(2, "0");
-      const targetDate = `${selectedYear}-${selectedMonth.padStart(2, "0")}-${day}`;
-      const dayEntries = filteredEntries.filter((e) => e.date === targetDate);
-      const totalMilkForDay = dayEntries.reduce(
-        (sum, e) => sum + Number(e.milk_quantity || 0),
-        0,
-      );
-      const totalFatProduct = dayEntries.reduce(
-        (sum, e) =>
-          sum + Number(e.fat_percentage || 0) * Number(e.milk_quantity || 0),
-        0,
-      );
-      return totalMilkForDay > 0
-        ? Number((totalFatProduct / totalMilkForDay).toFixed(1))
-        : 0;
-    });
-
-    const earningValues = Array.from({ length: daysInMonth }, (_, index) => {
-      const day = String(index + 1).padStart(2, "0");
-      const targetDate = `${selectedYear}-${selectedMonth.padStart(2, "0")}-${day}`;
-      return filteredEntries
-        .filter((e) => e.date === targetDate)
-        .reduce((sum, e) => sum + Number(e.earnings || 0), 0);
-    });
-
-    return { labels, milkValues, fatValues, earningValues };
-  }, [filteredEntries, selectedMonth, selectedYear]);
+  const chartData = useMemo(
+    () => buildMonthlyChartData(filteredEntries, selectedYear, selectedMonth),
+    [filteredEntries, selectedMonth, selectedYear],
+  );
 
   const peakLabel = (values: number[], suffix = "", decimals = 1) => {
     const peak = Math.max(...values, 0);
@@ -130,7 +72,7 @@ export default function ReportsScreen() {
     return t("reports.peak", { value: `${formatNumber(peak, decimals)}${suffix}` });
   };
 
-  const screenWidth = Dimensions.get("window").width;
+  const { width: screenWidth } = useWindowDimensions();
   const chartWidth = Math.max(screenWidth - 64, 280);
 
   const formatXLabel = (val: string) => {
@@ -155,24 +97,20 @@ export default function ReportsScreen() {
   };
 
   return (
-    <View style={styles.container}>
-      <AppHeader eyebrow={t("home.appTitle")} title={t("reports.title")} />
-
-      <View style={styles.filterBar}>
-        <MonthYearFilter
-          month={selectedMonth}
-          year={selectedYear}
-          onMonthChange={setSelectedMonth}
-          onYearChange={setSelectedYear}
-        />
-      </View>
-
-      <ScrollView
-        style={styles.content}
-        contentContainerStyle={styles.contentPad}
-        showsVerticalScrollIndicator={false}
-      >
-        <View style={styles.summaryCard}>
+    <ScreenContainer
+      header={<AppHeader eyebrow={t("home.appTitle")} title={t("reports.title")} />}
+      fixedContent={
+        <View style={styles.filterBar}>
+          <MonthYearFilter
+            month={selectedMonth}
+            year={selectedYear}
+            onMonthChange={setSelectedMonth}
+            onYearChange={setSelectedYear}
+          />
+        </View>
+      }
+    >
+      <View style={styles.summaryCard}>
           <View style={styles.summaryText}>
             <Text style={styles.summaryLabel}>
               {t("reports.totalMonthlyEarnings")}
@@ -191,34 +129,41 @@ export default function ReportsScreen() {
           <View style={styles.summaryGlow} />
         </View>
 
-        <View style={styles.metricsGrid}>
-          <View style={styles.metricCard}>
-            <View style={styles.metricIconBlue}>
-              <MaterialCommunityIcons
-                name="cup-water"
-                size={18}
-                color={COLORS.blue}
-              />
-            </View>
-            <Text style={styles.metricLabel}>{t("reports.totalMilk")}</Text>
-            <View style={styles.metricValueRow}>
-              <Text style={styles.metricValue}>
-                {formatNumber(reportSummary.totalMilk, 1)}
-              </Text>
-              <Text style={styles.metricUnit}>{t("common.kg")}</Text>
-            </View>
-          </View>
+        {filteredEntries.length === 0 ? (
+          <EmptyState
+            icon="chart-box-outline"
+            title={t("reports.emptyTitle")}
+            message={t("reports.emptySubtitle")}
+          />
+        ) : null}
 
-          <View style={styles.metricCard}>
-            <View style={styles.metricIconAmber}>
-              <MaterialCommunityIcons name="water" size={18} color={COLORS.amber} />
-            </View>
-            <Text style={styles.metricLabel}>{t("reports.averageFat")}</Text>
-            <View style={styles.metricValueRow}>
-              <Text style={styles.metricValue}>{reportSummary.avgFat}</Text>
-              <Text style={styles.metricUnit}>%</Text>
-            </View>
-          </View>
+        <View style={styles.metricsGrid}>
+          <MetricCard
+            icon="cup-water"
+            iconBackground={COLORS.blueFixed}
+            iconColor={COLORS.blue}
+            label={t("reports.totalMilk")}
+            value={formatNumber(reportSummary.totalMilk, 1)}
+            unit={t("common.kg")}
+            containerStyle={styles.metricCard}
+            iconStyle={styles.metricIconBlue}
+            labelStyle={styles.metricLabel}
+            valueStyle={styles.metricValue}
+            unitStyle={styles.metricUnit}
+          />
+          <MetricCard
+            icon="water"
+            iconBackground={COLORS.amberFixed}
+            iconColor={COLORS.amber}
+            label={t("reports.averageFat")}
+            value={reportSummary.avgFat}
+            unit="%"
+            containerStyle={styles.metricCard}
+            iconStyle={styles.metricIconAmber}
+            labelStyle={styles.metricLabel}
+            valueStyle={styles.metricValue}
+            unitStyle={styles.metricUnit}
+          />
         </View>
 
         <ReportChartCard
@@ -294,40 +239,18 @@ export default function ReportsScreen() {
           />
         </ReportChartCard>
 
-        <Pressable
-          accessibilityRole="button"
-          disabled={isExporting}
+        <ExportCard
+          label={t("settings.exportData")}
+          busyLabel={t("settings.exporting")}
+          busy={isExporting}
           onPress={handleExport}
-          style={({ pressed }) => [
-            styles.exportButton,
-            pressed && styles.exportButtonPressed,
-            isExporting && styles.exportButtonDisabled,
-          ]}
-        >
-          <View style={styles.exportLeft}>
-            <MaterialCommunityIcons
-              name="file-download-outline"
-              size={20}
-              color={COLORS.blue}
-            />
-            <Text style={styles.exportText}>
-              {isExporting ? t("settings.exporting") : t("settings.exportData")}
-            </Text>
-          </View>
-          <View style={styles.exportBadge}>
-            <Text style={styles.exportBadgeText}>JSON</Text>
-          </View>
-        </Pressable>
-      </ScrollView>
-    </View>
+        />
+    </ScreenContainer>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: COLORS.background },
   filterBar: { paddingHorizontal: 16, paddingBottom: 12 },
-  content: { flex: 1 },
-  contentPad: { paddingHorizontal: 16, paddingBottom: 100 },
   summaryCard: {
     position: "relative",
     overflow: "hidden",
@@ -372,43 +295,6 @@ const styles = StyleSheet.create({
     height: 160,
     borderRadius: 80,
     backgroundColor: withAlpha(COLORS.white, 0.06),
-  },
-  exportButton: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-    backgroundColor: COLORS.surface,
-    borderRadius: RADII.card,
-    padding: 16,
-    borderWidth: 1,
-    borderColor: COLORS.blueFixed,
-    ...SHADOWS.card,
-  },
-  exportButtonPressed: { backgroundColor: COLORS.blueFixed },
-  exportButtonDisabled: { opacity: 0.6 },
-  exportLeft: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 8,
-  },
-  exportText: {
-    fontSize: TYPOGRAPHY.body,
-    fontWeight: "600",
-    color: COLORS.text,
-  },
-  exportBadge: {
-    alignItems: "center",
-    justifyContent: "center",
-    height: 22,
-    paddingHorizontal: 8,
-    borderRadius: RADII.sm,
-    backgroundColor: COLORS.blueFixed,
-  },
-  exportBadgeText: {
-    fontSize: TYPOGRAPHY.micro,
-    fontWeight: "700",
-    letterSpacing: 0.5,
-    color: COLORS.blue,
   },
   metricsGrid: { flexDirection: "row", alignItems: "stretch", gap: 12, marginBottom: 16 },
   metricCard: {

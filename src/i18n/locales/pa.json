@@ -13,6 +13,8 @@
     "error": "ਗਲਤੀ",
     "success": "ਸਫਲਤਾ",
     "close": "ਬੰਦ ਕਰੋ",
+    "decrease": "ਘਟਾਓ",
+    "increase": "ਵਧਾਓ",
     "save": "ਸੰਭਾਲੋ",
     "kg": "kg",
     "fat": "ਚਰਬੀ"
@@ -88,8 +90,20 @@
     "delete": "ਐਂਟਰੀ ਮਿਟਾਓ",
     "deleteConfirmTitle": "ਐਂਟਰੀ ਮਿਟਾਓ",
     "deleteConfirmMessage": "ਕੀ ਤੁਸੀਂ ਇਹ ਦੁੱਧ ਦੀ ਐਂਟਰੀ ਮਿਟਾਉਣਾ ਚਾਹੁੰਦੇ ਹੋ?",
-    "deleteSuccess": "ਐਂਟਰੀ ਸਫਲਤਾਪੂਰਵਕ ਮਿਟਾਈ ਗਈ।",
-    "deleteFailed": "ਐਂਟਰੀ ਮਿਟਾਈ ਨਹੀਂ ਜਾ ਸਕੀ।"
+      "deleteSuccess": "ਐਂਟਰੀ ਸਫਲਤਾਪੂਰਵਕ ਮਿਟਾਈ ਗਈ।",
+      "deleteFailed": "ਐਂਟਰੀ ਮਿਟਾਈ ਨਹੀਂ ਜਾ ਸਕੀ।",
+      "monthlyReport": {
+        "title": "ਮਹੀਨਾਵਾਰ ਦੁੱਧ ਰਿਪੋਰਟ",
+        "viewReport": "ਰਿਪੋਰਟ ਵੇਖੋ",
+        "downloadPdf": "PDF ਡਾਊਨਲੋਡ ਕਰੋ",
+        "downloadLabel": "ਮਹੀਨਾਵਾਰ ਰਿਪੋਰਟ PDF ਡਾਊਨਲੋਡ ਕਰੋ",
+        "generating": "ਤਿਆਰ ਕੀਤਾ ਜਾ ਰਿਹਾ ਹੈ…",
+        "previewSubtitle": "ਡਾਊਨਲੋਡ ਕੀਤੀ PDF ਵਰਗਾ ਹੀ ਖਾਕਾ",
+        "emptyReport": "ਇਸ ਮਹੀਨੇ ਰਿਪੋਰਟ ਲਈ ਕੋਈ ਐਂਟਰੀ ਨਹੀਂ ਹੈ।",
+        "shareSuccess": "ਮਹੀਨਾਵਾਰ ਰਿਪੋਰਟ ਸਫਲਤਾ ਨਾਲ ਸਾਂਝੀ ਕੀਤੀ ਗਈ।",
+        "shareUnavailable": "ਇਸ ਡਿਵਾਈਸ 'ਤੇ ਫ਼ਾਈਲ ਸਾਂਝੀ ਕਰਨ ਦੀ ਸਹੂਲਤ ਉਪਲਬਧ ਨਹੀਂ ਹੈ।",
+        "shareError": "ਮਹੀਨਾਵਾਰ ਰਿਪੋਰਟ ਬਣਾਈ ਨਹੀਂ ਜਾ ਸਕੀ। ਕਿਰਪਾ ਕਰਕੇ ਦੁਬਾਰਾ ਕੋਸ਼ਿਸ਼ ਕਰੋ।"
+      }
   },
   "entryForm": {
     "editTitle": "ਐਂਟਰੀ ਸੋਧੋ",
@@ -135,6 +149,8 @@
     "dailyMilk": "ਰੋਜ਼ਾਨਾ ਦੁੱਧ ਦੀ ਮਾਤਰਾ (kg)",
     "dailyFat": "ਰੋਜ਼ਾਨਾ fat ਦੀ ਪ੍ਰਤੀਸ਼ਤ (%)",
     "dailyEarnings": "ਰੋਜ਼ਾਨਾ ਕਮਾਈ (₹)",
+    "emptyTitle": "ਇਸ ਮਹੀਨੇ ਲਈ ਕੋਈ ਡਾਟਾ ਨਹੀਂ",
+    "emptySubtitle": "ਮਹੀਨਾਵਾਰ ਚਾਰਟ ਬਣਾਉਣ ਲਈ ਦੁੱਧ ਦੀਆਂ ਐਂਟਰੀਆਂ ਜੋੜੋ।",
     "peak": "ਸ਼ਾਖੀ {{value}}"
   },
   "settings": {

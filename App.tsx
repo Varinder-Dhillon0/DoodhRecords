@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { View, ActivityIndicator, StyleSheet } from "react-native";
+import { StyleSheet } from "react-native";
 import { NavigationContainer } from "@react-navigation/native";
 import { createStackNavigator } from "@react-navigation/stack";
 import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
@@ -21,13 +21,15 @@ import {
   useFontScale,
 } from "./src/context/FontScaleContext";
 import { MainTabParamList, RootStackParamList } from "./src/types";
+import { TAB_ROUTES, getTabIcon } from "./src/navigation/tabs";
 import HomeScreen from "./src/screens/HomeScreen";
 import EntriesScreen from "./src/screens/EntriesScreen";
 import ReportsScreen from "./src/screens/ReportsScreen";
 import SettingsScreen from "./src/screens/SettingsScreen";
 import EntryFormScreen from "./src/screens/EntryFormScreen";
 import WelcomeScreen from "./src/screens/WelcomeScreen";
-import { getStoredFontScale } from "./src/utils/storageManager";
+import { loadFontScalePreference } from "./src/services/preferenceService";
+import LoadingIndicator from "./src/components/ui/LoadingIndicator";
 import { SnackbarProvider } from "./src/context/SnackbarContext";
 
 const Stack = createStackNavigator<RootStackParamList>();
@@ -68,13 +70,7 @@ function Tabs() {
         },
         tabBarLabel: t(`navigation.${route.name.toLowerCase()}`),
         tabBarIcon: ({ focused, color, size }) => {
-          const iconName =
-            {
-              Home: focused ? "home" : "home-outline",
-              Entries: focused ? "clipboard-text" : "clipboard-text-outline",
-              Reports: focused ? "chart-box" : "chart-box-outline",
-              Settings: focused ? "cog" : "cog-outline",
-            }[route.name] || "circle";
+          const iconName = getTabIcon(route.name, focused);
 
           return (
             <MaterialCommunityIcons
@@ -86,10 +82,20 @@ function Tabs() {
         },
       })}
     >
-      <Tab.Screen name="Home" component={HomeScreen} />
-      <Tab.Screen name="Entries" component={EntriesScreen} />
-      <Tab.Screen name="Reports" component={ReportsScreen} />
-      <Tab.Screen name="Settings" component={SettingsScreen} />
+      {TAB_ROUTES.map((route) => (
+        <Tab.Screen
+          key={route.name}
+          name={route.name}
+          component={
+            {
+              Home: HomeScreen,
+              Entries: EntriesScreen,
+              Reports: ReportsScreen,
+              Settings: SettingsScreen,
+            }[route.name]
+          }
+        />
+      ))}
     </Tab.Navigator>
   );
 }
@@ -98,11 +104,7 @@ function MainNavigator() {
   const { isLoading } = useDoodhContext();
 
   if (isLoading) {
-    return (
-      <View style={styles.loadingContainer}>
-        <ActivityIndicator size="large" color={COLORS.brand} />
-      </View>
-    );
+    return <LoadingIndicator style={styles.loadingContainer} />;
   }
 
   return (
@@ -131,17 +133,17 @@ export default function App() {
   const [initialFontScale, setInitialFontScale] = useState<number | null>(null);
 
   useEffect(() => {
-    Promise.all([initializeI18n(), getStoredFontScale()]).then(([, scale]) =>
-      setInitialFontScale(scale ?? FONT_SCALE_RANGE.default),
+    Promise.all([initializeI18n(), loadFontScalePreference()]).then(
+      ([, scaleResult]) =>
+        setInitialFontScale(
+          (scaleResult.ok ? scaleResult.value : null) ??
+            FONT_SCALE_RANGE.default,
+        ),
     );
   }, []);
 
   if (!fontsLoaded || initialFontScale === null) {
-    return (
-      <View style={styles.loadingContainer}>
-        <ActivityIndicator size="large" color={COLORS.brand} />
-      </View>
-    );
+    return <LoadingIndicator style={styles.loadingContainer} />;
   }
 
   return (

@@ -1,4 +1,4 @@
-import { Animal, MonthOption, Shift } from "./types";
+import type { Animal, MonthOption } from "./types";
 
 export const COLORS = {
   // Brand / emerald
@@ -49,16 +49,7 @@ export const COLORS = {
   onRedContainer: "#93000a",
 
   // Inverse
-  inverseSurface: "#283044",
-  inverseOnSurface: "#eef0ff",
   inversePrimary: "#94d5a7",
-
-  // Legacy aliases retained for existing call sites
-  blueSoft: "#dbe1ff",
-  amberSoft: "#ffdcbd",
-  gold: "#7a4700",
-  slateShade: "#334155",
-  steel: "#64748b",
 } as const;
 
 export const RADII = {
@@ -73,10 +64,21 @@ export const SPACING = {
   xs: 4,
   sm: 8,
   md: 12,
-  gap: 16,
-  lg: 20,
-  xl: 24,
-  xxl: 32,
+  lg: 16,
+  xl: 20,
+  xxl: 24,
+  xxxl: 32,
+} as const;
+
+export const INTERACTION = {
+  pressedOpacity: 0.78,
+  pressedOptionOpacity: 0.72,
+  disabledOpacity: 0.5,
+} as const;
+
+export const LAYOUT = {
+  screenGutter: 16,
+  listBottomClearance: 100,
 } as const;
 
 export const SHADOWS = {
@@ -110,6 +112,53 @@ export const SHADOWS = {
   },
 } as const;
 
+export const THEME = {
+  background: COLORS.background,
+  surface: COLORS.surface,
+  surfaceSecondary: COLORS.surfaceLow,
+  surfaceMuted: COLORS.surfaceContainer,
+  surfaceStrong: COLORS.surfaceHigh,
+  text: COLORS.text,
+  textSecondary: COLORS.muted,
+  border: COLORS.borderSoft,
+  divider: COLORS.surfaceContainer,
+  primary: COLORS.greenAccent,
+  primaryStrong: COLORS.brand,
+  primarySoft: COLORS.brandLight,
+  onPrimary: COLORS.white,
+  milk: COLORS.blue,
+  milkSoft: COLORS.blueFixed,
+  fat: COLORS.amber,
+  fatSoft: COLORS.amberFixed,
+  earnings: COLORS.greenAccent,
+  success: COLORS.greenAccent,
+  successSoft: COLORS.brandLight,
+  warning: COLORS.amber,
+  warningSoft: COLORS.amberFixed,
+  info: COLORS.blue,
+  infoSoft: COLORS.blueFixed,
+  danger: COLORS.red,
+  dangerSoft: COLORS.redContainer,
+} as const;
+
+export const CONTROL_HEIGHTS = {
+  compact: 32,
+  touch: 44,
+  control: 48,
+  input: 50,
+  listAction: 56,
+} as const;
+
+export const ICON_SIZES = {
+  xs: 12,
+  sm: 14,
+  md: 18,
+  lg: 20,
+  xl: 24,
+  display: 32,
+  hero: 40,
+} as const;
+
 export const withAlpha = (hex: string, alpha: number): string => {
   const normalized = hex.replace("#", "");
   const value =
@@ -127,7 +176,6 @@ export const withAlpha = (hex: string, alpha: number): string => {
 };
 
 export const ANIMALS: Animal[] = ["Cow", "Buffalo"];
-export const SHIFTS: Shift[] = ["Morning", "Evening"];
 export const APP_VERSION = "1.0.0";
 
 export const MONTH_OPTIONS: MonthOption[] = [

@@ -11,7 +11,7 @@ import {
   getNearestFontScaleOption,
   RuntimeTypography,
 } from "../constants/typography";
-import { saveStoredFontScale } from "../utils/storageManager";
+import { saveFontScalePreference } from "../services/preferenceService";
 
 type FontScaleContextValue = {
   fontScale: number;
@@ -35,7 +35,7 @@ export function FontScaleProvider({
   const setFontScale = useCallback((value: number) => {
     const nextScale = getNearestFontScaleOption(value).multiplier;
     setFontScaleState(nextScale);
-    void saveStoredFontScale(nextScale);
+    void saveFontScalePreference(nextScale);
   }, []);
 
   const typography = useMemo(() => createTypography(fontScale), [fontScale]);

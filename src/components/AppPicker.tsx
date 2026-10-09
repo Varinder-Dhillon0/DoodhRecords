@@ -1,20 +1,20 @@
 import React, { useEffect, useRef, useState } from "react";
 import {
   Animated,
-  Dimensions,
   Modal,
   Pressable,
   ScrollView,
   StyleSheet,
   View,
   ViewStyle,
+  useWindowDimensions,
 } from "react-native";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useTranslation } from "react-i18next";
 import Text from "./ScaledText";
 import { useFontScale } from "../context/FontScaleContext";
-import { COLORS, RADII, SHADOWS, withAlpha } from "../constants";
+import { COLORS, INTERACTION, RADII, SHADOWS, withAlpha } from "../constants";
 
 export type AppPickerOption<T extends string | number> = {
   label: string;
@@ -124,6 +124,7 @@ export default function AppPicker<T extends string | number>({
 }: AppPickerProps<T>) {
   const { typography } = useFontScale();
   const insets = useSafeAreaInsets();
+  const { height: windowHeight } = useWindowDimensions();
   const { t } = useTranslation();
   const anchorRef = useRef<View>(null);
   const optionsScrollRef = useRef<ScrollView>(null);
@@ -151,7 +152,6 @@ export default function AppPicker<T extends string | number>({
   const openPicker = () => {
     if (disabled || options.length === 0) return;
     anchorRef.current?.measureInWindow((left, top, width, height) => {
-      const windowHeight = Dimensions.get("window").height;
       const estimatedHeight = Math.min(options.length * 48, 288);
       const belowTop = top + height + 6;
       const roomBelow = windowHeight - insets.bottom - belowTop;
@@ -342,7 +342,7 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   selectedOption: { backgroundColor: withAlpha(COLORS.brandLight, 0.55) },
-  pressedOption: { opacity: 0.72 },
+  pressedOption: { opacity: INTERACTION.pressedOptionOpacity },
   optionText: { flex: 1, color: COLORS.muted },
   selectedOptionText: { color: COLORS.brand, fontWeight: "700" },
 });

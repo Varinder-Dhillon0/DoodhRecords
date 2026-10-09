@@ -7,10 +7,17 @@ import {
   StyleSheet,
   ViewStyle,
 } from "react-native";
-import { COLORS, RADII, SHADOWS } from "../constants";
+import { COLORS, INTERACTION, RADII, SHADOWS } from "../constants";
 
 export type ButtonSize = "sm" | "md" | "lg";
-export type ButtonVariant = "primary" | "secondary" | "outline" | "custom";
+export type ButtonVariant =
+  | "primary"
+  | "secondary"
+  | "outline"
+  | "ghost"
+  | "danger"
+  | "success"
+  | "custom";
 
 type ButtonProps = Omit<PressableProps, "style"> & {
   size?: ButtonSize;
@@ -42,12 +49,14 @@ const Button = forwardRef<React.ElementRef<typeof Pressable>, ButtonProps>(
     ref,
   ) {
     const isDisabled = disabled || loading;
+    const loadingColor =
+      variant === "primary" || variant === "success" || variant === "danger"
+        ? COLORS.white
+        : COLORS.brand;
     const content = (
       <>
         {loading ? (
-          <ActivityIndicator
-            color={variant === "primary" ? COLORS.white : COLORS.brand}
-          />
+          <ActivityIndicator color={loadingColor} />
         ) : iconPosition === "left" ? (
           icon
         ) : null}
@@ -69,8 +78,9 @@ const Button = forwardRef<React.ElementRef<typeof Pressable>, ButtonProps>(
         style={(state) => [
           variant !== "custom" && styles[variant],
           variant !== "custom" && styles[size],
-          isDisabled && variant !== "custom" && styles.disabled,
+          isDisabled && styles.disabled,
           fullWidth && styles.fullWidth,
+          state.pressed && styles.pressed,
           typeof style === "function" ? style(state) : style,
         ]}
       >
@@ -107,9 +117,31 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     gap: 8,
   },
+  ghost: {
+    backgroundColor: "transparent",
+    alignItems: "center",
+    justifyContent: "center",
+    flexDirection: "row",
+    gap: 8,
+  },
+  danger: {
+    backgroundColor: COLORS.red,
+    alignItems: "center",
+    justifyContent: "center",
+    flexDirection: "row",
+    gap: 8,
+  },
+  success: {
+    backgroundColor: COLORS.brand,
+    alignItems: "center",
+    justifyContent: "center",
+    flexDirection: "row",
+    gap: 8,
+  },
   sm: { minHeight: 32, paddingHorizontal: 12, borderRadius: RADII.pill },
   md: { minHeight: 40, paddingHorizontal: 14, borderRadius: RADII.control },
   lg: { minHeight: 48, paddingHorizontal: 20, borderRadius: RADII.control },
-  disabled: { opacity: 0.5 },
+  disabled: { opacity: INTERACTION.disabledOpacity },
+  pressed: { opacity: INTERACTION.pressedOpacity },
   fullWidth: { width: "100%" },
 });

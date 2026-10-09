@@ -105,6 +105,60 @@ const baseSizeToName = new Map<number, TypographyName>(
   ]),
 );
 
+export const TEXT_VARIANTS = {
+  display: {
+    fontSize: TYPOGRAPHY.display,
+    fontWeight: "800",
+    letterSpacing: -0.5,
+  },
+  screenTitle: {
+    fontSize: TYPOGRAPHY.headingSmall,
+    fontWeight: "800",
+    letterSpacing: -0.2,
+  },
+  sectionTitle: {
+    fontSize: TYPOGRAPHY.bodyLarge,
+    fontWeight: "700",
+  },
+  cardTitle: {
+    fontSize: TYPOGRAPHY.bodyLarge,
+    fontWeight: "700",
+  },
+  body: {
+    fontSize: TYPOGRAPHY.body,
+    fontWeight: "400",
+  },
+  bodyStrong: {
+    fontSize: TYPOGRAPHY.bodySmall,
+    fontWeight: "700",
+  },
+  caption: {
+    fontSize: TYPOGRAPHY.caption,
+    fontWeight: "500",
+  },
+  micro: {
+    fontSize: TYPOGRAPHY.micro,
+    fontWeight: "600",
+  },
+  eyebrow: {
+    fontSize: TYPOGRAPHY.micro,
+    fontWeight: "700",
+    letterSpacing: 1.2,
+    textTransform: "uppercase",
+  },
+  button: {
+    fontSize: TYPOGRAPHY.bodyLarge,
+    fontWeight: "700",
+  },
+  numeric: {
+    fontSize: TYPOGRAPHY.display,
+    fontWeight: "800",
+    letterSpacing: -0.5,
+  },
+} as const;
+
+export type TextVariantName = keyof typeof TEXT_VARIANTS;
+
 export const getTypographySize = (
   baseSize: number,
   runtimeTypography: RuntimeTypography,
