@@ -2,6 +2,7 @@ import type { AnimalPricing, PricingConfig } from "../types";
 import type { PricedMilkEntry } from "./entries";
 import { getDaysInMonth, getMonthDayKey } from "./reports";
 import { getMonthKey, resolveAnimalPricing } from "./pricing";
+import { formatDisplayDate } from "../utils/dateUtils";
 
 export type MonthlyReportSlot = {
   quantity: number;
@@ -31,6 +32,20 @@ export type MonthlyReport = {
   rates: AnimalPricing;
   days: MonthlyReportDay[];
   monthlyTotal: number;
+};
+
+/** Display strings for the report, resolved from the selected language. */
+export type MonthlyReportLabels = {
+  title: string;
+  day: string;
+  night: string;
+  total: string;
+  buffalo: string;
+  cow: string;
+  dailyTotal: string;
+  monthlyTotal: string;
+  ratesTitle: string;
+  perFat: string;
 };
 
 const SHORT_MONTHS = [
@@ -63,7 +78,13 @@ const LONG_MONTHS = [
   "December",
 ];
 
-export const formatReportDayLabel = (dateString: string): string => {
+export const formatReportDayLabel = (
+  dateString: string,
+  language = "en",
+): string => {
+  if (language.startsWith("pa")) {
+    return formatDisplayDate(dateString, language);
+  }
   const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(dateString);
   if (!match) return dateString;
   const [, year, month, day] = match;
@@ -133,6 +154,7 @@ export const buildMonthlyMilkReport = (
   pricingConfig: PricingConfig = {},
   year: string,
   month: string,
+  language = "en",
 ): MonthlyReport => {
   const monthKey = getMonthKey(year, month);
   const rates = resolveAnimalPricing(pricingConfig, year, month);
@@ -161,7 +183,7 @@ export const buildMonthlyMilkReport = (
 
     days.push({
       date,
-      label: formatReportDayLabel(date),
+      label: formatReportDayLabel(date, language),
       buffalo: { day: buffaloDay, night: buffaloNight, total: buffaloTotal },
       cow: { day: cowDay, night: cowNight, total: cowTotal },
       dailyTotal: buffaloTotal + cowTotal,

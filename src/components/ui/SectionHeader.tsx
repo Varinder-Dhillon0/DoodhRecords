@@ -30,10 +30,12 @@ export default function SectionHeader({
           style={styles.action}
           hitSlop={8}
         >
-          <Text textVariant="caption" style={styles.actionLabel}>{actionLabel}</Text>
+          <Text textVariant="caption" style={styles.actionLabel}>
+            {actionLabel}
+          </Text>
           <MaterialCommunityIcons
             name="chevron-right"
-            size={18}
+            size={14}
             color={COLORS.brand}
           />
         </Pressable>
@@ -49,7 +51,12 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   title: { color: COLORS.text },
-  action: { flexDirection: "row", alignItems: "center", gap: 2 },
+  action: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 4,
+  },
   actionLabel: {
     color: COLORS.brand,
     fontWeight: "700",

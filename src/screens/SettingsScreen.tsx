@@ -217,15 +217,18 @@ export default function SettingsScreen() {
 
           <Button
             variant="success"
-            size="lg"
+            size="sm"
             fullWidth
+            style={styles.saveButton}
             accessibilityLabel={t("settings.savePricing")}
             onPress={handleSave}
             icon={
-              <MaterialCommunityIcons name="content-save" size={20} color={COLORS.white} />
+              <MaterialCommunityIcons name="content-save" size={16} color={COLORS.white} />
             }
           >
-            <Text style={styles.saveButtonText}>{t("settings.savePricing")}</Text>
+            <Text style={styles.saveButtonText}>
+              {t("settings.savePricing")}
+            </Text>
           </Button>
         </SettingCard>
 
@@ -330,10 +333,15 @@ const styles = StyleSheet.create({
   },
   sliderScaleText: { fontSize: TYPOGRAPHY.caption, color: COLORS.muted },
   helpText: { fontSize: TYPOGRAPHY.caption, color: COLORS.muted },
+  saveButton: {
+    alignItems: "center",
+    justifyContent: "center",
+  },
   saveButtonText: {
     color: COLORS.white,
     fontWeight: "700",
-    fontSize: TYPOGRAPHY.bodyLarge,
+    fontSize: TYPOGRAPHY.bodySmall,
+    textAlign: "center",
   },
   footer: {
     flexDirection: "row",

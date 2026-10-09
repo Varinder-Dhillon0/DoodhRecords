@@ -1,7 +1,15 @@
-import React, { useEffect, useRef } from "react";
-import { Animated, Modal, Pressable, StyleSheet, View } from "react-native";
+import React, { useEffect, useRef, useState } from "react";
+import {
+  Animated,
+  Easing,
+  Modal,
+  Pressable,
+  StyleSheet,
+  View,
+  useWindowDimensions,
+} from "react-native";
 import { useTranslation } from "react-i18next";
-import { COLORS, RADII, withAlpha } from "../../constants";
+import { COLORS, RADII, SHADOWS, withAlpha } from "../../constants";
 import { TYPOGRAPHY } from "../../constants/typography";
 import type { MilkEntry } from "../../types";
 import { formatCurrency, formatNumber } from "../../utils/formatters";
@@ -26,35 +34,86 @@ export default function EntryActionSheet({
   onDelete,
 }: EntryActionSheetProps) {
   const { t } = useTranslation();
-  const sheetProgress = useRef(new Animated.Value(0)).current;
+  const { height } = useWindowDimensions();
+  const backdropAnim = useRef(new Animated.Value(0)).current;
+  const sheetAnim = useRef(new Animated.Value(0)).current;
+  const [isClosing, setIsClosing] = useState(false);
 
   useEffect(() => {
     if (!entry) return;
-    sheetProgress.setValue(0);
-    Animated.timing(sheetProgress, {
+    setIsClosing(false);
+    backdropAnim.setValue(0);
+    sheetAnim.setValue(0);
+
+    // Same staged entrance as the add/edit entry sheet: backdrop fades
+    // first, then the sheet slides up slightly after.
+    Animated.timing(backdropAnim, {
       toValue: 1,
-      duration: 180,
+      duration: 190,
+      easing: Easing.out(Easing.quad),
       useNativeDriver: true,
     }).start();
-  }, [entry, sheetProgress]);
+
+    Animated.timing(sheetAnim, {
+      toValue: 1,
+      duration: 340,
+      delay: 110,
+      easing: Easing.bezier(0.22, 1, 0.32, 1),
+      useNativeDriver: true,
+    }).start();
+  }, [backdropAnim, entry, sheetAnim]);
+
+  const handleClose = () => {
+    if (isClosing) return;
+    setIsClosing(true);
+    Animated.parallel([
+      Animated.timing(sheetAnim, {
+        toValue: 0,
+        duration: 200,
+        easing: Easing.in(Easing.cubic),
+        useNativeDriver: true,
+      }),
+      Animated.timing(backdropAnim, {
+        toValue: 0,
+        duration: 150,
+        easing: Easing.in(Easing.quad),
+        useNativeDriver: true,
+      }),
+    ]).start(() => onClose());
+  };
 
   return (
     <Modal
       transparent
       visible={!!entry}
       animationType="none"
-      onRequestClose={onClose}
+      onRequestClose={handleClose}
     >
-      <Pressable style={styles.backdrop} onPress={onClose}>
+      <View style={styles.root}>
+        <Animated.View style={[styles.backdrop, { opacity: backdropAnim }]}>
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel={t("common.close")}
+            style={StyleSheet.absoluteFill}
+            onPress={handleClose}
+          />
+        </Animated.View>
         <Animated.View
           style={[
             styles.sheet,
             {
+              opacity: sheetAnim,
               transform: [
                 {
-                  translateY: sheetProgress.interpolate({
+                  translateY: sheetAnim.interpolate({
                     inputRange: [0, 1],
-                    outputRange: [72, 0],
+                    outputRange: [height, 0],
+                  }),
+                },
+                {
+                  scale: sheetAnim.interpolate({
+                    inputRange: [0, 1],
+                    outputRange: [0.96, 1],
                   }),
                 },
               ],
@@ -87,7 +146,7 @@ export default function EntryActionSheet({
               <IconButton
                 icon="close"
                 accessibilityLabel={t("common.close")}
-                onPress={onClose}
+                onPress={handleClose}
                 size={32}
                 iconSize={20}
               />
@@ -119,16 +178,19 @@ export default function EntryActionSheet({
             </View>
           </Pressable>
         </Animated.View>
-      </Pressable>
+      </View>
     </Modal>
   );
 }
 
 const styles = StyleSheet.create({
-  backdrop: {
+  root: {
     flex: 1,
     justifyContent: "flex-end",
-    backgroundColor: withAlpha("#0F172A", 0.5),
+  },
+  backdrop: {
+    ...StyleSheet.absoluteFill,
+    backgroundColor: withAlpha("#0F172A", 0.6),
   },
   sheet: {
     backgroundColor: COLORS.surface,
@@ -137,6 +199,8 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     paddingTop: 12,
     paddingBottom: 24,
+    overflow: "hidden",
+    ...SHADOWS.sheet,
   },
   indicator: {
     width: 48,

@@ -95,11 +95,12 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
   },
-  center: { flex: 1 },
-  titleLine: { flexDirection: "row", alignItems: "center", gap: 6 },
+  center: { flex: 1, justifyContent: "center" },
+  titleLine: { flexDirection: "row", alignItems: "baseline", gap: 6 },
   title: {
     fontSize: TYPOGRAPHY.bodyLarge,
     fontWeight: "700",
+    lineHeight: 22,
     color: COLORS.text,
   },
   subtitle: {
@@ -112,16 +113,19 @@ const styles = StyleSheet.create({
     color: COLORS.muted,
     marginTop: 2,
   },
-  right: { alignItems: "flex-end" },
+  right: { alignItems: "flex-end", justifyContent: "center" },
   earnings: {
     fontSize: TYPOGRAPHY.headingSmall,
     fontWeight: "800",
+    lineHeight: 22,
     color: COLORS.brand,
+    textAlign: "right",
   },
   meta: {
     fontSize: TYPOGRAPHY.caption,
     fontWeight: "600",
     color: COLORS.muted,
     marginTop: 2,
+    textAlign: "right",
   },
 });

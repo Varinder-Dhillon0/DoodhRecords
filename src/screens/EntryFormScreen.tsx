@@ -11,7 +11,6 @@ import {
   View,
   useWindowDimensions,
 } from "react-native";
-import type { DateTimePickerChangeEvent } from "@react-native-community/datetimepicker";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 import { useNavigation, useRoute, RouteProp } from "@react-navigation/native";
 import { StackNavigationProp } from "@react-navigation/stack";
@@ -21,7 +20,6 @@ import { useDoodhContext } from "../context/DoodhContext";
 import {
   getLocalDateString,
   getYearAndMonth,
-  parseLocalDate,
 } from "../utils/dateUtils";
 import { resolveAnimalPricing } from "../domain/pricing";
 import { validateEntryInput } from "../domain/validation";
@@ -37,7 +35,7 @@ import { formatCurrency } from "../utils/formatters";
 import type { Animal, RootStackParamList, Shift } from "../types";
 import Text from "../components/ScaledText";
 import DateDisplay from "../components/ui/DateDisplay";
-import DateField from "../components/ui/DateField";
+import LocalizedDatePicker from "../components/ui/LocalizedDatePicker";
 import IconButton from "../components/ui/IconButton";
 import SegmentedControl from "../components/ui/SegmentedControl";
 import StepperInput from "../components/ui/StepperInput";
@@ -50,7 +48,7 @@ type NavigationProp = StackNavigationProp<RootStackParamList, "EntryForm">;
 type EntryRoute = RouteProp<RootStackParamList, "EntryForm">;
 
 export default function EntryFormScreen() {
-  const { t, i18n } = useTranslation();
+  const { t } = useTranslation();
   const { showSnackbar } = useSnackbar();
   const navigation = useNavigation<NavigationProp>();
   const route = useRoute<EntryRoute>();
@@ -210,15 +208,10 @@ export default function EntryFormScreen() {
     setFatPercentage(next);
   };
 
-  const handleDateChange = (
-    _: DateTimePickerChangeEvent,
-    selectedDate: Date,
-  ) => {
+  const handleDateChange = (nextDate: string) => {
     setShowDatePicker(false);
-    const nextDate = getLocalDateString(selectedDate);
 
-    // Backstop for the picker's own maximumDate, in case a platform still
-    // emits a future value.
+    // Backstop for dates beyond the allowed range, in case one slips through.
     if (nextDate > getLocalDateString()) return;
 
     setDate(nextDate);
@@ -340,10 +333,14 @@ export default function EntryFormScreen() {
             >
               <MaterialCommunityIcons
                 name="calendar-today"
-                size={13}
+                size={12}
                 color={COLORS.brand}
               />
-              <DateDisplay date={date} style={styles.sheetDate} numberOfLines={1} />
+              <DateDisplay
+                date={date}
+                style={styles.sheetDate}
+                numberOfLines={1}
+              />
             </Pressable>
           </View>
           <Pressable
@@ -359,22 +356,22 @@ export default function EntryFormScreen() {
           >
             <MaterialCommunityIcons
               name="check"
-              size={17}
+              size={15}
               color={COLORS.white}
             />
-            <Text style={styles.saveButtonText}>{t("common.save")}</Text>
+            <Text style={styles.saveButtonText}>
+              {t("common.save")}
+            </Text>
           </Pressable>
         </View>
 
-        {showDatePicker ? (
-          <DateField
-            value={parseLocalDate(date)}
-            maximumDate={new Date()}
-            locale={i18n.language.startsWith("pa") ? "pa-IN" : undefined}
-            onChange={handleDateChange}
-            onDismiss={() => setShowDatePicker(false)}
-          />
-        ) : null}
+        <LocalizedDatePicker
+          visible={showDatePicker}
+          value={date}
+          maximumDate={getLocalDateString()}
+          onSelect={handleDateChange}
+          onClose={() => setShowDatePicker(false)}
+        />
 
         <ScrollView
           ref={scrollViewRef}
@@ -535,8 +532,10 @@ const styles = StyleSheet.create({
   dateTrigger: {
     flexDirection: "row",
     alignItems: "center",
+    justifyContent: "flex-start",
     gap: 5,
     marginTop: 2,
+    minHeight: 20,
   },
   sheetDate: {
     fontSize: TYPOGRAPHY.caption,

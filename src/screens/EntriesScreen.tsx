@@ -19,6 +19,7 @@ import { useMonthlyReport } from "../hooks/useMonthlyReport";
 import {
   buildMonthlyMilkReport,
   createMonthlyReportFileName,
+  MonthlyReportLabels,
 } from "../domain/monthlyReport";
 import { buildMonthlyReportHtml } from "../utils/monthlyReportHtml";
 import { MilkEntry, RootStackParamList } from "../types";
@@ -38,7 +39,7 @@ import { COLORS, RADII } from "../constants";
 type EntriesScreenNavigationProp = StackNavigationProp<RootStackParamList>;
 
 export default function EntriesScreen() {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const { showSnackbar } = useSnackbar();
   const navigation = useNavigation<EntriesScreenNavigationProp>();
   const { entries, pricingConfig, deleteEntry } = useDoodhContext();
@@ -63,12 +64,29 @@ export default function EntriesScreen() {
         pricingConfig,
         selectedYear,
         selectedMonth,
+        i18n.language,
       ),
-    [filteredEntries, pricingConfig, selectedYear, selectedMonth],
+    [filteredEntries, pricingConfig, selectedYear, selectedMonth, i18n.language],
+  );
+
+  const reportLabels: MonthlyReportLabels = useMemo(
+    () => ({
+      title: `${t("entries.monthlyReport.title")} - ${t(`months.${selectedMonth}`)} ${selectedYear}`,
+      day: t("entries.monthlyReport.day"),
+      night: t("entries.monthlyReport.night"),
+      total: t("entries.monthlyReport.total"),
+      buffalo: t("animals.buffalo"),
+      cow: t("animals.cow"),
+      dailyTotal: t("entries.monthlyReport.dailyTotal"),
+      monthlyTotal: t("entries.monthlyReport.monthlyTotal"),
+      ratesTitle: t("entries.monthlyReport.ratesTitle"),
+      perFat: t("entries.monthlyReport.perFat"),
+    }),
+    [t, selectedMonth, selectedYear, monthlyReport.rates],
   );
 
   const { isGenerating, shareReport } = useMonthlyReport({
-    dialogTitle: monthlyReport.title,
+    dialogTitle: reportLabels.title,
     onShared: (shared) => {
       if (!shared) {
         Alert.alert(t("common.error"), t("entries.monthlyReport.shareUnavailable"));
@@ -84,13 +102,18 @@ export default function EntriesScreen() {
 
   const hasReportData = monthlyReport.days.length > 0;
 
+  const monthlyReportHtml = useMemo(
+    () => (hasReportData ? buildMonthlyReportHtml(monthlyReport, reportLabels) : ""),
+    [monthlyReport, reportLabels, hasReportData],
+  );
+
   const handleDownloadReport = async () => {
     if (!hasReportData) {
       showSnackbar(t("entries.monthlyReport.emptyReport"));
       return;
     }
     await shareReport(
-      buildMonthlyReportHtml(monthlyReport),
+      monthlyReportHtml,
       createMonthlyReportFileName(monthlyReport),
     );
   };
@@ -223,6 +246,7 @@ export default function EntriesScreen() {
       <MonthlyReportSheet
         visible={reportVisible}
         report={monthlyReport}
+        labels={hasReportData ? reportLabels : null}
         isGenerating={isGenerating}
         onClose={() => setReportVisible(false)}
         onDownload={handleDownloadReport}
@@ -234,6 +258,6 @@ export default function EntriesScreen() {
 const styles = StyleSheet.create({
   filterBar: { paddingHorizontal: 16, paddingBottom: 12, gap: 10 },
   reportRow: { flexDirection: "row", alignItems: "center", gap: 10 },
-  viewReportButton: { flex: 1 },
+  viewReportButton: { flex: 1, minHeight: 44, justifyContent: "center" },
   viewReportLabel: { color: COLORS.text, fontSize: 14, fontWeight: "700" },
 });

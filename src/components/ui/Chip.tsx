@@ -28,7 +28,12 @@ export default function Chip({
         pressed && styles.pressed,
       ]}
     >
-      <Text textVariant="micro" style={[styles.label, selected && styles.selectedLabel]}>{label}</Text>
+      <Text
+        textVariant="micro"
+        style={[styles.label, selected && styles.selectedLabel]}
+      >
+        {label}
+      </Text>
     </Pressable>
   );
 }

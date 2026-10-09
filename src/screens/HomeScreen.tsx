@@ -6,7 +6,6 @@ import {
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 import { useNavigation } from "@react-navigation/native";
 import { StackNavigationProp } from "@react-navigation/stack";
-import type { DateTimePickerChangeEvent } from "@react-native-community/datetimepicker";
 import { useTranslation } from "react-i18next";
 
 import { COLORS, INTERACTION, RADII, SHADOWS, withAlpha } from "../constants";
@@ -14,7 +13,6 @@ import { TYPOGRAPHY } from "../constants/typography";
 import { useDoodhContext } from "../context/DoodhContext";
 import {
   getLocalDateString,
-  parseLocalDate,
 } from "../utils/dateUtils";
 import { calculateSummary } from "../utils/calculations";
 import { calculateDayInsight } from "../domain/insights";
@@ -25,7 +23,7 @@ import AppHeader from "../components/AppHeader";
 import Button from "../components/Button";
 import DateDisplay from "../components/ui/DateDisplay";
 import ScreenContainer from "../components/ui/ScreenContainer";
-import DateField from "../components/ui/DateField";
+import LocalizedDatePicker from "../components/ui/LocalizedDatePicker";
 import EmptyState from "../components/ui/EmptyState";
 import IconButton from "../components/ui/IconButton";
 import MetricCard from "../components/ui/MetricCard";
@@ -35,7 +33,7 @@ import SectionHeader from "../components/ui/SectionHeader";
 type HomeScreenNavigationProp = StackNavigationProp<RootStackParamList>;
 
 export default function HomeScreen() {
-  const { t, i18n } = useTranslation();
+  const { t } = useTranslation();
   const navigation = useNavigation<HomeScreenNavigationProp>();
   const { entries } = useDoodhContext();
   const [selectedDate, setSelectedDate] =
@@ -70,9 +68,9 @@ export default function HomeScreen() {
       .slice(0, 5);
   }, [entries]);
 
-  const handleDateChange = (_: DateTimePickerChangeEvent, value: Date) => {
+  const handleDateChange = (nextDate: string) => {
     setShowDatePicker(false);
-    if (value) setSelectedDate(getLocalDateString(value));
+    if (nextDate) setSelectedDate(nextDate);
   };
 
   const isToday = selectedDate === getLocalDateString();
@@ -101,7 +99,7 @@ export default function HomeScreen() {
           onPress={() => navigation.navigate("EntryForm")}
           style={styles.summaryAdd}
           icon={
-            <MaterialCommunityIcons name="plus" size={16} color={COLORS.white} />
+            <MaterialCommunityIcons name="plus" size={14} color={COLORS.white} />
           }
         >
           <Text style={styles.summaryAddText} numberOfLines={1}>
@@ -129,16 +127,13 @@ export default function HomeScreen() {
             />
           </View>
 
-          {showDatePicker ? (
-            <DateField
-              value={parseLocalDate(selectedDate)}
-              maximumDate={parseLocalDate(getLocalDateString())}
-              locale={i18n.language.startsWith("pa") ? "pa-IN" : undefined}
-              onChange={handleDateChange}
-              onDismiss={() => setShowDatePicker(false)}
-              style={styles.datePicker}
-            />
-          ) : null}
+          <LocalizedDatePicker
+            visible={showDatePicker}
+            value={selectedDate}
+            maximumDate={getLocalDateString()}
+            onSelect={handleDateChange}
+            onClose={() => setShowDatePicker(false)}
+          />
 
           <View style={styles.metricsRow}>
             <MetricCard
@@ -322,7 +317,6 @@ const styles = StyleSheet.create({
     fontWeight: "500",
     marginTop: 2,
   },
-  datePicker: { alignSelf: "stretch" },
   metricsRow: { flexDirection: "row", alignItems: "stretch", gap: 8 },
   // Android renders an `elevation` shadow behind the view background, so a
   // translucent fill leaves a dark halo around the edge. Flat tint, no shadow.

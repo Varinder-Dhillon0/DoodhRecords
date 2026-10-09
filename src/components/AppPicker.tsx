@@ -209,14 +209,17 @@ export default function AppPicker<T extends string | number>({
             style={[
               styles.valueText,
               variant === "field" && styles.fieldValueText,
-              { fontSize: typography.bodyLarge },
+              {
+                fontSize:
+                  variant === "filter" ? typography.caption : typography.bodyLarge,
+              },
             ]}
           >
             {selectedOption?.label ?? ""}
           </Text>
           <MaterialCommunityIcons
             name="chevron-down"
-            size={20}
+            size={variant === "filter" ? 16 : 20}
             color={variant === "field" ? COLORS.text : COLORS.muted}
           />
         </Pressable>
@@ -294,8 +297,8 @@ const styles = StyleSheet.create({
     borderRadius: RADII.pill,
   },
   filter: {
-    minWidth: 110,
-    height: 38,
+    minWidth: 88,
+    height: 32,
     backgroundColor: COLORS.surfaceLow,
     borderWidth: 1,
     borderColor: COLORS.borderSoft,
@@ -312,7 +315,7 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
-    paddingHorizontal: 14,
+    paddingHorizontal: 10,
   },
   valueText: { flex: 1, color: COLORS.muted, paddingRight: 4 },
   fieldValueText: { color: COLORS.text },

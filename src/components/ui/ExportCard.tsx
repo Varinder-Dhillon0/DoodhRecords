@@ -36,10 +36,12 @@ export default function ExportCard({
       <View style={styles.left}>
         <MaterialCommunityIcons
           name="file-download-outline"
-          size={20}
+          size={18}
           color={COLORS.blue}
         />
-        <Text style={styles.label}>{busy ? busyLabel : label}</Text>
+        <Text style={styles.label}>
+          {busy ? busyLabel : label}
+        </Text>
       </View>
       <View style={styles.badge}>
         <Text style={styles.badgeLabel}>JSON</Text>
@@ -50,18 +52,30 @@ export default function ExportCard({
 
 const styles = StyleSheet.create({
   button: {
-    minHeight: 48,
+    minHeight: 36,
     backgroundColor: COLORS.surfaceLow,
     borderRadius: RADII.control,
     flexDirection: "row",
     alignItems: "center",
-    justifyContent: "space-between",
-    paddingHorizontal: SPACING.lg,
+    justifyContent: "center",
+    paddingHorizontal: SPACING.md,
+    paddingVertical: SPACING.xs,
+    gap: SPACING.sm,
   },
   pressed: { opacity: INTERACTION.pressedOpacity },
   disabled: { opacity: 0.6 },
-  left: { flexDirection: "row", alignItems: "center", gap: SPACING.sm },
-  label: { color: COLORS.text, fontSize: TYPOGRAPHY.bodyLarge, fontWeight: "600" },
+  left: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: SPACING.sm,
+  },
+  label: {
+    color: COLORS.text,
+    fontSize: TYPOGRAPHY.bodySmall,
+    fontWeight: "600",
+    textAlign: "center",
+  },
   badge: {
     alignItems: "center",
     justifyContent: "center",

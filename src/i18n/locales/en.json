@@ -7,6 +7,7 @@
   },
   "common": {
     "cancel": "Cancel",
+    "confirm": "Confirm",
     "delete": "Delete",
     "edit": "Edit",
     "duplicate": "Duplicate",
@@ -102,7 +103,29 @@
       "emptyReport": "No entries for this month to include in the report.",
       "shareSuccess": "Monthly report shared successfully.",
       "shareUnavailable": "File sharing is not available on this device.",
-      "shareError": "Unable to generate the monthly report. Please try again."
+      "shareError": "Unable to generate the monthly report. Please try again.",
+      "day": "DAY",
+      "night": "NIGHT",
+      "total": "TOTAL",
+      "dailyTotal": "Daily total",
+      "monthlyTotal": "MONTHLY TOTAL",
+      "ratesTitle": "Milk rates",
+      "perFat": "per fat"
+    }
+  },
+  "datePicker": {
+    "title": "Select date",
+    "today": "Today",
+    "previousMonth": "Previous month",
+    "nextMonth": "Next month",
+    "weekdays": {
+      "sun": "Sun",
+      "mon": "Mon",
+      "tue": "Tue",
+      "wed": "Wed",
+      "thu": "Thu",
+      "fri": "Fri",
+      "sat": "Sat"
     }
   },
   "entryForm": {

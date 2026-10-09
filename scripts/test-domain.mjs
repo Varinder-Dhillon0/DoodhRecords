@@ -5,7 +5,9 @@ import {
   calculateSummary,
   getStoredEntryEarnings,
 } from "../src/utils/calculations.ts";
+import { readFileSync } from "node:fs";
 import {
+  DATE_MONTH_NAMES,
   getLocalDateString,
   getYearAndMonth,
   parseLocalDate,
@@ -176,6 +178,17 @@ check("parsed local date", [parsed.getFullYear(), parsed.getMonth(), parsed.getD
   2026, 8, 27,
 ]);
 check("display date", formatDisplayDate("2026-09-27", "en"), "27 September, 2026");
+check("punjabi display date", formatDisplayDate("2026-09-27", "pa"), "27 ਸਤੰਬਰ, 2026");
+check("default display date is english", formatDisplayDate("2026-01-05"), "05 January, 2026");
+const localeMonths = (locale) =>
+  JSON.parse(
+    readFileSync(
+      new URL(`../src/i18n/locales/${locale}.json`, import.meta.url),
+      "utf8",
+    ),
+  ).months;
+check("date month names match en locale", DATE_MONTH_NAMES.en, localeMonths("en"));
+check("date month names match pa locale", DATE_MONTH_NAMES.pa, localeMonths("pa"));
 check("currency", formatCurrency(1170), "₹1,170");
 check("number", formatNumber(6.75, 1), "6.8");
 

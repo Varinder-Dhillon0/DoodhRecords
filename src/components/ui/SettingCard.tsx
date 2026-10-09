@@ -29,7 +29,7 @@ export default function SettingCard({
         <Text textVariant="eyebrow" style={styles.title}>{title}</Text>
         {trailing}
       </View>
-      {children}
+      {children ? <View style={styles.body}>{children}</View> : null}
     </Card>
   );
 }
@@ -49,4 +49,5 @@ const styles = StyleSheet.create({
     letterSpacing: 0.8,
     color: COLORS.brand,
   },
+  body: { marginTop: SPACING.md, gap: SPACING.md },
 });

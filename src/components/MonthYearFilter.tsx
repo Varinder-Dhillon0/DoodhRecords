@@ -46,6 +46,6 @@ export default function MonthYearFilter({
 }
 
 const styles = StyleSheet.create({
-  filterRow: { flexDirection: "row", alignItems: "center", gap: 8 },
-  filterSlot: { flex: 1 },
+  filterRow: { flexDirection: "row", alignItems: "center", gap: 6 },
+  filterSlot: { flex: 1, maxWidth: 132 },
 });

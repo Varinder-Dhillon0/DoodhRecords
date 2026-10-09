@@ -1,6 +1,5 @@
 import React from "react";
-import { StyleSheet, View } from "react-native";
-import { MaterialCommunityIcons } from "@expo/vector-icons";
+import { Image, StyleSheet, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { COLORS, RADII } from "../constants";
@@ -21,13 +20,11 @@ export default function AppHeader({ title, eyebrow }: AppHeaderProps) {
       accessibilityRole="header"
     >
       <View style={styles.left}>
-        <View style={styles.logo}>
-          <MaterialCommunityIcons
-            name="cup-water"
-            size={24}
-            color={COLORS.white}
-          />
-        </View>
+        <Image
+          source={require("../../assets/logo.png")}
+          style={styles.logo}
+          accessibilityIgnoresInvertColors
+        />
         <View style={styles.titles}>
           {eyebrow ? (
             <Text style={styles.eyebrow} numberOfLines={1}>
@@ -57,9 +54,7 @@ const styles = StyleSheet.create({
     width: 40,
     height: 40,
     borderRadius: RADII.control,
-    backgroundColor: COLORS.greenAccent,
-    alignItems: "center",
-    justifyContent: "center",
+    backgroundColor: COLORS.surfaceLow,
   },
   titles: { flex: 1, gap: 4 },
   eyebrow: {

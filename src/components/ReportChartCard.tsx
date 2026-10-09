@@ -32,7 +32,7 @@ export default function ReportChartCard({
           <View style={styles.peakBadge}>
             <MaterialCommunityIcons
               name="trending-up"
-              size={12}
+              size={11}
               color={COLORS.brand}
             />
             <Text style={styles.peakText} numberOfLines={1}>
@@ -73,16 +73,18 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
-    gap: 3,
-    height: 22,
-    paddingHorizontal: 10,
+    gap: 4,
+    minHeight: 20,
+    paddingHorizontal: 8,
+    paddingVertical: 2,
     backgroundColor: COLORS.brandLight,
     borderRadius: RADII.pill,
+    flexShrink: 1,
   },
   peakText: {
-    fontSize: TYPOGRAPHY.micro,
+    fontSize: 10,
     fontWeight: "700",
-    lineHeight: TYPOGRAPHY.micro,
     color: COLORS.brand,
+    flexShrink: 1,
   },
 });
