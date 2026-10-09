@@ -2,7 +2,6 @@ import React, { useMemo, useState } from "react";
 import {
   View,
   StyleSheet,
-  Alert,
   Text as RNText,
 } from "react-native";
 import { useNavigation } from "@react-navigation/native";
@@ -30,9 +29,11 @@ import EntryActionSheet from "../components/entries/EntryActionSheet";
 import EntryList from "../components/entries/EntryList";
 import MonthlyReportSheet from "../components/reports/MonthlyReportSheet";
 import Button from "../components/Button";
+import ConfirmDialog from "../components/ui/ConfirmDialog";
 import IconButton from "../components/ui/IconButton";
 import ScreenContainer from "../components/ui/ScreenContainer";
 import EmptyState from "../components/ui/EmptyState";
+import { useConfirmDialog } from "../hooks/useConfirmDialog";
 import { useSnackbar } from "../context/SnackbarContext";
 import { COLORS, RADII } from "../constants";
 
@@ -51,6 +52,7 @@ export default function EntriesScreen() {
   } = useCurrentMonthYear();
   const [sheetEntry, setSheetEntry] = useState<MilkEntry | null>(null);
   const [reportVisible, setReportVisible] = useState(false);
+  const { dialog: confirmDialog, showConfirm } = useConfirmDialog();
 
   const pricedEntries = usePricedEntries(entries, pricingConfig);
   const filteredEntries = useEntriesForMonth(pricedEntries, selectedYear, selectedMonth, {
@@ -85,18 +87,26 @@ export default function EntriesScreen() {
     [t, selectedMonth, selectedYear, monthlyReport.rates],
   );
 
-  const { isGenerating, shareReport } = useMonthlyReport({
-    dialogTitle: reportLabels.title,
-    onShared: (shared) => {
-      if (!shared) {
-        Alert.alert(t("common.error"), t("entries.monthlyReport.shareUnavailable"));
-        return;
-      }
-      showSnackbar(t("entries.monthlyReport.shareSuccess"));
+  const { isGenerating, saveReport } = useMonthlyReport({
+    onSaved: (location) => {
+      showSnackbar(
+        location === "downloads"
+          ? t("entries.monthlyReport.savedDownloads")
+          : t("entries.monthlyReport.savedFiles"),
+      );
+    },
+    onCancelled: () => {
+      showSnackbar(t("entries.monthlyReport.saveCancelled"));
     },
     onError: (error) => {
-      console.error("Error generating monthly report:", error);
-      Alert.alert(t("common.error"), t("entries.monthlyReport.shareError"));
+      console.error("Error saving monthly report:", error);
+      showConfirm({
+        title: t("common.error"),
+        message: t("entries.monthlyReport.saveError"),
+        tone: "danger",
+        icon: "alert-circle-outline",
+        confirmLabel: t("common.ok"),
+      });
     },
   });
 
@@ -112,7 +122,7 @@ export default function EntriesScreen() {
       showSnackbar(t("entries.monthlyReport.emptyReport"));
       return;
     }
-    await shareReport(
+    await saveReport(
       monthlyReportHtml,
       createMonthlyReportFileName(monthlyReport),
     );
@@ -151,27 +161,25 @@ export default function EntriesScreen() {
   const handleDelete = () => {
     if (!sheetEntry) return;
     const entry = sheetEntry;
-    Alert.alert(
-      t("entries.deleteConfirmTitle"),
-      t("entries.deleteConfirmMessage"),
-      [
-        { text: t("common.cancel"), style: "cancel" },
-        {
-          text: t("common.delete"),
-          style: "destructive",
-          onPress: async () => {
-            closeEntrySheet();
-            const result = await deleteEntry(entry.id, entry.date);
-            if (result.ok) {
-              showSnackbar(t("entries.deleteSuccess"));
-            } else {
-              console.error("Error deleting entry:", result.error);
-              showSnackbar(t("entries.deleteFailed"));
-            }
-          },
-        },
-      ],
-    );
+    showConfirm({
+      title: t("entries.deleteConfirmTitle"),
+      message: t("entries.deleteConfirmMessage"),
+      tone: "danger",
+      icon: "trash-can-outline",
+      cancelLabel: t("common.cancel"),
+      confirmLabel: t("common.delete"),
+      destructive: true,
+      onConfirm: async () => {
+        closeEntrySheet();
+        const result = await deleteEntry(entry.id, entry.date);
+        if (result.ok) {
+          showSnackbar(t("entries.deleteSuccess"));
+        } else {
+          console.error("Error deleting entry:", result.error);
+          showSnackbar(t("entries.deleteFailed"));
+        }
+      },
+    });
   };
 
   return (
@@ -211,8 +219,8 @@ export default function EntriesScreen() {
               icon="download"
               accessibilityLabel={t("entries.monthlyReport.downloadLabel")}
               onPress={handleDownloadReport}
-              size={44}
-              iconSize={22}
+              size={40}
+              iconSize={20}
               backgroundColor={COLORS.text}
               iconColor={COLORS.white}
               borderRadius={RADII.control}
@@ -251,6 +259,8 @@ export default function EntriesScreen() {
         onClose={() => setReportVisible(false)}
         onDownload={handleDownloadReport}
       />
+
+      <ConfirmDialog {...confirmDialog} />
     </ScreenContainer>
   );
 }

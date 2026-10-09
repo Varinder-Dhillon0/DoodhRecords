@@ -68,10 +68,10 @@ export const buildMonthlyReportHtml = (
 <head>
 <meta charset="utf-8" />
 <style>
-  @page { size: A4; margin: 36px 44px 60px 44px; }
+  @page { size: A4; margin: 32px 40px 44px 40px; }
   * { box-sizing: border-box; }
   html, body { margin: 0; padding: 0; background: #ffffff; color: #000000; }
-  body { font-family: Helvetica, Arial, sans-serif; padding-bottom: 24px; }
+  body { font-family: Helvetica, Arial, sans-serif; padding-bottom: 12px; }
   .title { text-align: center; font-size: 30px; font-weight: 800; margin: 8px 0 12px 0; letter-spacing: 0.2px; }
   .rates { border: 1px solid #000000; border-radius: 8px; padding: 8px 14px 10px 14px; margin: 0 0 6px 0; }
   .rates-caption { font-size: 12px; font-weight: 800; letter-spacing: 1.2px; text-transform: uppercase; margin-bottom: 4px; }
@@ -90,7 +90,7 @@ export const buildMonthlyReportHtml = (
   .daily-total { text-align: right; font-size: 15px; font-weight: 800; padding-top: 6px; }
   .grand { display: flex; justify-content: flex-end; align-items: center; border-top: 1px solid #000000; margin-top: 28px; padding: 14px 0 8px 0; }
   .grand-label { font-size: 20px; font-weight: 800; letter-spacing: 0.3px; }
-  .footer { position: fixed; bottom: 0; left: 0; right: 0; display: flex; justify-content: space-between; font-size: 11px; color: #000000; border-top: 1px solid #000000; padding: 6px 0 0 0; background: #ffffff; }
+  .footer { position: fixed; bottom: 0; left: 0; right: 0; display: flex; justify-content: space-between; font-size: 11px; color: #000000; border-top: 1px solid #000000; padding: 4px 0 0 0; background: #ffffff; }
 </style>
 </head>
 <body>

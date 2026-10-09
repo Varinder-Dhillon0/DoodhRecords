@@ -67,7 +67,7 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "baseline",
     gap: 3,
-    marginTop: 4,
+    marginTop: 2,
   },
   value: {
     color: COLORS.text,

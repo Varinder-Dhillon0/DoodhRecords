@@ -7,7 +7,12 @@ import React, {
 } from "react";
 import { Animal, DoodhContextType, MilkEntry, PricingConfig } from "../types";
 import { defaultEntries, defaultPricing } from "../data/defaultData";
-import { getDefaultAnimalPricing, getMonthKey } from "../domain/pricing";
+import {
+  getDefaultAnimalPricing,
+  getMonthKey,
+  resolveAnimalPricing,
+} from "../domain/pricing";
+import { getYearAndMonth } from "../utils/dateUtils";
 import {
   createRecord,
   deleteRecord,
@@ -96,9 +101,32 @@ export function DoodhProvider({ children }: { children: React.ReactNode }) {
       });
       if (!createResult.ok) return createResult;
       setEntries((prev) => [...prev, createResult.value]);
+
+      // The first entry created in a month without its own rates snapshots
+      // the inherited previous-month rates as that month's own
+      // configuration, so later changes to earlier months can't move it.
+      const { year, month } = getYearAndMonth(entry.date);
+      const key = getMonthKey(year, month);
+      if (!pricingConfig[key]) {
+        const inherited = resolveAnimalPricing(pricingConfig, year, month);
+        const cowResult = await saveRate(year, month, "Cow", inherited.Cow);
+        const buffaloResult = cowResult.ok
+          ? await saveRate(year, month, "Buffalo", inherited.Buffalo)
+          : cowResult;
+        if (!cowResult.ok || !buffaloResult.ok) {
+          console.error("Unable to snapshot month pricing:", {
+            cowResult,
+            buffaloResult,
+          });
+        } else {
+          setPricingConfig((prev) =>
+            prev[key] ? prev : { ...prev, [key]: inherited },
+          );
+        }
+      }
       return { ok: true as const, value: createResult.value };
     },
-    [],
+    [pricingConfig],
   );
 
   const handleUpdateEntry = useCallback(

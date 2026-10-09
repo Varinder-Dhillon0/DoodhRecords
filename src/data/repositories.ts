@@ -11,12 +11,16 @@ import {
   getPricingConfig,
   getStoredFontScale,
   getStoredLanguage,
+  getStoredReportDirectory,
   initializeStorage,
   readAllEntries,
+  readEntriesForMonth,
   savePricingConfig,
   saveStoredFontScale,
   saveStoredLanguage,
+  saveStoredReportDirectory,
   updateEntry,
+  writeEntriesForMonth,
 } from "../utils/storageManager";
 
 export type RepositoryResult<T> = OperationResult<T>;
@@ -34,6 +38,8 @@ export const runRepository = async <T>(
 export interface EntryRepository {
   initialize(): Promise<void>;
   listAll(): Promise<MilkEntry[]>;
+  listForMonth(year: string, month: string): Promise<MilkEntry[]>;
+  writeMonth(year: string, month: string, entries: MilkEntry[]): Promise<void>;
   create(
     entry: Omit<MilkEntry, "id" | "price"> & {
       id?: number;
@@ -47,6 +53,8 @@ export interface EntryRepository {
 export const entryRepository: EntryRepository = {
   initialize: () => initializeStorage(),
   listAll: () => readAllEntries(),
+  listForMonth: (year, month) => readEntriesForMonth(year, month),
+  writeMonth: (year, month, entries) => writeEntriesForMonth(year, month, entries),
   create: (entry) => addEntry(entry),
   replace: (entry, oldDate = null) => updateEntry(entry, oldDate),
   remove: (entryId, dateString) => deleteEntry(entryId, dateString),
@@ -75,6 +83,8 @@ export interface PreferenceRepository {
   saveLanguage(language: string): Promise<void>;
   loadFontScale(): Promise<number | null>;
   saveFontScale(scale: number): Promise<void>;
+  loadReportDirectory(): Promise<string | null>;
+  saveReportDirectory(directoryUri: string): Promise<void>;
 }
 
 export const preferenceRepository: PreferenceRepository = {
@@ -82,4 +92,7 @@ export const preferenceRepository: PreferenceRepository = {
   saveLanguage: (language) => saveStoredLanguage(language),
   loadFontScale: () => getStoredFontScale(),
   saveFontScale: (scale) => saveStoredFontScale(scale),
+  loadReportDirectory: () => getStoredReportDirectory(),
+  saveReportDirectory: (directoryUri) =>
+    saveStoredReportDirectory(directoryUri),
 };

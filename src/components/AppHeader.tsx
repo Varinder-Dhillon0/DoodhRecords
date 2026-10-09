@@ -1,6 +1,5 @@
 import React from "react";
-import { Image, StyleSheet, View } from "react-native";
-import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { Image, StyleSheet, View } from "react-native";import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { COLORS, RADII } from "../constants";
 import { TYPOGRAPHY } from "../constants/typography";
@@ -48,21 +47,22 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingBottom: 12,
     backgroundColor: COLORS.background,
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderBottomColor: COLORS.surfaceHigh,
   },
   left: { flexDirection: "row", alignItems: "center", gap: 10, flex: 1 },
   logo: {
     width: 40,
     height: 40,
     borderRadius: RADII.control,
-    backgroundColor: COLORS.surfaceLow,
   },
   titles: { flex: 1, gap: 4 },
   eyebrow: {
-    fontSize: TYPOGRAPHY.micro,
+    fontSize: TYPOGRAPHY.ultraMicro,
     fontWeight: "700",
     color: COLORS.brand,
     letterSpacing: 0.6,
-    lineHeight: TYPOGRAPHY.micro,
+    lineHeight: TYPOGRAPHY.ultraMicro,
     textTransform: "uppercase",
   },
   title: {
@@ -70,7 +70,6 @@ const styles = StyleSheet.create({
     fontWeight: "800",
     color: COLORS.text,
     letterSpacing: -0.2,
-    lineHeight: TYPOGRAPHY.headingSmall + 9,
-    marginTop: 1,
+    lineHeight: TYPOGRAPHY.headingSmall + 7,
   },
 });

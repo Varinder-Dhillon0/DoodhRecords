@@ -1,39 +1,42 @@
 import { useCallback, useState } from "react";
-import { shareMonthlyReportPdf } from "../services/monthlyReportService";
+import {
+  saveMonthlyReportPdf,
+  type MonthlyReportSaveResult,
+} from "../services/monthlyReportService";
 
 type UseMonthlyReportOptions = {
-  dialogTitle: string;
-  onShared?: (shared: boolean) => void;
+  onSaved?: (location: "downloads" | "files") => void;
+  onCancelled?: () => void;
   onError?: (error: unknown) => void;
 };
 
 export const useMonthlyReport = ({
-  dialogTitle,
-  onShared,
+  onSaved,
+  onCancelled,
   onError,
 }: UseMonthlyReportOptions) => {
   const [isGenerating, setIsGenerating] = useState(false);
 
-  const shareReport = useCallback(
-    async (html: string, fileName: string): Promise<boolean> => {
+  const saveReport = useCallback(
+    async (html: string, fileName: string): Promise<MonthlyReportSaveResult> => {
       setIsGenerating(true);
       try {
-        const shared = await shareMonthlyReportPdf({
-          html,
-          fileName,
-          dialogTitle,
-        });
-        onShared?.(shared);
-        return shared;
+        const result = await saveMonthlyReportPdf({ html, fileName });
+        if (result.status === "saved") {
+          onSaved?.(result.location);
+        } else {
+          onCancelled?.();
+        }
+        return result;
       } catch (error) {
         onError?.(error);
-        return false;
+        return { status: "cancelled" };
       } finally {
         setIsGenerating(false);
       }
     },
-    [dialogTitle, onShared, onError],
+    [onSaved, onCancelled, onError],
   );
 
-  return { isGenerating, shareReport };
+  return { isGenerating, saveReport };
 };

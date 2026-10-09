@@ -57,6 +57,31 @@ export const saveStoredFontScale = async (scale: number): Promise<void> => {
   }
 };
 
+export const getStoredReportDirectory = async (): Promise<string | null> => {
+  try {
+    const directoryFile = storageDir.file("report_dir.txt");
+    if (!directoryFile.exists) return null;
+    const directoryUri = (await directoryFile.text()).trim();
+    return directoryUri || null;
+  } catch (err) {
+    console.error("Error reading report directory:", err);
+    return null;
+  }
+};
+
+export const saveStoredReportDirectory = async (
+  directoryUri: string,
+): Promise<void> => {
+  try {
+    if (!storageDir.exists) {
+      storageDir.create();
+    }
+    storageDir.file("report_dir.txt").write(directoryUri);
+  } catch (err) {
+    console.error("Error saving report directory:", err);
+  }
+};
+
 const readCsvFile = async (file: StoredFile): Promise<string[][]> => {
   try {
     if (!file.exists) {

@@ -1,6 +1,5 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import {
-  Alert,
   Animated,
   Easing,
   KeyboardAvoidingView,
@@ -34,6 +33,7 @@ import {
 import { formatCurrency } from "../utils/formatters";
 import type { Animal, RootStackParamList, Shift } from "../types";
 import Text from "../components/ScaledText";
+import ConfirmDialog from "../components/ui/ConfirmDialog";
 import DateDisplay from "../components/ui/DateDisplay";
 import LocalizedDatePicker from "../components/ui/LocalizedDatePicker";
 import IconButton from "../components/ui/IconButton";
@@ -42,6 +42,7 @@ import StepperInput from "../components/ui/StepperInput";
 import { COLORS, INTERACTION, RADII, SHADOWS, withAlpha } from "../constants";
 import { TYPOGRAPHY } from "../constants/typography";
 import useKeyboardAwareScroll from "../hooks/useKeyboardAwareScroll";
+import { useConfirmDialog } from "../hooks/useConfirmDialog";
 import { useSnackbar } from "../context/SnackbarContext";
 
 type NavigationProp = StackNavigationProp<RootStackParamList, "EntryForm">;
@@ -55,6 +56,7 @@ export default function EntryFormScreen() {
   const insets = useSafeAreaInsets();
   const { height } = useWindowDimensions();
   const { scrollViewRef, onInputFocus } = useKeyboardAwareScroll(220);
+  const { dialog: confirmDialog, showConfirm } = useConfirmDialog();
 
   const backdropAnim = useRef(new Animated.Value(0)).current;
   const sheetAnim = useRef(new Animated.Value(0)).current;
@@ -229,10 +231,13 @@ export default function EntryFormScreen() {
     const fat = Number(fatPercentage);
     const validationError = validateEntryInput(qty, fat);
     if (validationError) {
-      Alert.alert(
-        t(validationError.titleKey),
-        t(validationError.messageKey),
-      );
+      showConfirm({
+        title: t(validationError.titleKey),
+        message: t(validationError.messageKey),
+        tone: "danger",
+        icon: "alert-circle-outline",
+        confirmLabel: t("common.ok"),
+      });
       return;
     }
 
@@ -484,6 +489,8 @@ export default function EntryFormScreen() {
           />
         </ScrollView>
       </Animated.View>
+
+      <ConfirmDialog {...confirmDialog} />
     </KeyboardAvoidingView>
   );
 }

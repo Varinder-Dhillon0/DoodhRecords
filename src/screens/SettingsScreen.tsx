@@ -2,7 +2,6 @@ import React, { useEffect, useState } from "react";
 import {
   View,
   StyleSheet,
-  Alert,
 } from "react-native";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 import { useTranslation } from "react-i18next";
@@ -11,7 +10,7 @@ import { useDoodhContext } from "../context/DoodhContext";
 import { useCurrentMonthYear } from "../hooks/useEntries";
 import {
   getDefaultAnimalPricing,
-  getMonthKey,
+  resolveAnimalPricing,
 } from "../domain/pricing";
 import { validateAnimalPrice } from "../domain/validation";
 import MonthYearFilter from "../components/MonthYearFilter";
@@ -21,7 +20,9 @@ import { TYPOGRAPHY } from "../constants/typography";
 import AppHeader from "../components/AppHeader";
 import AppPicker from "../components/AppPicker";
 import Button from "../components/Button";
+import ConfirmDialog from "../components/ui/ConfirmDialog";
 import ExportCard from "../components/ui/ExportCard";
+import ImportModal from "../components/ui/ImportModal";
 import PriceField from "../components/ui/PriceField";
 import ScreenContainer from "../components/ui/ScreenContainer";
 import SettingCard from "../components/ui/SettingCard";
@@ -33,14 +34,17 @@ import {
   getNearestFontScaleOption,
 } from "../constants/typography";
 import { useDataExport } from "../hooks/useDataExport";
+import { useDataImport } from "../hooks/useDataImport";
+import { useConfirmDialog } from "../hooks/useConfirmDialog";
 import { useSnackbar } from "../context/SnackbarContext";
+import { MonthImportValidationError } from "../services/importService";
 
 export default function SettingsScreen() {
   const { t, i18n } = useTranslation();
   const { showSnackbar } = useSnackbar();
   const { fontScale, setFontScale } = useFontScale();
   const { scrollViewRef, onInputFocus } = useKeyboardAwareScroll(200);
-  const { pricingConfig, saveConfig } = useDoodhContext();
+  const { pricingConfig, saveConfig, loadData } = useDoodhContext();
   const {
     month,
     year,
@@ -53,25 +57,74 @@ export default function SettingsScreen() {
   const [buffaloPrice, setBuffaloPrice] = useState<string>(() =>
     String(getDefaultAnimalPricing().Buffalo),
   );
+  const { dialog: confirmDialog, showConfirm } = useConfirmDialog();
+  const [importVisible, setImportVisible] = useState(false);
+  const { isImporting, importData } = useDataImport({
+    onImported: (summary) => {
+      setImportVisible(false);
+      showSnackbar(
+        t("settings.import.importSuccess", {
+          imported: summary.imported,
+          skipped: summary.skipped,
+          month: summary.month,
+        }),
+      );
+      void loadData();
+    },
+    onError: (error) => {
+      if (error instanceof MonthImportValidationError) {
+        // Row-level problems stay inside the modal; only unexpected
+        // failures surface here.
+        showConfirm({
+          title: t("common.error"),
+          message: t("settings.import.importError"),
+          tone: "danger",
+          icon: "alert-circle-outline",
+          confirmLabel: t("common.ok"),
+        });
+        return;
+      }
+      console.error("Error importing app data:", error);
+      showConfirm({
+        title: t("common.error"),
+        message: t("settings.import.importError"),
+        tone: "danger",
+        icon: "alert-circle-outline",
+        confirmLabel: t("common.ok"),
+      });
+    },
+  });
   const { isExporting, exportData: handleExport } = useDataExport({
     dialogTitle: t("settings.exportDialogTitle"),
     onExported: (exported) => {
       if (!exported) {
-        Alert.alert(t("common.error"), t("settings.exportUnavailable"));
+        showConfirm({
+          title: t("common.error"),
+          message: t("settings.exportUnavailable"),
+          tone: "danger",
+          icon: "alert-circle-outline",
+          confirmLabel: t("common.ok"),
+        });
       }
     },
     onError: (error) => {
       console.error("Error exporting app data:", error);
-      Alert.alert(t("common.error"), t("settings.exportError"));
+      showConfirm({
+        title: t("common.error"),
+        message: t("settings.exportError"),
+        tone: "danger",
+        icon: "alert-circle-outline",
+        confirmLabel: t("common.ok"),
+      });
     },
   });
 
   useEffect(() => {
-    const key = getMonthKey(year, month);
-    const defaults = getDefaultAnimalPricing();
-    const selected = pricingConfig?.[key] || defaults;
-    setCowPrice(String(selected.Cow ?? defaults.Cow));
-    setBuffaloPrice(String(selected.Buffalo ?? defaults.Buffalo));
+    // A month without its own rates shows the inherited previous-month
+    // rates; saving writes them as this month's own configuration.
+    const selected = resolveAnimalPricing(pricingConfig, year, month);
+    setCowPrice(String(selected.Cow));
+    setBuffaloPrice(String(selected.Buffalo));
   }, [month, year, pricingConfig]);
 
   const handleSave = async () => {
@@ -79,10 +132,13 @@ export default function SettingsScreen() {
     const bufVal = Number(buffaloPrice);
 
     if (!validateAnimalPrice(cowVal) || !validateAnimalPrice(bufVal)) {
-      Alert.alert(
-        t("settings.invalidInputTitle"),
-        t("settings.invalidInputMessage"),
-      );
+      showConfirm({
+        title: t("settings.invalidInputTitle"),
+        message: t("settings.invalidInputMessage"),
+        tone: "danger",
+        icon: "alert-circle-outline",
+        confirmLabel: t("common.ok"),
+      });
       return;
     }
 
@@ -243,6 +299,25 @@ export default function SettingsScreen() {
             busy={isExporting}
             onPress={handleExport}
           />
+          <Text style={styles.helpText}>{t("settings.importDataDescription")}</Text>
+          <Button
+            variant="outline"
+            size="md"
+            fullWidth
+            style={styles.importButton}
+            disabled={isImporting}
+            accessibilityLabel={t("settings.importData")}
+            onPress={() => setImportVisible(true)}
+            icon={
+              <MaterialCommunityIcons
+                name="file-upload-outline"
+                size={18}
+                color={COLORS.text}
+              />
+            }
+          >
+            <Text style={styles.importButtonLabel}>{t("settings.importData")}</Text>
+          </Button>
         </SettingCard>
 
         <View style={styles.footer}>
@@ -254,6 +329,19 @@ export default function SettingsScreen() {
           </View>
           <Text style={styles.footerBadge}>{t("settings.offlineReady")}</Text>
         </View>
+
+        <ConfirmDialog {...confirmDialog} />
+
+        <ImportModal
+          visible={importVisible}
+          busy={isImporting}
+          onClose={() => {
+            if (!isImporting) setImportVisible(false);
+          }}
+          onImport={(rawText, monthKey) => {
+            void importData(rawText, monthKey);
+          }}
+        />
     </ScreenContainer>
   );
 }
@@ -333,6 +421,15 @@ const styles = StyleSheet.create({
   },
   sliderScaleText: { fontSize: TYPOGRAPHY.caption, color: COLORS.muted },
   helpText: { fontSize: TYPOGRAPHY.caption, color: COLORS.muted },
+  importButton: {
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  importButtonLabel: {
+    color: COLORS.text,
+    fontWeight: "700",
+    fontSize: TYPOGRAPHY.bodySmall,
+  },
   saveButton: {
     alignItems: "center",
     justifyContent: "center",

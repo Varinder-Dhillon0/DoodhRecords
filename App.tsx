@@ -29,6 +29,11 @@ import SettingsScreen from "./src/screens/SettingsScreen";
 import EntryFormScreen from "./src/screens/EntryFormScreen";
 import WelcomeScreen from "./src/screens/WelcomeScreen";
 import { loadFontScalePreference } from "./src/services/preferenceService";
+import {
+  checkForBinaryUpdate,
+  type UpdateManifestAndroid,
+} from "./src/services/versionCheckService";
+import UpdateGateModal from "./src/components/UpdateGateModal";
 import LoadingIndicator from "./src/components/ui/LoadingIndicator";
 import { SnackbarProvider } from "./src/context/SnackbarContext";
 
@@ -100,8 +105,23 @@ function Tabs() {
   );
 }
 
-function MainNavigator() {
-  const { isLoading } = useDoodhContext();
+function UpdateGate() {
+  const [manifest, setManifest] = useState<UpdateManifestAndroid | null>(null);
+
+  useEffect(() => {
+    if (__DEV__) return;
+    checkForBinaryUpdate().then((result) => {
+      if (result.status === "update-required") {
+        setManifest(result.manifest);
+      }
+    });
+  }, []);
+
+  if (!manifest) return null;
+  return <UpdateGateModal manifest={manifest} />;
+}
+
+function MainNavigator() {  const { isLoading } = useDoodhContext();
 
   if (isLoading) {
     return <LoadingIndicator style={styles.loadingContainer} />;
@@ -155,6 +175,7 @@ export default function App() {
             <NavigationContainer>
               <MainNavigator />
             </NavigationContainer>
+            <UpdateGate />
           </SnackbarProvider>
         </DoodhProvider>
       </FontScaleProvider>

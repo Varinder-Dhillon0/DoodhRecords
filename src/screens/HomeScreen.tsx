@@ -1,8 +1,5 @@
 import React, { useMemo, useState } from "react";
-import {
-  StyleSheet,
-  View,
-} from "react-native";
+import { Image, StyleSheet, View } from "react-native";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 import { useNavigation } from "@react-navigation/native";
 import { StackNavigationProp } from "@react-navigation/stack";
@@ -11,9 +8,7 @@ import { useTranslation } from "react-i18next";
 import { COLORS, INTERACTION, RADII, SHADOWS, withAlpha } from "../constants";
 import { TYPOGRAPHY } from "../constants/typography";
 import { useDoodhContext } from "../context/DoodhContext";
-import {
-  getLocalDateString,
-} from "../utils/dateUtils";
+import { getLocalDateString } from "../utils/dateUtils";
 import { calculateSummary } from "../utils/calculations";
 import { calculateDayInsight } from "../domain/insights";
 import { formatCurrency, formatNumber } from "../utils/formatters";
@@ -77,165 +72,171 @@ export default function HomeScreen() {
 
   return (
     <ScreenContainer
-      header={<AppHeader eyebrow={t("home.appTitle")} title={t("home.screenTitle")} />}
+      header={
+        <AppHeader eyebrow={t("home.appTitle")} title={t("home.screenTitle")} />
+      }
       contentStyle={styles.scrollContent}
     >
       <View style={styles.banner}>
-          <View style={styles.bannerText}>
-            <Text style={styles.bannerEyebrow}>{t("home.brandEyebrow")}</Text>
-            <Text style={styles.bannerTitle}>{t("home.appTitle")}</Text>
-            <Text style={styles.bannerTagline}>{t("home.brandTagline")}</Text>
-          </View>
-          <View style={styles.bannerIcon}>
-            <MaterialCommunityIcons name="cow" size={40} color={COLORS.white} />
-          </View>
+        <View style={styles.bannerText}>
+          <Text style={styles.bannerEyebrow}>{t("home.brandEyebrow")}</Text>
+          <Text style={styles.bannerTitle}>{t("home.appTitle")}</Text>
+          <Text style={styles.bannerTagline}>{t("home.brandTagline")}</Text>
         </View>
-
-        <Button
-          variant="primary"
-          size="md"
-          fullWidth
-          accessibilityLabel={t("home.addEntry")}
-          onPress={() => navigation.navigate("EntryForm")}
-          style={styles.summaryAdd}
-          icon={
-            <MaterialCommunityIcons name="plus" size={14} color={COLORS.white} />
-          }
-        >
-          <Text style={styles.summaryAddText} numberOfLines={1}>
-            {t("home.addEntry")}
-          </Text>
-        </Button>
-
-        <View style={styles.summaryCard}>
-          <View style={styles.summaryHeader}>
-            <View style={styles.summaryHeading}>
-              <Text style={styles.summaryTitle}>
-                {isToday ? t("home.summaryTitle") : t("home.daySummaryTitle")}
-              </Text>
-              <DateDisplay date={selectedDate} style={styles.summaryDate} />
-            </View>
-            <IconButton
-              icon="calendar-today"
-              accessibilityLabel={t("home.selectDate")}
-              onPress={() => setShowDatePicker(true)}
-              size={40}
-              iconSize={18}
-              backgroundColor={COLORS.surfaceLow}
-              iconColor={COLORS.brand}
-              borderRadius={RADII.control}
-            />
-          </View>
-
-          <LocalizedDatePicker
-            visible={showDatePicker}
-            value={selectedDate}
-            maximumDate={getLocalDateString()}
-            onSelect={handleDateChange}
-            onClose={() => setShowDatePicker(false)}
+        <View style={styles.bannerArt}>
+          <View style={styles.bannerGlow} />
+          <Image
+            source={require("../../assets/CuteCow.png")}
+            style={styles.bannerCow}
+            resizeMode="contain"
+            accessibilityIgnoresInvertColors
           />
+        </View>
+      </View>
 
-          <View style={styles.metricsRow}>
-            <MetricCard
-              icon="cup-water"
-              iconBackground={COLORS.blueFixed}
-              iconColor={COLORS.blue}
-              label={t("home.totalMilk")}
-              value={formatNumber(summary.totalMilk, 1)}
-              unit={t("common.kg")}
-              containerStyle={styles.metricBoxBlue}
-              iconStyle={styles.metricIconBlue}
-              labelStyle={styles.metricLabel}
-              valueStyle={styles.metricValue}
-              unitStyle={styles.metricUnit}
-            />
-            <MetricCard
-              icon="water"
-              iconBackground={COLORS.amberFixed}
-              iconColor={COLORS.amber}
-              label={t("home.averageFat")}
-              value={summary.avgFat}
-              unit="%"
-              containerStyle={styles.metricBoxAmber}
-              iconStyle={styles.metricIconAmber}
-              labelStyle={styles.metricLabel}
-              valueStyle={styles.metricValue}
-              unitStyle={styles.metricUnit}
-            />
-          </View>
+      <Button
+        variant="primary"
+        size="md"
+        fullWidth
+        accessibilityLabel={t("home.addEntry")}
+        onPress={() => navigation.navigate("EntryForm")}
+        style={styles.summaryAdd}
+        icon={
+          <MaterialCommunityIcons name="plus" size={14} color={COLORS.white} />
+        }
+      >
+        <Text style={styles.summaryAddText} numberOfLines={1}>
+          {t("home.addEntry")}
+        </Text>
+      </Button>
 
-          <View style={styles.earningsBox}>
-            <View style={styles.metricIconGreen}>
-              <Text style={styles.rupeeMark}>₹</Text>
-            </View>
-            <View style={styles.earningsInfo}>
-              <Text style={styles.earningsLabel}>
-                {t("home.todaysEarnings")}
-              </Text>
-              <Text style={styles.earningsValue}>
-                {formatCurrency(summary.totalEarnings)}
-              </Text>
-            </View>
-            {insight?.earningsDelta != null ? (
-              <View style={styles.deltaPill}>
-                <MaterialCommunityIcons
-                  name={
-                    insight.earningsDelta >= 0 ? "trending-up" : "trending-down"
-                  }
-                  size={14}
-                  color={COLORS.brand}
-                />
-                <Text style={styles.deltaText}>
-                  {insight.earningsDelta >= 0 ? "+" : ""}
-                  {insight.earningsDelta}%
-                </Text>
-              </View>
-            ) : null}
+      <View style={styles.summaryCard}>
+        <View style={styles.summaryHeader}>
+          <View style={styles.summaryHeading}>
+            <Text style={styles.summaryTitle}>
+              {isToday ? t("home.summaryTitle") : t("home.daySummaryTitle")}
+            </Text>
+            <DateDisplay date={selectedDate} style={styles.summaryDate} />
           </View>
+          <IconButton
+            icon="calendar-today"
+            accessibilityLabel={t("home.selectDate")}
+            onPress={() => setShowDatePicker(true)}
+            size={40}
+            iconSize={18}
+            backgroundColor={COLORS.surfaceLow}
+            iconColor={COLORS.brand}
+            borderRadius={RADII.control}
+          />
         </View>
 
-        <SectionHeader
-          title={t("home.recentEntries")}
-          actionLabel={t("home.viewAll")}
-          onActionPress={() =>
-            navigation.navigate("MainTabs", { screen: "Entries" })
-          }
+        <LocalizedDatePicker
+          visible={showDatePicker}
+          value={selectedDate}
+          maximumDate={getLocalDateString()}
+          onSelect={handleDateChange}
+          onClose={() => setShowDatePicker(false)}
         />
 
-        <EntryList
-          entries={recentEntries}
-          empty={<EmptyState icon="cup-water" message={t("home.empty")} />}
-          onSelect={(selected) =>
-            navigation.navigate("EntryForm", { entry: selected })
-          }
-        />
+        <View style={styles.metricsRow}>
+          <MetricCard
+            icon="cup-water"
+            iconBackground={COLORS.blueFixed}
+            iconColor={COLORS.blue}
+            label={t("home.totalMilk")}
+            value={formatNumber(summary.totalMilk, 1)}
+            unit={t("common.kg")}
+            containerStyle={styles.metricBoxBlue}
+            iconStyle={styles.metricIconBlue}
+            labelStyle={styles.metricLabel}
+            valueStyle={styles.metricValue}
+            unitStyle={styles.metricUnit}
+          />
+          <MetricCard
+            icon="water"
+            iconBackground={COLORS.amberFixed}
+            iconColor={COLORS.amber}
+            label={t("home.averageFat")}
+            value={summary.avgFat}
+            unit="%"
+            containerStyle={styles.metricBoxAmber}
+            iconStyle={styles.metricIconAmber}
+            labelStyle={styles.metricLabel}
+            valueStyle={styles.metricValue}
+            unitStyle={styles.metricUnit}
+          />
+        </View>
 
-        {insight?.fatDelta != null && insight.fatDelta !== 0 ? (
-          <View style={styles.insightBanner}>
-            <View style={styles.insightIcon}>
-              <MaterialCommunityIcons
-                name="flask-outline"
-                size={20}
-                color={COLORS.white}
-              />
-            </View>
-            <View style={styles.insightText}>
-              <Text style={styles.insightTitle}>
-                {t("home.qualityInsightTitle")}
-              </Text>
-              <Text style={styles.insightBody}>
-                {t("home.qualityInsightBody", {
-                  value: Math.abs(insight.fatDelta).toFixed(1),
-                  direction: t(
-                    insight.fatDelta > 0
-                      ? "home.qualityAbove"
-                      : "home.qualityBelow",
-                  ),
-                })}
-              </Text>
-            </View>
+        <View style={styles.earningsBox}>
+          <View style={styles.metricIconGreen}>
+            <Text style={styles.rupeeMark}>₹</Text>
           </View>
-        ) : null}
+          <View style={styles.earningsInfo}>
+            <Text style={styles.earningsLabel}>{t("home.todaysEarnings")}</Text>
+            <Text style={styles.earningsValue}>
+              {formatCurrency(summary.totalEarnings)}
+            </Text>
+          </View>
+          {insight?.earningsDelta != null ? (
+            <View style={styles.deltaPill}>
+              <MaterialCommunityIcons
+                name={
+                  insight.earningsDelta >= 0 ? "trending-up" : "trending-down"
+                }
+                size={14}
+                color={COLORS.brand}
+              />
+              <Text style={styles.deltaText}>
+                {insight.earningsDelta >= 0 ? "+" : ""}
+                {insight.earningsDelta}%
+              </Text>
+            </View>
+          ) : null}
+        </View>
+      </View>
+
+      <SectionHeader
+        title={t("home.recentEntries")}
+        actionLabel={t("home.viewAll")}
+        onActionPress={() =>
+          navigation.navigate("MainTabs", { screen: "Entries" })
+        }
+      />
+
+      <EntryList
+        entries={recentEntries}
+        empty={<EmptyState icon="cup-water" message={t("home.empty")} />}
+        onSelect={(selected) =>
+          navigation.navigate("EntryForm", { entry: selected })
+        }
+      />
+
+      {insight?.fatDelta != null && insight.fatDelta !== 0 ? (
+        <View style={styles.insightBanner}>
+          <View style={styles.insightIcon}>
+            <MaterialCommunityIcons
+              name="flask-outline"
+              size={20}
+              color={COLORS.white}
+            />
+          </View>
+          <View style={styles.insightText}>
+            <Text style={styles.insightTitle}>
+              {t("home.qualityInsightTitle")}
+            </Text>
+            <Text style={styles.insightBody}>
+              {t("home.qualityInsightBody", {
+                value: Math.abs(insight.fatDelta).toFixed(1),
+                direction: t(
+                  insight.fatDelta > 0
+                    ? "home.qualityAbove"
+                    : "home.qualityBelow",
+                ),
+              })}
+            </Text>
+          </View>
+        </View>
+      ) : null}
     </ScreenContainer>
   );
 }
@@ -256,7 +257,7 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
     ...SHADOWS.control,
   },
-  bannerText: { flex: 1 },
+  bannerText: { flex: 1, paddingRight: 4 },
   bannerEyebrow: {
     fontSize: TYPOGRAPHY.micro,
     fontWeight: "700",
@@ -269,29 +270,27 @@ const styles = StyleSheet.create({
     fontWeight: "800",
     letterSpacing: -0.4,
     color: COLORS.white,
-    marginTop: 2,
   },
   bannerTagline: {
     fontSize: TYPOGRAPHY.caption,
     color: withAlpha(COLORS.inversePrimary, 0.8),
     marginTop: 2,
   },
-  bannerIcon: {
-    width: 56,
-    height: 56,
-    borderRadius: RADII.card,
-    backgroundColor: withAlpha(COLORS.greenAccent, 0.6),
+  bannerArt: {
+    width: 112,
+    height: 112,
     alignItems: "center",
     justifyContent: "center",
+    marginRight: -15,
+    marginBottom: -20,
   },
+  bannerCow: { width: 170, height: 170 },
   bannerGlow: {
     position: "absolute",
-    right: -32,
-    bottom: -40,
-    width: 144,
-    height: 144,
-    borderRadius: 72,
-    backgroundColor: withAlpha(COLORS.brandLight, 0.1),
+    width: 128,
+    height: 128,
+    borderRadius: 64,
+    backgroundColor: withAlpha(COLORS.white, 0.14),
   },
   summaryCard: {
     backgroundColor: COLORS.surface,

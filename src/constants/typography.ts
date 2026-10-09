@@ -1,4 +1,5 @@
 export const BASE_FONT_SIZES = {
+  labelSm: 9,
   labelCaps: 11,
   bodySm: 12,
   titleMd: 14,
@@ -15,6 +16,7 @@ export const BASE_FONT_SIZES = {
 } as const;
 
 export const TYPOGRAPHY = {
+  ultraMicro: BASE_FONT_SIZES.labelSm,
   micro: BASE_FONT_SIZES.labelCaps,
   caption: BASE_FONT_SIZES.bodySm,
   label: BASE_FONT_SIZES.titleMd,
@@ -92,8 +94,7 @@ export const createTypography = (multiplier: number): RuntimeTypography =>
 
 export const getNearestFontScaleOption = (value: number): FontScaleOption =>
   FONT_SCALE_OPTIONS.reduce((nearest, option) =>
-    Math.abs(option.multiplier - value) <
-    Math.abs(nearest.multiplier - value)
+    Math.abs(option.multiplier - value) < Math.abs(nearest.multiplier - value)
       ? option
       : nearest,
   );

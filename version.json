@@ -1,0 +1,12 @@
+{
+  "android": {
+    "latestVersionCode": 1,
+    "minVersionCode": 1,
+    "versionName": "1.0.0",
+    "apkUrl": "https://github.com/Varinder-Dhillon0/DoodhRecords/releases/latest/download/doodhrecords.apk",
+    "notes": {
+      "en": "",
+      "pa": ""
+    }
+  }
+}

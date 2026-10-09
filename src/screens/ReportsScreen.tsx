@@ -1,5 +1,5 @@
 import React, { useMemo, useState } from "react";
-import { View, StyleSheet, Alert, useWindowDimensions } from "react-native";
+import { View, StyleSheet, useWindowDimensions } from "react-native";
 import { LineChart } from "react-native-chart-kit";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 import { useTranslation } from "react-i18next";
@@ -14,6 +14,7 @@ import { calculateSummary } from "../utils/calculations";
 import { buildMonthlyChartData } from "../domain/reports";
 import { formatCurrency, formatNumber } from "../utils/formatters";
 import MonthYearFilter from "../components/MonthYearFilter";
+import ConfirmDialog from "../components/ui/ConfirmDialog";
 import EmptyState from "../components/ui/EmptyState";
 import ExportCard from "../components/ui/ExportCard";
 import ScreenContainer from "../components/ui/ScreenContainer";
@@ -25,6 +26,7 @@ import { TYPOGRAPHY } from "../constants/typography";
 import { FONT_FAMILY } from "../constants/fonts";
 import { useFontScale } from "../context/FontScaleContext";
 import { useDataExport } from "../hooks/useDataExport";
+import { useConfirmDialog } from "../hooks/useConfirmDialog";
 import { useSnackbar } from "../context/SnackbarContext";
 
 export default function ReportsScreen() {
@@ -38,18 +40,31 @@ export default function ReportsScreen() {
     setMonth: setSelectedMonth,
     setYear: setSelectedYear,
   } = useCurrentMonthYear();
+  const { dialog: confirmDialog, showConfirm } = useConfirmDialog();
   const { isExporting, exportData: handleExport } = useDataExport({
     dialogTitle: t("settings.exportDialogTitle"),
     onExported: (exported) => {
       if (!exported) {
-        Alert.alert(t("common.error"), t("settings.exportUnavailable"));
+        showConfirm({
+          title: t("common.error"),
+          message: t("settings.exportUnavailable"),
+          tone: "danger",
+          icon: "alert-circle-outline",
+          confirmLabel: t("common.ok"),
+        });
         return;
       }
       showSnackbar(t("settings.exportSuccess"));
     },
     onError: (error) => {
       console.error("Error exporting app data:", error);
-      Alert.alert(t("common.error"), t("settings.exportError"));
+      showConfirm({
+        title: t("common.error"),
+        message: t("settings.exportError"),
+        tone: "danger",
+        icon: "alert-circle-outline",
+        confirmLabel: t("common.ok"),
+      });
     },
   });
 
@@ -245,6 +260,8 @@ export default function ReportsScreen() {
           busy={isExporting}
           onPress={handleExport}
         />
+
+        <ConfirmDialog {...confirmDialog} />
     </ScreenContainer>
   );
 }

@@ -22,6 +22,7 @@ import {
 } from "../src/data/csv.ts";
 import {
   DEFAULT_ANIMAL_PRICING,
+  findInheritedMonthKey,
   getDefaultAnimalPricing,
   getMonthKey,
   mergePricingConfig,
@@ -54,7 +55,14 @@ import {
   getDaysInMonth,
   getMonthDayKey,
 } from "../src/domain/reports.ts";
-import { calculateDayInsight, shiftDateString } from "../src/domain/insights.ts";
+import {
+  calculateDayInsight,
+  shiftDateString,
+} from "../src/domain/insights.ts";
+import {
+  buildMonthImportSample,
+  parseMonthImportPayload,
+} from "../src/domain/monthImport.ts";
 import {
   formatFieldValue,
   getFieldStep,
@@ -108,6 +116,100 @@ check("rates for date", resolveRatesForDate("2026-09-27", {}), {
   cowPrice: 8,
   buffaloPrice: 9,
 });
+check(
+  "month inherits previous month rates",
+  resolveAnimalPricing({ "2026-08": { Cow: 7.5, Buffalo: 8.5 } }, "2026", "9"),
+  { Cow: 7.5, Buffalo: 8.5 },
+);
+check(
+  "own month wins over previous month",
+  resolveAnimalPricing(
+    {
+      "2026-08": { Cow: 7.5, Buffalo: 8.5 },
+      "2026-09": { Cow: 8, Buffalo: 9 },
+    },
+    "2026",
+    "9",
+  ),
+  { Cow: 8, Buffalo: 9 },
+);
+check(
+  "inheritance crosses year boundary",
+  resolveAnimalPricing({ "2025-12": { Cow: 7, Buffalo: 8 } }, "2026", "1"),
+  { Cow: 7, Buffalo: 8 },
+);
+check(
+  "inherited month key lookup",
+  findInheritedMonthKey({ "2026-08": { Cow: 7.5, Buffalo: 8.5 } }, "2026", "10"),
+  "2026-08",
+);
+check("no inherited key when empty", findInheritedMonthKey({}, "2026", "9"), null);
+
+// Month import payloads validate one month of pasted/picked JSON.
+const sampleImport = buildMonthImportSample("2026-10");
+const parsedSample = parseMonthImportPayload(sampleImport, "2026-10");
+check("sample import parses", parsedSample.ok, true);
+check(
+  "sample import shape",
+  parsedSample.ok
+    ? {
+        month: parsedSample.value.month,
+        rates: parsedSample.value.rates,
+        entries: parsedSample.value.entries.length,
+      }
+    : null,
+  { month: "2026-10", rates: { Cow: 8, Buffalo: 9 }, entries: 2 },
+);
+check("import rejects malformed json", parseMonthImportPayload("{oops", "2026-10"), {
+  ok: false,
+  issues: [{ key: "settings.importIssues.invalidJson" }],
+});
+check(
+  "import rejects wrong format",
+  parseMonthImportPayload(
+    JSON.stringify({ format: "nope", formatVersion: 1, month: "2026-10", entries: [] }),
+    "2026-10",
+  ).ok,
+  false,
+);
+check(
+  "import rejects month mismatch",
+  parseMonthImportPayload(sampleImport, "2026-11"),
+  {
+    ok: false,
+    issues: [
+      {
+        key: "settings.importIssues.monthMismatch",
+        params: { expected: "2026-11", found: "2026-10" },
+      },
+    ],
+  },
+);
+const badRowImport = JSON.stringify({
+  format: "doodh-records-month-import",
+  formatVersion: 1,
+  month: "2026-10",
+  entries: [
+    { date: "2026-10-01", animal: "Goat", shift: "Morning", milk_quantity: 5, fat_percentage: 4 },
+    { date: "2026-11-02", animal: "Cow", shift: "Evening", milk_quantity: 5, fat_percentage: 4 },
+    { date: "2026-10-03", animal: "Cow", shift: "Evening", milk_quantity: 0, fat_percentage: 4 },
+  ],
+});
+check(
+  "import collects row issues",
+  parseMonthImportPayload(badRowImport, "2026-10"),
+  {
+    ok: false,
+    issues: [
+      { key: "settings.importIssues.badAnimal", params: { row: 1, value: "Goat" } },
+      {
+        key: "settings.importIssues.dateOutsideMonth",
+        params: { row: 2, date: "2026-11-02", month: "2026-10" },
+      },
+      { key: "settings.importIssues.badMilk", params: { row: 3, max: 500 } },
+    ],
+  },
+);
 check("saved pricing wins", mergePricingConfig({ "2026-09": { Cow: 10, Buffalo: 11 } }), {
   "2026-09": { Cow: 10, Buffalo: 11 },
   "2026-08": { Cow: 7.5, Buffalo: 8.5 },

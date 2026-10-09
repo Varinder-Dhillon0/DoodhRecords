@@ -11,7 +11,10 @@
     ],
     "android": {
       "package": "com.doodhrecords.app",
-      "permissions": [],
+      "versionCode": 1,
+      "permissions": [
+        "REQUEST_INSTALL_PACKAGES"
+      ],
       "adaptiveIcon": {
         "foregroundImage": "./assets/app-icon.png",
         "backgroundColor": "#FFFFFF"
@@ -22,7 +25,11 @@
       "expo-sharing"
     ],
     "ios": {
-      "bundleIdentifier": "com.doodhrecords.app"
+      "bundleIdentifier": "com.doodhrecords.app",
+      "infoPlist": {
+        "UIFileSharingEnabled": true,
+        "LSSupportsOpeningDocumentsInPlace": true
+      }
     },
     "extra": {
       "eas": {
