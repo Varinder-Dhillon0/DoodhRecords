@@ -106,19 +106,30 @@ function Tabs() {
 }
 
 function UpdateGate() {
-  const [manifest, setManifest] = useState<UpdateManifestAndroid | null>(null);
+  const [gate, setGate] = useState<{
+    manifest: UpdateManifestAndroid;
+    installedCode: number;
+  } | null>(null);
 
   useEffect(() => {
     if (__DEV__) return;
     checkForBinaryUpdate().then((result) => {
       if (result.status === "update-required") {
-        setManifest(result.manifest);
+        setGate({
+          manifest: result.manifest,
+          installedCode: result.installedCode,
+        });
       }
     });
   }, []);
 
-  if (!manifest) return null;
-  return <UpdateGateModal manifest={manifest} />;
+  if (!gate) return null;
+  return (
+    <UpdateGateModal
+      manifest={gate.manifest}
+      installedCode={gate.installedCode}
+    />
+  );
 }
 
 function MainNavigator() {  const { isLoading } = useDoodhContext();
