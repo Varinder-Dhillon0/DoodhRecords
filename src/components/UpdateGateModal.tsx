@@ -10,7 +10,7 @@ import { useTranslation } from "react-i18next";
 import { COLORS, RADII, SHADOWS } from "../constants";
 import { TYPOGRAPHY } from "../constants/typography";
 import type { UpdateManifestAndroid } from "../services/versionCheckService";
-import { downloadApk, launchApkInstaller } from "../services/appUpdateService";
+import { downloadApk, launchApkInstaller, openUnknownSourcesSettings } from "../services/appUpdateService";
 import Button from "./Button";
 
 type UpdateGateModalProps = {
@@ -20,7 +20,7 @@ type UpdateGateModalProps = {
 type GatePhase =
   | { name: "ready" }
   | { name: "downloading"; fraction: number | null }
-  | { name: "downloaded"; fileUri: string }
+  | { name: "downloaded"; fileUri: string; installerFailed: boolean }
   | { name: "failed" };
 
 /**
@@ -44,8 +44,13 @@ export default function UpdateGateModal({ manifest }: UpdateGateModalProps) {
       const fileUri = await downloadApk(manifest.apkUrl, (progress) => {
         setPhase({ name: "downloading", fraction: progress.fraction });
       });
-      setPhase({ name: "downloaded", fileUri });
-      await launchApkInstaller(fileUri);
+      setPhase({ name: "downloaded", fileUri, installerFailed: false });
+      try {
+        await launchApkInstaller(fileUri);
+      } catch (error) {
+        console.error("Error launching installer:", error);
+        setPhase({ name: "downloaded", fileUri, installerFailed: true });
+      }
     } catch (error) {
       console.error("Error downloading update:", error);
       setPhase({ name: "failed" });
@@ -56,8 +61,18 @@ export default function UpdateGateModal({ manifest }: UpdateGateModalProps) {
     if (phase.name !== "downloaded") return;
     try {
       await launchApkInstaller(phase.fileUri);
+      setPhase({ name: "downloaded", fileUri: phase.fileUri, installerFailed: false });
     } catch (error) {
       console.error("Error launching installer:", error);
+      setPhase({ name: "downloaded", fileUri: phase.fileUri, installerFailed: true });
+    }
+  };
+
+  const openSettings = async () => {
+    try {
+      await openUnknownSourcesSettings();
+    } catch (error) {
+      console.error("Error opening install settings:", error);
     }
   };
 
@@ -109,9 +124,27 @@ export default function UpdateGateModal({ manifest }: UpdateGateModalProps) {
               <RNText style={styles.installHelp}>
                 {t("update.installHelp")}
               </RNText>
+              {phase.installerFailed ? (
+                <RNText style={styles.error}>
+                  {t("update.installerFailed")}
+                </RNText>
+              ) : null}
               <Button variant="primary" size="lg" fullWidth onPress={retryInstall}>
                 <RNText style={styles.primaryLabel}>{t("update.install")}</RNText>
               </Button>
+              {phase.installerFailed ? (
+                <Button
+                  variant="outline"
+                  size="lg"
+                  fullWidth
+                  style={styles.settingsButton}
+                  onPress={openSettings}
+                >
+                  <RNText style={styles.settingsLabel}>
+                    {t("update.openSettings")}
+                  </RNText>
+                </Button>
+              ) : null}
             </>
           ) : (
             <Button
@@ -204,6 +237,12 @@ const styles = StyleSheet.create({
   },
   primaryLabel: {
     color: COLORS.white,
+    fontSize: TYPOGRAPHY.bodyLarge,
+    fontWeight: "700",
+  },
+  settingsButton: { marginTop: 12 },
+  settingsLabel: {
+    color: COLORS.text,
     fontSize: TYPOGRAPHY.bodyLarge,
     fontWeight: "700",
   },

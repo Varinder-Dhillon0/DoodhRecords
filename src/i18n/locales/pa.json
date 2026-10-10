@@ -121,6 +121,8 @@
     "download": "ਅੱਪਡੇਟ ਡਾਊਨਲੋਡ ਕਰੋ",
     "downloading": "ਡਾਊਨਲੋਡ ਹੋ ਰਿਹਾ ਹੈ {{percent}}%",
     "install": "ਹੁਣੇ Install ਕਰੋ",
+    "openSettings": "ਸੈਟਿੰਗ ਖੋਲ੍ਹੋ",
+    "installerFailed": "Installer ਨਹੀਂ ਖੁੱਲ੍ਹਿਆ। ਇੱਕ ਵਾਰ ਇਜਾਜ਼ਤ ਦਿਓ, ਫਿਰ Install ਦਬਾਓ।",
     "installHelp": "ਡਾਊਨਲੋਡ ਤੋਂ ਬਾਅਦ Install ਦਬਾਓ। ਜੇ ਪੁੱਛਿਆ ਜਾਵੇ ਤਾਂ Doodh Records ਲਈ “Install unknown apps” ਦੀ ਇਜਾਜ਼ਤ ਦਿਓ — ਸਿਰਫ਼ ਪਹਿਲੀ ਵਾਰ।",
     "retry": "ਮੁੜ ਕੋਸ਼ਿਸ਼ ਕਰੋ",
     "failed": "ਡਾਊਨਲੋਡ ਅਸਫਲ ਰਿਹਾ। ਆਪਣਾ ਇੰਟਰਨੈੱਟ ਚੈੱਕ ਕਰਕੇ ਮੁੜ ਕੋਸ਼ਿਸ਼ ਕਰੋ।"

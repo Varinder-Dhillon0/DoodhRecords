@@ -88,3 +88,28 @@ export const launchApkInstaller = async (fileUri: string): Promise<void> => {
     type: "application/vnd.android.package-archive",
   });
 };
+
+/**
+ * Opens the system "Install unknown apps" screen for this app, so the
+ * user can grant the one-time install permission and then tap Install.
+ */
+export const openUnknownSourcesSettings = async (): Promise<void> => {
+  if (Platform.OS !== "android") return;
+  // eslint-disable-next-line @typescript-eslint/no-var-requires
+  const IntentLauncher =
+    require("expo-intent-launcher") as IntentLauncherModule;
+  let packageName = "com.doodhrecords.app";
+  try {
+    // eslint-disable-next-line @typescript-eslint/no-var-requires
+    const Application = require("expo-application") as {
+      applicationId?: string | null;
+    };
+    if (Application.applicationId) packageName = Application.applicationId;
+  } catch {
+    // Fall through with the manifest package name.
+  }
+  await IntentLauncher.startActivityAsync(
+    "android.settings.MANAGE_UNKNOWN_APP_SOURCES",
+    { data: `package:${packageName}` },
+  );
+};

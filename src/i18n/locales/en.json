@@ -121,6 +121,8 @@
     "download": "Download update",
     "downloading": "Downloading {{percent}}%",
     "install": "Install now",
+    "openSettings": "Open settings",
+    "installerFailed": "Couldn't open the installer. Allow installs once, then tap Install again.",
     "installHelp": "After downloading, tap Install. If asked, allow “Install unknown apps” for Doodh Records — only needed once.",
     "retry": "Try again",
     "failed": "Download failed. Check your connection and try again."
