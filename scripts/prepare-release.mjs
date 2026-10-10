@@ -30,11 +30,27 @@ packageJson.version = versionName;
 writeJson("package.json", packageJson);
 
 const appJson = readJson("app.json");
-const currentCode = Number(appJson.expo?.android?.versionCode ?? 1);
-const nextCode = currentCode + 1;
+
+const GRADLE_PATH = "android/app/build.gradle";
+const gradle = fs.readFileSync(GRADLE_PATH, "utf8");
+const gradleCode = Number(gradle.match(/versionCode\s+(\d+)/)?.[1] ?? 0);
+const nextCode = Math.max(
+  Number(appJson.expo?.android?.versionCode ?? 0),
+  gradleCode,
+) + 1;
+
 appJson.expo.version = versionName;
 appJson.expo.android = { ...(appJson.expo.android ?? {}), versionCode: nextCode };
 writeJson("app.json", appJson);
+
+const updatedGradle = gradle
+  .replace(/versionCode\s+\d+/, `versionCode ${nextCode}`)
+  .replace(/versionName\s+"[^"]*"/, `versionName "${versionName}"`);
+if (updatedGradle === gradle) {
+  console.error(`Unable to bump ${GRADLE_PATH}: versionCode/versionName not found`);
+  process.exit(1);
+}
+fs.writeFileSync(GRADLE_PATH, updatedGradle);
 
 const manifest = readJson("version.json");
 manifest.android = {

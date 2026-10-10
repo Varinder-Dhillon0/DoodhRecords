@@ -30,12 +30,20 @@ jobs:
 
       - name: Preflight self-update requirements
         run: >
-          node -e "const a=require('./app.json');
+          node -e "const fs=require('fs');
+          const a=JSON.parse(fs.readFileSync('./app.json','utf8'));
+          const manifest=JSON.parse(fs.readFileSync('./version.json','utf8')).android;
+          const man=fs.readFileSync('android/app/src/main/AndroidManifest.xml','utf8');
           const perms=a.expo?.android?.permissions ?? [];
-          const code=a.expo?.android?.versionCode;
-          if(!perms.includes('REQUEST_INSTALL_PACKAGES')){console.error('PREFLIGHT FAIL: android.permissions is missing REQUEST_INSTALL_PACKAGES — in-app installs would be impossible');process.exit(1);}
-          if(!Number.isInteger(code)||code<1){console.error('PREFLIGHT FAIL: android.versionCode must be a positive integer');process.exit(1);}
-          console.log('preflight ok: versionCode '+code+', install permission declared');"
+          const appCode=a.expo?.android?.versionCode;
+          const g=fs.readFileSync('android/app/build.gradle','utf8').match(/versionCode\s+(\d+)/);
+          const gradleCode=g?Number(g[1]):NaN;
+          if(!perms.includes('REQUEST_INSTALL_PACKAGES')){console.error('PREFLIGHT FAIL: android.permissions is missing REQUEST_INSTALL_PACKAGES');process.exit(1);}
+          if(!man.includes('android.permission.REQUEST_INSTALL_PACKAGES')){console.error('PREFLIGHT FAIL: android manifest is missing REQUEST_INSTALL_PACKAGES — the built APK cannot request installs');process.exit(1);}
+          if(!Number.isInteger(appCode)||appCode<1){console.error('PREFLIGHT FAIL: android.versionCode must be a positive integer');process.exit(1);}
+          if(gradleCode!==appCode){console.error('PREFLIGHT FAIL: build.gradle versionCode ('+gradleCode+') != app.json versionCode ('+appCode+') — gate never clears');process.exit(1);}
+          if(manifest?.minVersionCode!==appCode){console.error('PREFLIGHT FAIL: version.json minVersionCode ('+(manifest?.minVersionCode??'?')+') != app.json versionCode ('+appCode+')');process.exit(1);}
+          console.log('preflight ok: versionCode '+appCode+', install permission declared in native manifest');"
 
       - uses: expo/expo-github-action@v8
         with:
@@ -62,7 +70,7 @@ jobs:
         run: |
           git config user.name "release-bot"
           git config user.email "release-bot@users.noreply.github.com"
-          git add app.json package.json package-lock.json version.json
+          git add app.json package.json package-lock.json version.json android/app/build.gradle
           git commit -m "chore(release): ${{ github.ref_name }} [skip ci]" || echo "nothing to commit"
           git fetch origin main
           git rebase origin/main || (git rebase --abort && echo "rebase failed: main moved unexpectedly" && exit 1)
