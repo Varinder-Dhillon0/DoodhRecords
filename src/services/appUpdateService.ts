@@ -20,6 +20,9 @@ type DownloadResumable = {
 type LegacyFileSystem = {
   cacheDirectory?: string | null;
   getContentUriAsync(fileUri: string): Promise<string>;
+  getInfoAsync(
+    fileUri: string,
+  ): Promise<{ exists: boolean; size?: number }>;
   createDownloadResumable(
     url: string,
     fileUri: string,
@@ -69,6 +72,14 @@ export const downloadApk = async (
   const result = await task.downloadAsync();
   if (!result?.uri) {
     throw new Error("APK download did not produce a file.");
+  }
+  // Guard against truncated downloads or error pages saved as .apk
+  // (e.g. a 404 HTML page): a real release APK is tens of megabytes.
+  const info = await legacy.getInfoAsync(result.uri).catch(() => null);
+  if (!info?.exists || (info.size ?? 0) < 1_000_000) {
+    throw new Error(
+      `Downloaded file failed integrity check (size: ${info?.size ?? 0} bytes).`,
+    );
   }
   return result.uri;
 };

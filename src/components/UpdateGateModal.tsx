@@ -21,8 +21,8 @@ type UpdateGateModalProps = {
 type GatePhase =
   | { name: "ready" }
   | { name: "downloading"; fraction: number | null }
-  | { name: "downloaded"; fileUri: string; installerFailed: boolean }
-  | { name: "failed" };
+  | { name: "downloaded"; fileUri: string; installerFailed: boolean; installerError?: string }
+  | { name: "failed"; detail?: string };
 
 /**
  * Blocking forced-update gate for self-hosted APK distribution. No
@@ -39,6 +39,14 @@ export default function UpdateGateModal({ manifest, installedCode }: UpdateGateM
     manifest.notes?.pa ??
     "";
 
+  const failDownload = (error: unknown) => {
+    console.error("Error downloading update:", error);
+    setPhase({
+      name: "failed",
+      detail: error instanceof Error ? error.message : String(error),
+    });
+  };
+
   const startDownload = async () => {
     setPhase({ name: "downloading", fraction: null });
     try {
@@ -50,11 +58,15 @@ export default function UpdateGateModal({ manifest, installedCode }: UpdateGateM
         await launchApkInstaller(fileUri);
       } catch (error) {
         console.error("Error launching installer:", error);
-        setPhase({ name: "downloaded", fileUri, installerFailed: true });
+        setPhase({
+          name: "downloaded",
+          fileUri,
+          installerFailed: true,
+          installerError: error instanceof Error ? error.message : String(error),
+        });
       }
     } catch (error) {
-      console.error("Error downloading update:", error);
-      setPhase({ name: "failed" });
+      failDownload(error);
     }
   };
 
@@ -65,7 +77,12 @@ export default function UpdateGateModal({ manifest, installedCode }: UpdateGateM
       setPhase({ name: "downloaded", fileUri: phase.fileUri, installerFailed: false });
     } catch (error) {
       console.error("Error launching installer:", error);
-      setPhase({ name: "downloaded", fileUri: phase.fileUri, installerFailed: true });
+      setPhase({
+        name: "downloaded",
+        fileUri: phase.fileUri,
+        installerFailed: true,
+        installerError: error instanceof Error ? error.message : String(error),
+      });
     }
   };
 
@@ -123,7 +140,12 @@ export default function UpdateGateModal({ manifest, installedCode }: UpdateGateM
           ) : null}
 
           {phase.name === "failed" ? (
-            <RNText style={styles.error}>{t("update.failed")}</RNText>
+            <>
+              <RNText style={styles.error}>{t("update.failed")}</RNText>
+              {phase.detail ? (
+                <RNText style={styles.errorDetail}>{phase.detail}</RNText>
+              ) : null}
+            </>
           ) : null}
 
           {phase.name === "downloaded" ? (
@@ -132,9 +154,16 @@ export default function UpdateGateModal({ manifest, installedCode }: UpdateGateM
                 {t("update.installHelp")}
               </RNText>
               {phase.installerFailed ? (
-                <RNText style={styles.error}>
-                  {t("update.installerFailed")}
-                </RNText>
+                <>
+                  <RNText style={styles.error}>
+                    {t("update.installerFailed")}
+                  </RNText>
+                  {phase.installerError ? (
+                    <RNText style={styles.errorDetail}>
+                      {phase.installerError}
+                    </RNText>
+                  ) : null}
+                </>
               ) : null}
               <Button variant="primary" size="lg" fullWidth onPress={retryInstall}>
                 <RNText style={styles.primaryLabel}>{t("update.install")}</RNText>
@@ -240,6 +269,12 @@ const styles = StyleSheet.create({
     fontWeight: "700",
     textAlign: "center",
     marginTop: 12,
+  },
+  errorDetail: {
+    color: COLORS.muted,
+    fontSize: TYPOGRAPHY.micro,
+    textAlign: "center",
+    marginTop: 4,
   },
   installHelp: {
     color: COLORS.muted,
