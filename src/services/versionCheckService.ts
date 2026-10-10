@@ -57,6 +57,11 @@ export const checkForBinaryUpdate = async (): Promise<UpdateCheckResult> => {
     // eslint-disable-next-line @typescript-eslint/no-var-requires
     const Application = require("expo-application") as ApplicationModule;
     const installedCode = Number(Application.nativeBuildVersion ?? 0);
+    if (!Number.isFinite(installedCode) || installedCode <= 0) {
+      // Unknown build identity (e.g. dev clients, malformed manifests):
+      // never gate on a guess.
+      return { status: "ok" };
+    }
     const manifest = await fetchManifest();
     if (!manifest) return { status: "ok" };
     if (installedCode < Number(manifest.minVersionCode)) {

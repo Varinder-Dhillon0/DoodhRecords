@@ -15,6 +15,7 @@ import Button from "./Button";
 
 type UpdateGateModalProps = {
   manifest: UpdateManifestAndroid;
+  installedCode: number;
 };
 
 type GatePhase =
@@ -27,7 +28,7 @@ type GatePhase =
  * Blocking forced-update gate for self-hosted APK distribution. No
  * dismiss path: the user downloads the APK and installs it to proceed.
  */
-export default function UpdateGateModal({ manifest }: UpdateGateModalProps) {
+export default function UpdateGateModal({ manifest, installedCode }: UpdateGateModalProps) {
   const { t, i18n } = useTranslation();
   const [phase, setPhase] = useState<GatePhase>({ name: "ready" });
 
@@ -96,6 +97,12 @@ export default function UpdateGateModal({ manifest }: UpdateGateModalProps) {
             {t("update.message", { version: manifest.versionName })}
           </RNText>
           {notes ? <RNText style={styles.notes}>{notes}</RNText> : null}
+          <RNText style={styles.versionCaption}>
+            {t("update.versionCaption", {
+              installed: installedCode,
+              required: manifest.minVersionCode,
+            })}
+          </RNText>
 
           {phase.name === "downloading" ? (
             <View style={styles.progressWrap}>
@@ -205,6 +212,13 @@ const styles = StyleSheet.create({
     textAlign: "center",
     marginTop: 8,
     lineHeight: 18,
+  },
+  versionCaption: {
+    color: COLORS.muted,
+    fontSize: TYPOGRAPHY.micro,
+    fontWeight: "700",
+    textAlign: "center",
+    marginTop: 6,
   },
   progressWrap: { width: "100%", marginTop: 16, gap: 8 },
   track: {
