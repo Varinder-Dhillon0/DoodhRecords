@@ -29,6 +29,11 @@ export interface SummaryMetrics {
   totalEarnings: number;
 }
 
+export interface PendingAppUpdate {
+  fileUri: string;
+  versionCode: number;
+}
+
 export interface MonthOption {
   value: string;
 }

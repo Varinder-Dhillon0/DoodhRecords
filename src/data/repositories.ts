@@ -2,15 +2,18 @@ import type {
   Animal,
   MilkEntry,
   OperationResult,
+  PendingAppUpdate,
   PricingConfig,
 } from "../types";
 import {
   addEntry,
+  clearStoredPendingUpdate,
   deleteEntry,
   getPriceForEntry,
   getPricingConfig,
   getStoredFontScale,
   getStoredLanguage,
+  getStoredPendingUpdate,
   getStoredReportDirectory,
   initializeStorage,
   readAllEntries,
@@ -18,6 +21,7 @@ import {
   savePricingConfig,
   saveStoredFontScale,
   saveStoredLanguage,
+  saveStoredPendingUpdate,
   saveStoredReportDirectory,
   updateEntry,
   writeEntriesForMonth,
@@ -85,6 +89,9 @@ export interface PreferenceRepository {
   saveFontScale(scale: number): Promise<void>;
   loadReportDirectory(): Promise<string | null>;
   saveReportDirectory(directoryUri: string): Promise<void>;
+  loadPendingUpdate(): Promise<PendingAppUpdate | null>;
+  savePendingUpdate(pending: PendingAppUpdate): Promise<void>;
+  clearPendingUpdate(): Promise<void>;
 }
 
 export const preferenceRepository: PreferenceRepository = {
@@ -95,4 +102,7 @@ export const preferenceRepository: PreferenceRepository = {
   loadReportDirectory: () => getStoredReportDirectory(),
   saveReportDirectory: (directoryUri) =>
     saveStoredReportDirectory(directoryUri),
+  loadPendingUpdate: () => getStoredPendingUpdate(),
+  savePendingUpdate: (pending) => saveStoredPendingUpdate(pending),
+  clearPendingUpdate: () => clearStoredPendingUpdate(),
 };

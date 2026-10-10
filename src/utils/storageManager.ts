@@ -82,6 +82,59 @@ export const saveStoredReportDirectory = async (
   }
 };
 
+export type StoredPendingUpdate = {
+  fileUri: string;
+  versionCode: number;
+};
+
+export const getStoredPendingUpdate =
+  async (): Promise<StoredPendingUpdate | null> => {
+    try {
+      const updateFile = storageDir.file("pending_update.json");
+      if (!updateFile.exists) return null;
+      const parsed = JSON.parse(await updateFile.text());
+      if (
+        typeof parsed?.fileUri === "string" &&
+        Number.isFinite(Number(parsed?.versionCode))
+      ) {
+        return {
+          fileUri: parsed.fileUri,
+          versionCode: Number(parsed.versionCode),
+        };
+      }
+      return null;
+    } catch (err) {
+      console.error("Error reading pending update:", err);
+      return null;
+    }
+  };
+
+export const saveStoredPendingUpdate = async (
+  pending: StoredPendingUpdate,
+): Promise<void> => {
+  try {
+    if (!storageDir.exists) {
+      storageDir.create();
+    }
+    storageDir.file("pending_update.json").write(JSON.stringify(pending));
+  } catch (err) {
+    console.error("Error saving pending update:", err);
+  }
+};
+
+export const clearStoredPendingUpdate = async (): Promise<void> => {
+  try {
+    if (!storageDir.exists) {
+      storageDir.create();
+    }
+    // No delete primitive on StoredFile; "null" parses cleanly and reads
+    // back as no pending update.
+    storageDir.file("pending_update.json").write("null");
+  } catch (err) {
+    console.error("Error clearing pending update:", err);
+  }
+};
+
 const readCsvFile = async (file: StoredFile): Promise<string[][]> => {
   try {
     if (!file.exists) {

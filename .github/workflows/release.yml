@@ -28,6 +28,15 @@ jobs:
       - name: Bump release versions
         run: node scripts/prepare-release.mjs ${{ github.ref_name }}
 
+      - name: Preflight self-update requirements
+        run: >
+          node -e "const a=require('./app.json');
+          const perms=a.expo?.android?.permissions ?? [];
+          const code=a.expo?.android?.versionCode;
+          if(!perms.includes('REQUEST_INSTALL_PACKAGES')){console.error('PREFLIGHT FAIL: android.permissions is missing REQUEST_INSTALL_PACKAGES — in-app installs would be impossible');process.exit(1);}
+          if(!Number.isInteger(code)||code<1){console.error('PREFLIGHT FAIL: android.versionCode must be a positive integer');process.exit(1);}
+          console.log('preflight ok: versionCode '+code+', install permission declared');"
+
       - uses: expo/expo-github-action@v8
         with:
           eas-version: latest

@@ -10,12 +10,13 @@ import { useTranslation } from "react-i18next";
 import { COLORS, RADII, SHADOWS } from "../constants";
 import { TYPOGRAPHY } from "../constants/typography";
 import type { UpdateManifestAndroid } from "../services/versionCheckService";
-import { downloadApk, launchApkInstaller, openUnknownSourcesSettings } from "../services/appUpdateService";
+import { downloadApk, launchApkInstaller, openUnknownSourcesSettings, rememberPendingApk } from "../services/appUpdateService";
 import Button from "./Button";
 
 type UpdateGateModalProps = {
   manifest: UpdateManifestAndroid;
   installedCode: number;
+  initialFileUri?: string | null;
 };
 
 type GatePhase =
@@ -28,9 +29,13 @@ type GatePhase =
  * Blocking forced-update gate for self-hosted APK distribution. No
  * dismiss path: the user downloads the APK and installs it to proceed.
  */
-export default function UpdateGateModal({ manifest, installedCode }: UpdateGateModalProps) {
+export default function UpdateGateModal({ manifest, installedCode, initialFileUri }: UpdateGateModalProps) {
   const { t, i18n } = useTranslation();
-  const [phase, setPhase] = useState<GatePhase>({ name: "ready" });
+  const [phase, setPhase] = useState<GatePhase>(
+    initialFileUri
+      ? { name: "downloaded", fileUri: initialFileUri, installerFailed: false }
+      : { name: "ready" },
+  );
 
   const language = i18n.language.startsWith("pa") ? "pa" : "en";
   const notes =
@@ -53,6 +58,7 @@ export default function UpdateGateModal({ manifest, installedCode }: UpdateGateM
       const fileUri = await downloadApk(manifest.apkUrl, (progress) => {
         setPhase({ name: "downloading", fraction: progress.fraction });
       });
+      await rememberPendingApk(fileUri, Number(manifest.minVersionCode));
       setPhase({ name: "downloaded", fileUri, installerFailed: false });
       try {
         await launchApkInstaller(fileUri);

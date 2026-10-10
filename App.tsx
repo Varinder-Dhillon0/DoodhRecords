@@ -33,6 +33,7 @@ import {
   checkForBinaryUpdate,
   type UpdateManifestAndroid,
 } from "./src/services/versionCheckService";
+import { clearPendingApk, loadPendingApk } from "./src/services/appUpdateService";
 import UpdateGateModal from "./src/components/UpdateGateModal";
 import LoadingIndicator from "./src/components/ui/LoadingIndicator";
 import { SnackbarProvider } from "./src/context/SnackbarContext";
@@ -109,17 +110,24 @@ function UpdateGate() {
   const [gate, setGate] = useState<{
     manifest: UpdateManifestAndroid;
     installedCode: number;
+    initialFileUri: string | null;
   } | null>(null);
 
   useEffect(() => {
     if (__DEV__) return;
-    checkForBinaryUpdate().then((result) => {
-      if (result.status === "update-required") {
-        setGate({
-          manifest: result.manifest,
-          installedCode: result.installedCode,
-        });
+    checkForBinaryUpdate().then(async (result) => {
+      if (result.status === "ok") {
+        await clearPendingApk();
+        return;
       }
+      const initialFileUri = await loadPendingApk(
+        Number(result.manifest.minVersionCode),
+      );
+      setGate({
+        manifest: result.manifest,
+        installedCode: result.installedCode,
+        initialFileUri,
+      });
     });
   }, []);
 
@@ -128,6 +136,7 @@ function UpdateGate() {
     <UpdateGateModal
       manifest={gate.manifest}
       installedCode={gate.installedCode}
+      initialFileUri={gate.initialFileUri}
     />
   );
 }

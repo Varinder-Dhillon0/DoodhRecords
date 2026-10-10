@@ -1,4 +1,5 @@
 import { Platform } from "react-native";
+import { preferenceRepository } from "../data/repositories";
 
 /**
  * Self-hosted APK delivery: download with progress, then hand the file to
@@ -123,4 +124,59 @@ export const openUnknownSourcesSettings = async (): Promise<void> => {
     "android.settings.MANAGE_UNKNOWN_APP_SOURCES",
     { data: `package:${packageName}` },
   );
+};
+
+/** Minimum believable release APK size; anything smaller is not our APK. */
+const MIN_APK_BYTES = 1_000_000;
+
+export const isUsableApkFile = async (fileUri: string): Promise<boolean> => {
+  try {
+    const legacy = loadLegacyFileSystem();
+    const info = await legacy.getInfoAsync(fileUri);
+    return Boolean(info?.exists) && (info.size ?? 0) >= MIN_APK_BYTES;
+  } catch {
+    return false;
+  }
+};
+
+/**
+ * Returns a previously downloaded APK that still satisfies the required
+ * code, so a relaunch after installing (or failing to install) resumes
+ * at Install instead of forcing another download.
+ */
+export const loadPendingApk = async (
+  requiredCode: number,
+): Promise<string | null> => {
+  try {
+    const pending = await preferenceRepository.loadPendingUpdate();
+    if (!pending || pending.versionCode < requiredCode) {
+      return null;
+    }
+    if (!(await isUsableApkFile(pending.fileUri))) {
+      await preferenceRepository.clearPendingUpdate().catch(() => undefined);
+      return null;
+    }
+    return pending.fileUri;
+  } catch {
+    return null;
+  }
+};
+
+export const rememberPendingApk = async (
+  fileUri: string,
+  versionCode: number,
+): Promise<void> => {
+  try {
+    await preferenceRepository.savePendingUpdate({ fileUri, versionCode });
+  } catch {
+    // Resuming is a convenience; a failed save just means re-downloading.
+  }
+};
+
+export const clearPendingApk = async (): Promise<void> => {
+  try {
+    await preferenceRepository.clearPendingUpdate();
+  } catch {
+    // Best effort only.
+  }
 };
