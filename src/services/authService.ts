@@ -163,15 +163,24 @@ export const mapSignInError = (error: unknown): string => {
         return "auth.failed";
     }
   }
-  const code = (error as { code?: string } | null)?.code ?? "";
-  if (
-    code.includes("SIGN_IN_CANCELLED") ||
-    code.includes("12501") ||
-    code === "auth.cancelled"
-  ) {
+  // Native errors carry numeric GoogleSignInStatusCodes (as strings) on
+  // Android, e.g. 12501 cancelled, 10 DEVELOPER_ERROR, 7 NETWORK_ERROR.
+  const code = String((error as { code?: unknown } | null)?.code ?? "");
+  if (__DEV__) {
+    console.warn("Google sign-in error:", code || error);
+  }
+  if (code === "12501" || code.includes("SIGN_IN_CANCELLED")) {
     return "auth.cancelled";
   }
-  if (code.includes("IN_PROGRESS")) return "auth.inProgress";
+  if (code === "12502" || code.includes("IN_PROGRESS")) {
+    return "auth.inProgress";
+  }
   if (code.includes("PLAY_SERVICES")) return "auth.noPlayServices";
+  if (code === "10" || code.includes("DEVELOPER_ERROR")) {
+    return "auth.developerError";
+  }
+  if (code === "7" || code.includes("NETWORK_ERROR")) {
+    return "auth.networkError";
+  }
   return "auth.failed";
 };

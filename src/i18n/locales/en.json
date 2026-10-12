@@ -292,6 +292,8 @@
     "failed": "Google sign-in failed. Try again, or continue offline.",
     "unavailable": "Google sign-in needs a development build. Continue offline for now.",
     "noClientId": "Google sign-in is not configured yet. Continue offline for now.",
+    "developerError": "Google Sign-In isn't set up for this build. This app's package name and signing key must be registered in Google Cloud.",
+    "networkError": "Network problem during Google sign-in. Check your connection and try again.",
     "inProgress": "Sign-in already in progress.",
     "noPlayServices": "Google Play services are required for sign-in.",
     "signedOut": "Signed out. Your local records are kept.",
