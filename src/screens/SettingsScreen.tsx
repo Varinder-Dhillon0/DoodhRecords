@@ -28,6 +28,7 @@ import ScreenContainer from "../components/ui/ScreenContainer";
 import SettingCard from "../components/ui/SettingCard";
 import Slider from "@react-native-community/slider";
 import { useFontScale } from "../context/FontScaleContext";
+import { useAuth } from "../context/AuthContext";
 import useKeyboardAwareScroll from "../hooks/useKeyboardAwareScroll";
 import {
   FONT_SCALE_RANGE,
@@ -38,6 +39,7 @@ import { useDataImport } from "../hooks/useDataImport";
 import { useConfirmDialog } from "../hooks/useConfirmDialog";
 import { useSnackbar } from "../context/SnackbarContext";
 import { MonthImportValidationError } from "../services/importService";
+import { mapSignInError } from "../services/authService";
 
 export default function SettingsScreen() {
   const { t, i18n } = useTranslation();
@@ -59,6 +61,30 @@ export default function SettingsScreen() {
   );
   const { dialog: confirmDialog, showConfirm } = useConfirmDialog();
   const [importVisible, setImportVisible] = useState(false);
+  const { user, isSigningIn, signIn, signOut } = useAuth();
+  const [isSigningOut, setIsSigningOut] = useState(false);
+
+  const handleAccountSignIn = async () => {
+    const result = await signIn();
+    if (!result.ok) {
+      const key = mapSignInError(result.error);
+      if (key !== "auth.cancelled") {
+        showSnackbar(t(key));
+      }
+    }
+  };
+
+  const handleAccountSignOut = async () => {
+    setIsSigningOut(true);
+    try {
+      const result = await signOut();
+      showSnackbar(
+        t(result.ok ? "auth.signedOut" : "auth.signOutFailed"),
+      );
+    } finally {
+      setIsSigningOut(false);
+    }
+  };
   const { isImporting, importData } = useDataImport({
     onImported: (summary) => {
       setImportVisible(false);
@@ -177,6 +203,84 @@ export default function SettingsScreen() {
           </View>
           <View style={styles.heroGlow} />
         </View>
+
+        <SettingCard icon="google" title={t("settings.accountTitle")}>
+          <Text style={styles.helpText}>
+            {t("settings.accountDescription")}
+          </Text>
+          {user ? (
+            <View style={styles.accountRow}>
+              <View style={styles.avatar}>
+                <Text style={styles.avatarText}>
+                  {(user.name ?? user.email).charAt(0).toUpperCase()}
+                </Text>
+              </View>
+              <View style={styles.accountCopy}>
+                <Text style={styles.accountLabel}>
+                  {t("settings.signedInAs")}
+                </Text>
+                <Text style={styles.accountEmail} numberOfLines={1}>
+                  {user.email}
+                </Text>
+                {user.name ? (
+                  <Text style={styles.accountName} numberOfLines={1}>
+                    {user.name}
+                  </Text>
+                ) : null}
+              </View>
+            </View>
+          ) : (
+            <Text style={styles.helpText}>{t("settings.offlineMode")}</Text>
+          )}
+          {user ? (
+            <Button
+              variant="outline"
+              size="md"
+              fullWidth
+              loading={isSigningOut}
+              disabled={isSigningOut || isSigningIn}
+              accessibilityLabel={t("settings.signOut")}
+              onPress={handleAccountSignOut}
+              style={styles.importButton}
+              icon={
+                <MaterialCommunityIcons
+                  name="logout"
+                  size={18}
+                  color={COLORS.text}
+                />
+              }
+            >
+              <Text style={styles.importButtonLabel}>
+                {t("settings.signOut")}
+              </Text>
+            </Button>
+          ) : (
+            <Button
+              variant="primary"
+              size="md"
+              fullWidth
+              loading={isSigningIn}
+              disabled={isSigningIn || isSigningOut}
+              accessibilityLabel={t("settings.signIn")}
+              onPress={handleAccountSignIn}
+              style={styles.accountSignIn}
+              icon={
+                <MaterialCommunityIcons
+                  name="google"
+                  size={18}
+                  color={COLORS.white}
+                />
+              }
+            >
+              <Text style={styles.saveButtonText}>
+                {isSigningIn
+                  ? t("settings.signingIn")
+                  : t("settings.signIn")}
+              </Text>
+            </Button>
+          )}
+          <Text style={styles.syncSoon}>{t("settings.syncComingSoon")}</Text>
+        </SettingCard>
 
         <SettingCard
           icon="translate"
@@ -421,6 +525,26 @@ const styles = StyleSheet.create({
   },
   sliderScaleText: { fontSize: TYPOGRAPHY.caption, color: COLORS.muted },
   helpText: { fontSize: TYPOGRAPHY.caption, color: COLORS.muted },
+  accountRow: { flexDirection: "row", alignItems: "center", gap: 12 },
+  avatar: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: COLORS.brand,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  avatarText: { color: COLORS.white, fontWeight: "800", fontSize: 18 },
+  accountCopy: { flex: 1 },
+  accountLabel: { fontSize: TYPOGRAPHY.caption, color: COLORS.muted },
+  accountEmail: { fontSize: TYPOGRAPHY.bodySmall, fontWeight: "700", color: COLORS.text },
+  accountName: { fontSize: TYPOGRAPHY.caption, color: COLORS.muted },
+  accountSignIn: { alignItems: "center", justifyContent: "center" },
+  syncSoon: {
+    fontSize: TYPOGRAPHY.caption,
+    color: COLORS.muted,
+    fontStyle: "italic",
+  },
   importButton: {
     alignItems: "center",
     justifyContent: "center",

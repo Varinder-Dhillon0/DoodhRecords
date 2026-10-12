@@ -34,6 +34,15 @@ export interface PendingAppUpdate {
   versionCode: number;
 }
 
+export interface StoredAuthUser {
+  id: string;
+  email: string;
+  name: string | null;
+  photo: string | null;
+}
+
+export type AuthUser = StoredAuthUser;
+
 export interface MonthOption {
   value: string;
 }
@@ -71,6 +80,7 @@ export interface DoodhContextType {
 }
 
 export type RootStackParamList = {
+  Login: undefined;
   Welcome: undefined;
   MainTabs: NavigatorScreenParams<MainTabParamList> | undefined;
   EntryForm: { entry?: MilkEntry } | undefined;

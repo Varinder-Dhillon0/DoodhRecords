@@ -4,13 +4,17 @@ import type {
   OperationResult,
   PendingAppUpdate,
   PricingConfig,
+  StoredAuthUser,
 } from "../types";
 import {
   addEntry,
+  clearStoredAuthUser,
   clearStoredPendingUpdate,
   deleteEntry,
+  getAuthSkipped,
   getPriceForEntry,
   getPricingConfig,
+  getStoredAuthUser,
   getStoredFontScale,
   getStoredLanguage,
   getStoredPendingUpdate,
@@ -18,7 +22,9 @@ import {
   initializeStorage,
   readAllEntries,
   readEntriesForMonth,
+  saveAuthSkipped,
   savePricingConfig,
+  saveStoredAuthUser,
   saveStoredFontScale,
   saveStoredLanguage,
   saveStoredPendingUpdate,
@@ -105,4 +111,20 @@ export const preferenceRepository: PreferenceRepository = {
   loadPendingUpdate: () => getStoredPendingUpdate(),
   savePendingUpdate: (pending) => saveStoredPendingUpdate(pending),
   clearPendingUpdate: () => clearStoredPendingUpdate(),
+};
+
+export interface AuthRepository {
+  loadUser(): Promise<StoredAuthUser | null>;
+  saveUser(user: StoredAuthUser): Promise<void>;
+  clearUser(): Promise<void>;
+  loadSkipped(): Promise<boolean>;
+  saveSkipped(skipped: boolean): Promise<void>;
+}
+
+export const authRepository: AuthRepository = {
+  loadUser: () => getStoredAuthUser(),
+  saveUser: (user) => saveStoredAuthUser(user),
+  clearUser: () => clearStoredAuthUser(),
+  loadSkipped: () => getAuthSkipped(),
+  saveSkipped: (skipped) => saveAuthSkipped(skipped),
 };

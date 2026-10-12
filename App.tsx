@@ -16,6 +16,7 @@ import { FONT_SCALE_RANGE } from "./src/constants/typography";
 import { initializeI18n } from "./src/i18n";
 import { useTranslation } from "react-i18next";
 import { DoodhProvider, useDoodhContext } from "./src/context/DoodhContext";
+import { AuthProvider, useAuth } from "./src/context/AuthContext";
 import {
   FontScaleProvider,
   useFontScale,
@@ -28,6 +29,7 @@ import ReportsScreen from "./src/screens/ReportsScreen";
 import SettingsScreen from "./src/screens/SettingsScreen";
 import EntryFormScreen from "./src/screens/EntryFormScreen";
 import WelcomeScreen from "./src/screens/WelcomeScreen";
+import LoginScreen from "./src/screens/LoginScreen";
 import { loadFontScalePreference } from "./src/services/preferenceService";
 import {
   checkForBinaryUpdate,
@@ -141,29 +143,39 @@ function UpdateGate() {
   );
 }
 
-function MainNavigator() {  const { isLoading } = useDoodhContext();
+function MainNavigator() {
+  const { isLoading } = useDoodhContext();
+  const { user, skipped, isAuthLoading } = useAuth();
 
-  if (isLoading) {
+  if (isLoading || isAuthLoading) {
     return <LoadingIndicator style={styles.loadingContainer} />;
   }
 
+  const needsAuth = !user && !skipped;
+
   return (
     <Stack.Navigator
-      initialRouteName="Welcome"
+      initialRouteName={needsAuth ? "Login" : "Welcome"}
       screenOptions={{ headerShown: false }}
     >
-      <Stack.Screen name="Welcome" component={WelcomeScreen} />
-      <Stack.Screen name="MainTabs" component={Tabs} />
-      <Stack.Screen
-        name="EntryForm"
-        component={EntryFormScreen}
-        options={{
-          presentation: "transparentModal",
-          animation: "none",
-          cardOverlayEnabled: false,
-          gestureEnabled: false,
-        }}
-      />
+      {needsAuth ? (
+        <Stack.Screen name="Login" component={LoginScreen} />
+      ) : (
+        <>
+          <Stack.Screen name="Welcome" component={WelcomeScreen} />
+          <Stack.Screen name="MainTabs" component={Tabs} />
+          <Stack.Screen
+            name="EntryForm"
+            component={EntryFormScreen}
+            options={{
+              presentation: "transparentModal",
+              animation: "none",
+              cardOverlayEnabled: false,
+              gestureEnabled: false,
+            }}
+          />
+        </>
+      )}
     </Stack.Navigator>
   );
 }
@@ -192,10 +204,12 @@ export default function App() {
       <FontScaleProvider initialScale={initialFontScale}>
         <DoodhProvider>
           <SnackbarProvider>
-            <NavigationContainer>
-              <MainNavigator />
-            </NavigationContainer>
-            <UpdateGate />
+            <AuthProvider>
+              <NavigationContainer>
+                <MainNavigator />
+              </NavigationContainer>
+              <UpdateGate />
+            </AuthProvider>
           </SnackbarProvider>
         </DoodhProvider>
       </FontScaleProvider>

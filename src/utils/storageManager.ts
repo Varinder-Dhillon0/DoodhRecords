@@ -1,4 +1,4 @@
-import type { Animal, AnimalPricing, MilkEntry, PricingConfig } from "../types";
+import type { Animal, AnimalPricing, MilkEntry, PricingConfig, StoredAuthUser } from "../types";
 import { getStorageDirectory } from "./fileStorage";
 import type { StoredFile } from "./fileStorage";
 import { getYearAndMonth } from "./dateUtils";
@@ -132,6 +132,72 @@ export const clearStoredPendingUpdate = async (): Promise<void> => {
     storageDir.file("pending_update.json").write("null");
   } catch (err) {
     console.error("Error clearing pending update:", err);
+  }
+};
+
+export const getStoredAuthUser = async (): Promise<StoredAuthUser | null> => {
+  try {
+    const authFile = storageDir.file("auth_user.json");
+    if (!authFile.exists) return null;
+    const raw = (await authFile.text()).trim();
+    if (!raw || raw === "null") return null;
+    const parsed = JSON.parse(raw);
+    if (typeof parsed?.email !== "string" || !parsed.email) return null;
+    return {
+      id: String(parsed.id ?? parsed.email),
+      email: parsed.email,
+      name: typeof parsed.name === "string" ? parsed.name : null,
+      photo: typeof parsed.photo === "string" ? parsed.photo : null,
+    };
+  } catch (err) {
+    console.error("Error reading auth user:", err);
+    return null;
+  }
+};
+
+export const saveStoredAuthUser = async (
+  user: StoredAuthUser,
+): Promise<void> => {
+  try {
+    if (!storageDir.exists) {
+      storageDir.create();
+    }
+    storageDir.file("auth_user.json").write(JSON.stringify(user));
+  } catch (err) {
+    console.error("Error saving auth user:", err);
+  }
+};
+
+export const clearStoredAuthUser = async (): Promise<void> => {
+  try {
+    if (!storageDir.exists) {
+      storageDir.create();
+    }
+    storageDir.file("auth_user.json").write("null");
+  } catch (err) {
+    console.error("Error clearing auth user:", err);
+  }
+};
+
+export const getAuthSkipped = async (): Promise<boolean> => {
+  try {
+    const skipFile = storageDir.file("auth_skipped.txt");
+    if (!skipFile.exists) return false;
+    return (await skipFile.text()).trim() === "1";
+  } catch (err) {
+    console.error("Error reading auth skipped flag:", err);
+    return false;
+  }
+};
+
+export const saveAuthSkipped = async (skipped: boolean): Promise<void> => {
+  try {
+    if (!storageDir.exists) {
+      storageDir.create();
+    }
+    storageDir.file("auth_skipped.txt").write(skipped ? "1" : "0");
+  } catch (err) {
+    console.error("Error saving auth skipped flag:", err);
   }
 };
 
