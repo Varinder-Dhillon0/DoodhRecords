@@ -150,6 +150,24 @@ export const skipSignIn = (): Promise<OperationResult<void>> =>
 export const clearSkip = (): Promise<OperationResult<void>> =>
   runRepository(() => authRepository.saveSkipped(false));
 
+export const describeSignInError = (error: unknown): string => {
+  const nat =
+    error instanceof GoogleSignInError
+      ? `${error.code}: ${error.message}`
+      : (() => {
+          const e = error as { code?: unknown; message?: unknown } | null;
+          const code = e?.code != null ? String(e.code) : "no-code";
+          const message =
+            e?.message != null ? String(e.message) : String(error);
+          return `${code}: ${message}`;
+        })();
+  const clientId = getWebClientId();
+  const maskedClient = clientId
+    ? `${clientId.slice(0, 12)}...${clientId.slice(-20)}`
+    : "MISSING";
+  return `webClientId=${maskedClient} | error=${nat}`;
+};
+
 export const mapSignInError = (error: unknown): string => {
   if (error instanceof GoogleSignInError) {
     switch (error.code) {
@@ -165,10 +183,9 @@ export const mapSignInError = (error: unknown): string => {
   }
   // Native errors carry numeric GoogleSignInStatusCodes (as strings) on
   // Android, e.g. 12501 cancelled, 10 DEVELOPER_ERROR, 7 NETWORK_ERROR.
+  // Log in release too so the exact code is visible while diagnosing.
+  console.warn("Google sign-in error:", describeSignInError(error));
   const code = String((error as { code?: unknown } | null)?.code ?? "");
-  if (__DEV__) {
-    console.warn("Google sign-in error:", code || error);
-  }
   if (code === "12501" || code.includes("SIGN_IN_CANCELLED")) {
     return "auth.cancelled";
   }

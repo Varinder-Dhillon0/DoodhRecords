@@ -7,7 +7,7 @@ import { COLORS, RADII, SHADOWS, withAlpha } from "../constants";
 import { TYPOGRAPHY } from "../constants/typography";
 import { useAuth } from "../context/AuthContext";
 import { useSnackbar } from "../context/SnackbarContext";
-import { mapSignInError } from "../services/authService";
+import { describeSignInError, mapSignInError } from "../services/authService";
 import Text from "../components/ScaledText";
 import Button from "../components/Button";
 
@@ -24,7 +24,7 @@ export default function LoginScreen() {
       const key = mapSignInError(result.error);
       // "cancelled" is a deliberate user action — stay silent.
       if (key !== "auth.cancelled") {
-        showSnackbar(t(key));
+        showSnackbar(`${t(key)} [${describeSignInError(result.error)}]`);
       }
     }
   };
