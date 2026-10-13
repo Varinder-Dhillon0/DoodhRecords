@@ -2,7 +2,7 @@
   "expo": {
     "name": "Doodh Records",
     "slug": "doodh-records",
-    "version": "1.0.15",
+    "version": "1.0.16",
     "icon": "./assets/app-icon.png",
     "orientation": "portrait",
     "userInterfaceStyle": "light",
@@ -11,7 +11,7 @@
     ],
     "android": {
       "package": "com.doodhrecords.app",
-      "versionCode": 11,
+      "versionCode": 12,
       "permissions": [
         "REQUEST_INSTALL_PACKAGES"
       ],
