@@ -61,8 +61,32 @@ jobs:
           test -n "$url"
           curl -L "$url" -o doodhrecords.apk
 
+      - name: Compute signing fingerprint
+        run: |
+          sudo apt-get update -y
+          sudo apt-get install -y apksigner
+          raw=$(apksigner verify --print-certs doodhrecords.apk | sed -n 's/.*SHA-1 digest: //p' | head -1 | tr 'a-f' 'A-F')
+          sha1=$(echo "$raw" | sed 's/../&:/g; s/:$//')
+          clientid=$(node -e "console.log(require('./app.json').expo.extra.google.webClientId)")
+          {
+            echo "## Google Sign-In setup"
+            echo ""
+            echo '```'
+            echo "package    : com.doodhrecords.app"
+            echo "SHA-1      : $sha1"
+            echo "webClientId: $clientid"
+            echo '```'
+            echo ""
+            echo "Register the SHA-1 on an **Android** OAuth client (same Google Cloud project as the webClientId). One-time — the keystore is stable across releases."
+          } > fingerprint.md
+          cat fingerprint.md >> "$GITHUB_STEP_SUMMARY"
+
       - name: Publish GitHub Release
-        run: gh release create ${{ github.ref_name }} doodhrecords.apk --title ${{ github.ref_name }} --generate-notes
+        run: |
+          gh release create ${{ github.ref_name }} doodhrecords.apk --title ${{ github.ref_name }} --generate-notes
+          gh release view ${{ github.ref_name }} --json body -q .body > generated.md
+          { cat fingerprint.md; echo; cat generated.md; } > notes.md
+          gh release edit ${{ github.ref_name }} --notes-file notes.md
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
